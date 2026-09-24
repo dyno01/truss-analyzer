@@ -1,0 +1,298 @@
+/**
+ * Structural Design Studio — Dark Themed Study Panel & KaTeX Styling
+ */
+
+.study {
+  grid-area: study;
+  background: #0d141b;
+  border-top: 1px solid var(--line);
+  padding: 10px 12px 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.studyhead {
+  margin-bottom: 8px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  flex: 0 0 auto;
+}
+
+.studyhead b {
+  font-size: 11px;
+  color: var(--text);
+}
+
+.studyhead small {
+  display: block;
+  margin-top: 2px;
+  color: #6f8798;
+  font: 8px var(--mono);
+  letter-spacing: 0.08em;
+}
+
+.studyhead > span {
+  font: 8px var(--mono);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.solution-tabs {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 7px;
+  scrollbar-width: thin;
+}
+
+.solution-tab {
+  min-width: 104px;
+  padding: 8px 9px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #111a22;
+  color: var(--muted);
+  text-align: left;
+  transition: all 0.15s;
+}
+
+.solution-tab b {
+  display: block;
+  font: 9px var(--mono);
+  margin-bottom: 3px;
+  color: #6e899a;
+}
+
+.solution-tab span {
+  font-size: 9px;
+}
+
+.solution-tab.active {
+  border-color: var(--accent);
+  background: #13212b;
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px rgba(112, 184, 220, 0.12);
+}
+
+.solution-paper {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 165px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  width: 100%;
+  box-sizing: border-box;
+  background: #0d141b;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px 16px 20px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+}
+
+.solution-kicker {
+  font: 8px var(--mono);
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 7px;
+  margin-bottom: 8px;
+}
+
+.solution-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 9px;
+}
+
+.solution-title-row h2 {
+  font: 700 15px var(--sans);
+  margin: 0;
+  color: var(--text);
+}
+
+.solution-badge {
+  font: 8px var(--mono);
+  padding: 4px 6px;
+  border: 1px solid #315267;
+  border-radius: 4px;
+  color: var(--accent);
+  background: #13222e;
+}
+
+.solution-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+}
+
+.solution-block {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--panel2);
+  padding: 12px 14px;
+  overflow: hidden;
+}
+
+.solution-block.wide {
+  width: 100%;
+}
+
+.solution-block h3 {
+  font-size: 10px;
+  margin: 0 0 7px;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-family: var(--mono);
+}
+
+.solution-block h4 {
+  font-size: 10px;
+  margin: 9px 0 5px;
+  color: var(--text);
+}
+
+.solution-block p, .solution-block li {
+  font-size: 9.5px;
+  line-height: 1.6;
+  margin: 4px 0;
+  color: #a4b3c0;
+}
+
+.solution-block ul {
+  padding-left: 18px;
+  margin: 5px 0;
+}
+
+/* Equations styling in Dark Theme */
+.solution-equation {
+  border-left: 3px solid var(--accent);
+  background: #0a1117;
+  margin: 6px 0;
+  padding: 8px 12px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 0 5px 5px 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.solution-equation .katex {
+  font-size: 1.05em;
+  color: #e8eef3;
+}
+
+.solution-substitution {
+  border-left-color: #79a9bd;
+  background: #0e1720;
+}
+
+.solution-result {
+  border-left-color: var(--ok);
+  background: #0c1813;
+  color: #a9e0bd;
+}
+
+.solution-result strong, .solution-result b {
+  color: var(--ok);
+}
+
+.solution-formula-label {
+  font: 700 8px var(--mono);
+  letter-spacing: 0.08em;
+  color: #7b9bb0;
+  text-transform: uppercase;
+  margin: 7px 0 2px;
+}
+
+.solution-remarks {
+  background: #080e14;
+  border-left: 3px solid #284457;
+  border-radius: 0 5px 5px 0;
+  padding: 8px 11px;
+  margin: 6px 0 10px;
+  font-size: 8.5px;
+  line-height: 1.6;
+  color: #9ab0c2;
+}
+
+.solution-remarks b {
+  color: var(--text);
+}
+
+.solution-remarks-title {
+  font: 700 8px var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+
+.solution-data-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 6px 0;
+}
+
+.solution-data {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.solution-data th, .solution-data td {
+  padding: 6px 7px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+  font-size: 9px;
+  color: var(--text);
+}
+
+.solution-data th {
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.solution-note {
+  font-size: 8.5px !important;
+  color: var(--muted) !important;
+  margin-top: 7px !important;
+}
+
+.solution-callout {
+  padding: 8px 10px;
+  border: 1px dashed var(--line);
+  border-radius: 6px;
+  background: #111a24;
+  font-size: 9px;
+  line-height: 1.5;
+  color: #a4b3c0;
+}
+
+.fallback-math {
+  font: 11px var(--mono);
+  white-space: pre-wrap;
+  color: #dbe7ee;
+}
+
+@media (max-width: 900px) {
+  .solution-grid {
+    grid-template-columns: 1fr;
+  }
+  .solution-block.wide {
+    grid-column: auto;
+  }
+}

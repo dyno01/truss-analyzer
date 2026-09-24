@@ -1,0 +1,1341 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Structural Design Studio — Assignment 3A</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css"><script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<style>
+:root{--bg:#0a0f14;--panel:#111820;--panel2:#151e27;--line:#26333f;--text:#e8eef3;--muted:#8997a4;--accent:#70b8dc;--ok:#6bc58d;--warn:#e5b85f;--bad:#e06c61;--mono:"IBM Plex Mono",ui-monospace,monospace;--sans:Inter,system-ui,sans-serif}*{box-sizing:border-box}html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);overflow:hidden}button,input,select{font:inherit}button{cursor:pointer}.app{height:100%;display:grid;grid-template-columns:275px minmax(0,1fr) 345px;grid-template-rows:58px minmax(0,1fr) 215px;grid-template-areas:"top top top" "left scene right" "left study right"}.top{grid-area:top;border-bottom:1px solid var(--line);background:#0d141b;display:flex;align-items:center;justify-content:space-between;padding:0 15px;z-index:20}.brand{display:flex;gap:10px;align-items:center}.dot{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 13px var(--accent)}.brand b{font-size:14px}.brand small{display:block;color:var(--muted);font:9px var(--mono);margin-top:2px}.top-actions{display:flex;gap:7px;align-items:center}.btn,.select{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:7px;padding:7px 9px;font-size:10px}.status{font:10px var(--mono);padding:7px 10px;border:1px solid var(--ok);color:var(--ok);border-radius:99px}.left{grid-area:left;background:var(--panel);border-right:1px solid var(--line);overflow:auto}.right{grid-area:right;background:var(--panel);border-left:1px solid var(--line);overflow:auto}.section{padding:13px;border-bottom:1px solid var(--line)}.section h2{margin:0 0 10px;color:var(--accent);font:10px var(--mono);letter-spacing:.11em;text-transform:uppercase}.field{margin:0 0 9px}.field:last-child{margin-bottom:0}.field label{display:flex;justify-content:space-between;color:var(--muted);font-size:10px;margin-bottom:5px}.field label b{color:var(--text);font:10px var(--mono)}input[type=number],input[type=text],select{width:100%;background:#0b1219;color:var(--text);border:1px solid var(--line);border-radius:6px;padding:7px;font-size:10px}.row2{display:grid;grid-template-columns:1fr 1fr;gap:7px}.assignment-location{display:grid;grid-template-columns:1fr;gap:0}.tag{font:8px var(--mono);border:1px solid var(--line);border-radius:99px;padding:2px 5px;color:var(--muted)}.given{color:var(--ok);border-color:#31563f}.inputtag{color:var(--accent);border-color:#315267}.hint{font-size:9px;color:var(--muted);line-height:1.5}.seg{display:grid;grid-template-columns:repeat(2,1fr);border:1px solid var(--line);border-radius:6px;overflow:hidden}.seg button{border:0;border-right:1px solid var(--line);background:#0b1219;color:var(--muted);padding:7px 4px;font-size:9px}.seg button.active{background:#16303d;color:var(--accent)}.layers{display:grid;grid-template-columns:1fr 1fr;gap:5px}.layer{border:1px solid var(--line);border-radius:6px;padding:6px;font-size:9px;color:var(--muted)}.layer input{accent-color:var(--accent)}.scene{grid-area:scene;position:relative;min-width:0;background:radial-gradient(circle at 50% 40%,#17232e 0,#0a0f14 62%);overflow:hidden}.scene canvas{display:block;width:100%;height:100%}.toolbar{position:absolute;left:12px;right:12px;top:10px;display:flex;justify-content:space-between;pointer-events:none}.toolbar>*{pointer-events:auto}.views{display:flex;gap:5px}.views button{background:#111a22dd;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:6px 9px;font:9px var(--mono)}.views button.active{color:var(--accent);border-color:var(--accent)}.scene-note{background:#111a22dd;border:1px solid var(--line);border-radius:6px;padding:6px 8px;color:var(--muted);font:9px var(--mono)}.legend{position:absolute;left:12px;bottom:12px;background:#111a22e8;border:1px solid var(--line);border-radius:7px;padding:7px 9px;font:8px var(--mono);color:var(--muted);line-height:1.8}.study{grid-area:study;background:#0d141b;border-top:1px solid var(--line);padding:11px 13px;overflow:auto}.studyhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.studyhead b{font-size:11px}.studyhead span{font:8px var(--mono);color:var(--muted)}.steps{display:flex;gap:5px;overflow:auto;margin-bottom:9px}.step{min-width:125px;border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:7px;color:var(--muted);font-size:9px}.step.active{border-color:var(--accent);color:var(--text)}.step b{display:block;margin-bottom:3px}.studygrid{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:9px}.box{border:1px solid var(--line);background:#111a22;border-radius:7px;padding:9px;min-height:72px}.box h3{font-size:9px;margin:0 0 6px;color:var(--muted);text-transform:uppercase;font-family:var(--mono)}.eq{font-size:13px;overflow:auto}.explain{font-size:9px;line-height:1.5;color:var(--muted)}.metricgrid{display:grid;grid-template-columns:1fr 1fr;gap:5px}.metric{border:1px solid var(--line);border-radius:5px;padding:6px}.metric small{display:block;color:var(--muted);font-size:8px}.metric b{font:10px var(--mono)}.card{margin:10px;border:1px solid var(--line);border-radius:8px;background:#101820;padding:10px}.card h2{font:9px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin:0 0 9px}.inspect-title{display:flex;justify-content:space-between;font-size:11px}.inspect-sub{font-size:9px;color:var(--muted);margin:5px 0 8px}.inspectgrid{display:grid;grid-template-columns:1fr 1fr;gap:5px}.icell{background:#151f28;border:1px solid var(--line);border-radius:5px;padding:6px;font:9px var(--mono)}.icell span{display:block;color:var(--muted);font:8px var(--sans);margin-bottom:2px}.result{padding:7px;border-radius:6px;font-size:9px;line-height:1.45}.ok{border:1px solid #31563f;background:#102017;color:#9dd6b3}.warn{border:1px solid #5e4d29;background:#201b10;color:#e6c982}.bad{border:1px solid #61352f;background:#241413;color:#e7aaa4}.checklist{display:grid;gap:5px}.checkrow{display:flex;justify-content:space-between;border-bottom:1px solid #1e2933;padding:5px 0;font-size:9px;color:var(--muted)}.checkrow b{color:var(--text);font-family:var(--mono)}.smallbtn{width:100%;margin-top:7px}.mobilebar{display:none}
+
+@media(max-width:1050px){.app{grid-template-columns:235px minmax(0,1fr) 295px}.studygrid{grid-template-columns:1fr 1fr}.studygrid .wide{grid-column:1/-1}}
+@media(max-width:780px){html,body{overflow:auto}.app{height:auto;min-height:100%;display:flex;flex-direction:column}.top{height:56px;flex:none}.left,.right{border:0;max-height:none;overflow:visible}.scene{height:58vh;min-height:380px;order:1}.left{order:2}.right{order:3}.study{display:block;order:4}.top-actions .hideMob{display:none}.studygrid{grid-template-columns:1fr}.studygrid .wide{grid-column:auto}.scene-note{display:none}.mobilebar{display:flex;position:sticky;bottom:0;background:#0b1219ee;border-top:1px solid var(--line);padding:7px;gap:6px;z-index:30}.mobilebar button{flex:1;background:var(--panel2);border:1px solid var(--line);color:var(--muted);padding:8px;border-radius:6px;font-size:9px}.left.collapsed,.right.collapsed{display:none}}
+.workflow-overlay{position:fixed;inset:0;background:rgba(4,8,12,.72);backdrop-filter:blur(10px);z-index:100;display:none;padding:5vh 6vw}.workflow-overlay.open{display:block}.workflow-panel{height:90vh;background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:0 24px 80px rgba(0,0,0,.45);display:flex;flex-direction:column;overflow:hidden}.workflow-head{display:flex;justify-content:space-between;align-items:center;padding:16px 18px;border-bottom:1px solid var(--line)}.workflow-head b{display:block;font-size:14px}.workflow-head span{font:9px var(--mono);color:var(--muted)}.workflow-steps{display:flex;gap:6px;padding:12px 16px;border-bottom:1px solid var(--line);overflow:auto}.workflow-step{min-width:125px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--muted);padding:9px;text-align:left}.workflow-step b{display:block;color:var(--accent);font:9px var(--mono);margin-bottom:4px}.workflow-step span{font-size:10px}.workflow-step.active{border-color:var(--accent);background:#15303d;color:var(--text)}.workflow-content{display:grid;grid-template-columns:1.4fr .8fr;gap:12px;padding:16px;overflow:auto}.workflow-main,.workflow-equation{background:#0d151c;border:1px solid var(--line);border-radius:9px;padding:15px}.workflow-main h3{margin:0 0 12px;font-size:14px}.workflow-main p,.workflow-main li{font-size:11px;line-height:1.65;color:var(--muted)}.workflow-equation .wf-label{font:9px var(--mono);color:var(--muted);text-transform:uppercase}.workflow-equation #wfEq{padding:20px 0;overflow:auto}.wf-note{font-size:9px;line-height:1.5;color:var(--muted);border-top:1px solid var(--line);padding-top:10px}.panel-hidden{display:none!important}@media(max-width:780px){.workflow-overlay{padding:2vh 2vw}.workflow-panel{height:96vh}.workflow-content{grid-template-columns:1fr}}
+.inspect-sub b{color:var(--text)} .checkrow span{line-height:1.35} </style>
+
+<style>
+.assignment-data-section{max-height:70vh;overflow:auto}.assignment-data-section .eq{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;padding:7px 10px;margin:4px 0;border-left:3px solid #64748b;background:rgba(255,255,255,.035);overflow-x:auto}.assignment-data-section .data-table{width:100%;border-collapse:collapse}.assignment-data-section th,.assignment-data-section td{padding:8px;border-bottom:1px solid rgba(148,163,184,.2);text-align:left}
+</style>
+
+<style>
+#studyPanel{padding:10px 12px 12px;overflow:hidden;background:#0d141b;border-top:1px solid var(--line)}
+#studyPanel .studyhead{margin-bottom:8px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+#studyPanel .studyhead small{display:block;margin-top:2px;color:#6f8798;font:8px var(--mono);letter-spacing:.08em}
+#studyPanel .studyhead>span{font:8px var(--mono);color:var(--muted);white-space:nowrap}
+.solution-tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:7px;scrollbar-width:thin}
+.solution-tab{min-width:104px;padding:8px 9px;border:1px solid var(--line);border-radius:7px;background:#111a22;color:var(--muted);text-align:left}
+.solution-tab b{display:block;font:9px var(--mono);margin-bottom:3px;color:#6e899a}
+.solution-tab span{font-size:9px}
+.solution-tab.active{border-color:var(--accent);background:#13212b;color:var(--text);box-shadow:inset 0 0 0 1px rgba(112,184,220,.12)}
+.solution-paper{height:calc(100% - 74px);min-height:165px;overflow:auto;background:#f3f0e8;color:#1c252d;border:1px solid #a9a59a;border-radius:8px;padding:16px 18px 22px;box-shadow:0 5px 20px rgba(0,0,0,.18)}
+.solution-kicker{font:8px var(--mono);letter-spacing:.12em;color:#68727a;border-bottom:1px solid #c8c3b7;padding-bottom:7px;margin-bottom:8px}
+.solution-title-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:9px}
+.solution-title-row h2{font:700 16px var(--sans);margin:0;color:#182127}
+.solution-badge{font:8px var(--mono);padding:4px 6px;border:1px solid #a5a09a;border-radius:4px;color:#59626a;background:#ebe7dc}
+.solution-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.solution-block{border:1px solid #c8c3b7;border-radius:7px;background:#faf8f2;padding:10px 11px}
+.solution-block.wide{grid-column:1/-1}
+.solution-block h3{font-size:10px;margin:0 0 7px;color:#46515a;text-transform:uppercase;letter-spacing:.06em}
+.solution-block h4{font-size:10px;margin:9px 0 5px;color:#29333a}
+.solution-block p,.solution-block li{font-size:9.5px;line-height:1.55;margin:4px 0;color:#4a555d}
+.solution-block ul{padding-left:18px;margin:5px 0}
+.solution-equation{border-left:3px solid #6b8796;background:#eef1f0;margin:6px 0;padding:8px 9px;overflow:auto}
+.solution-equation .katex{font-size:1.05em}
+.solution-substitution{border-left-color:#9b8b69;background:#f3efe5}
+.solution-result{border-left-color:#527a5e;background:#e9f0ea}
+.solution-result strong{color:#234b31}
+.solution-data{width:100%;border-collapse:collapse}
+.solution-data th,.solution-data td{padding:6px 7px;border-bottom:1px solid #d7d1c5;text-align:left;vertical-align:top;font-size:9px}
+.solution-data th{font-size:8px;text-transform:uppercase;letter-spacing:.05em;color:#67717a}
+.solution-note{font-size:8.5px!important;color:#68737b!important;margin-top:7px!important}
+.solution-callout{padding:8px 10px;border:1px dashed #b4ada0;border-radius:6px;background:#f7f4ec;font-size:9px;line-height:1.5}
+@media(max-width:900px){.solution-grid{grid-template-columns:1fr}.solution-block.wide{grid-column:auto}}
+</style>
+
+<style id="responsive-complete-css">
+:root{--left-panel-w:275px;--right-panel-w:345px;--study-panel-h:215px}
+.app{position:relative;grid-template-columns:var(--left-panel-w) minmax(220px,1fr) var(--right-panel-w);grid-template-rows:58px minmax(0,1fr) var(--study-panel-h)}
+.left,.right,.scene,.study{min-width:0;min-height:0}
+.layout-resizer{position:absolute;z-index:100;background:transparent;touch-action:none}
+.layout-resizer:hover,.layout-resizer.dragging{background:rgba(112,184,220,.25)}
+.layout-left{left:calc(var(--left-panel-w) - 3px);top:58px;bottom:0;width:7px;cursor:col-resize}
+.layout-right{right:calc(var(--right-panel-w) - 3px);top:58px;bottom:0;width:7px;cursor:col-resize}
+.layout-bottom{left:var(--left-panel-w);right:var(--right-panel-w);bottom:calc(var(--study-panel-h) - 3px);height:7px;cursor:row-resize}
+.solution-study{min-height:0;display:flex;flex-direction:column}
+.solution-tabs{flex:0 0 auto;display:flex;gap:6px;overflow-x:auto}
+.solution-paper{min-height:0;flex:1 1 auto;height:auto}
+.assignment-data-section{max-height:none;overflow:visible}
+.snapshot-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.snapshot-grid>div{min-width:0;border:1px solid var(--line);border-radius:6px;padding:6px;background:#0d151d}
+.snapshot-grid small{display:block;color:var(--muted);font-size:8px;margin-bottom:2px}
+.snapshot-grid b{display:block;color:var(--text);font:9px var(--mono);overflow-wrap:anywhere}
+@media(max-width:1050px){
+  .app{grid-template-columns:var(--left-panel-w) minmax(180px,1fr) var(--right-panel-w)}
+  .solution-grid{grid-template-columns:1fr}
+  .solution-block.wide{grid-column:auto}
+}
+@media(max-width:780px){
+  .app{display:flex;flex-direction:column;height:auto;min-height:100%;grid-template-columns:none;grid-template-rows:none}
+  .layout-resizer{display:none}
+  .scene{height:56vh;min-height:350px;order:1}
+  .left{order:2}.right{order:3}.study{order:4;min-height:440px}
+  .solution-grid{grid-template-columns:1fr}
+  .solution-paper{height:auto;min-height:320px}
+}
+</style>
+
+<style id="repair-enhancements-css">
+.rec-row{display:grid;grid-template-columns:1fr auto;gap:5px 8px;padding:7px 0;border-bottom:1px solid #1e2933}
+.rec-row:last-child{border-bottom:0}
+.rec-row b{font:9px var(--mono);color:var(--text)}
+.rec-row span{font:9px var(--mono);color:var(--accent);text-align:right}
+.rec-row small{grid-column:1/-1;color:var(--muted);font-size:8px;line-height:1.35}
+.solution-equation .fallback-math{font:11px var(--mono);white-space:pre-wrap;color:#26333b}
+.live-status-chip{display:inline-block;font:8px var(--mono);padding:3px 5px;border:1px solid #c8c3b7;border-radius:4px;background:#ebe7dc;color:#59626a}
+.rec-input-row{display:grid;grid-template-columns:1fr auto;gap:8px;padding:7px 0;border-bottom:1px solid #1e2933;align-items:center}.rec-input-row:last-child{border-bottom:0}.rec-input-row b{display:block;font:9px var(--mono);color:var(--text)}.rec-input-row small{display:block;color:var(--muted);font-size:8px;line-height:1.35;margin-top:2px}.rec-input-row>span{font:9px var(--mono);color:var(--accent);text-align:right;white-space:nowrap}.recommended-value{border-color:var(--accent)!important;box-shadow:0 0 0 1px rgba(112,184,220,.14)}
+</style>
+</head><body><div class="app">
+
+<header class="top"><div class="brand"><span class="dot"></span><div><b>Structural Design Studio</b><small>Assignment 3A · IS 800 / IS 875 · Limit State</small></div></div><div class="top-actions"><button class="btn" id="toggleLeft">Inputs</button><button class="btn" id="toggleStudy">Workflow</button><button class="btn" id="toggleRight">Inspector</button><button class="btn hideMob" id="fit">Fit</button><button class="btn hideMob" id="reset">Reset</button><button class="btn hideMob" id="resetLayout">Reset Layout</button><span class="status" id="status">READY</span></div></header>
+<div class="layout-resizer layout-left" id="leftResizer" title="Drag to resize left panel"></div>
+<div class="layout-resizer layout-right" id="rightResizer" title="Drag to resize right panel"></div>
+<div class="layout-resizer layout-bottom" id="studyResizer" title="Drag to resize solution panel"></div>
+<aside class="left" id="left">
+
+<section class="section assignment-data-section" id="assignmentData">
+<h2>Current Project Data</h2>
+<div class="hint">Live summary of the selected problem group and current design inputs.</div>
+<div id="assignmentSnapshot"></div>
+</section>
+
+<section class="section"><h2>01 · Assignment</h2><div class="field"><label>Problem group <span class="tag given">GIVEN</span></label><select id="group"></select></div><div class="assignment-location"><div class="field"><label>Location</label><input id="loc" disabled></div><div class="field"><label>Terrain</label><input id="terrain" disabled></div></div><div class="row2"><div class="field"><label>Truss span (m)</label><input id="span" type="number"></div><div class="field"><label>Building length (m)</label><input id="length" type="number"></div></div><div class="row2"><div class="field"><label>Building height (m)</label><input id="height" type="number"></div><div class="field"><label>Frame spacing (m)</label><input id="spacing" type="number"></div></div><div class="hint">Span is transverse truss geometry. Building length controls the repeated frame count. These are never treated as the same dimension.</div></section>
+<section class="section"><h2>02 · Structural geometry</h2><div class="field"><label>Truss type <span class="tag given">GROUP</span></label><select id="truss"></select></div><div class="row2"><div class="field"><label>Panels</label><input id="panels" type="number" min="4" max="16"></div><div class="field"><label>Roof slope (°) <span class="tag inputtag">INPUT</span></label><input id="slope" type="number" min="0" max="45" step="0.5"></div></div><div class="row2"><div class="field"><label>Overhang (m)</label><input id="overhang" type="number" step="0.1"></div><div class="field"><label>Number of trusses <span class="tag inputtag">INPUT</span></label><input id="frames" type="number" min="2" max="80"></div></div><div class="hint">The number of transverse trusses is directly controllable. Purlins run longitudinally between matching roof points on those trusses; they do not become the truss shape.</div></section>
+<section class="section"><h2>03 · Materials & members</h2><div class="field"><label>Primary truss member <span class="tag inputtag">INPUT</span></label><select id="section"></select></div><div class="field"><label>Steel grade</label><div class="seg"><button class="active" data-grade="E250">E250 / Fe410</button><button data-grade="E350">E350 / Fe490</button></div></div><div class="row2"><div class="field"><label>Purlin</label><select id="purlin"></select></div><div class="field"><label>Purlin spacing</label><input id="purlinSpacing" type="number" step="0.1"></div></div><div class="field"><label>Column: 2C back-to-back</label><select id="column"></select></div></section>
+<section class="section"><h2>04 · Connections & stability</h2>
+<div class="field"><label>Truss connection <span class="tag given">GROUP</span></label><div class="seg"><button id="weld">Welded</button><button id="bolt">Bolted</button></div></div>
+<div class="row2"><div class="field"><label>Column K</label><select id="K"><option>0.65</option><option>0.8</option><option selected>1.0</option><option>1.2</option><option>2.0</option></select></div><div class="field"><label>Lacing pitch (m)</label><input id="lacing" type="number" step="0.05"></div></div>
+<div class="row2"><div class="field"><label>Weld size (mm) <span class="tag inputtag">INPUT</span></label><input id="weldSize" type="number" min="4" step="1" value="6"></div><div class="field"><label>Weld length / side (mm) <span class="tag inputtag">INPUT</span></label><input id="weldLength" type="number" min="20" step="5" value="65"></div></div>
+<div class="hint">The statement gives the connection type and 2C back-to-back columns, but not gusset dimensions, bolt layout, weld length or lacing geometry. These remain explicit design inputs.</div>
+</section>
+<section class="section"><h2>05 · Loads</h2><div class="row2"><div class="field"><label>Roof</label><select id="roof"><option>GI</option><option>AC</option></select></div><div class="field"><label>Internal Cpi</label><select id="cpi"><option value="0.2">+0.2</option><option value="-0.2">−0.2</option></select></div></div><div class="row2"><div class="field"><label>Basic wind Vb</label><input id="Vb" type="number"></div><div class="field"><label>Cpe <span class="tag inputtag">INPUT</span></label><input id="cpe" type="number" step="0.05"></div></div><div class="hint">IS 875 Part 3 requires the more adverse internal-pressure case where applicable; pitched-roof Cpe depends on geometry and wind zones.</div></section>
+
+<section class="section"><h2>07 · Longitudinal Stability</h2>
+<div class="field">
+<label>Stability system</label>
+<select id="stabilitySystem">
+<option value="not_specified" selected>Not specified / assess separately</option>
+<option value="single_diagonal">Single diagonal</option>
+<option value="x_bracing">X-bracing</option>
+<option value="k_bracing">K-bracing</option>
+<option value="portalised_bay">Portalised / moment-resisting bay</option>
+</select>
+</div>
+<div class="hint">Select a system only when longitudinal stability is intentionally represented in the concept. “Not specified / assess separately” is not treated as a structural failure.</div>
+</section>
+<section class="section"><h2>08 · Recommended Inputs</h2>
+<div id="recommendedInputs"></div>
+<button class="btn" id="applyRecommendedInputs" style="width:100%;margin-top:8px">APPLY RECOMMENDED INPUTS</button>
+<div class="hint" style="margin-top:7px">These values are generated from the current preliminary screening. They are sizing suggestions, not assignment-given values, and still require final IS 800 / IS 875 verification.</div>
+</section>
+<section class="section"><h2>06 · Visibility</h2><div class="layers"><label class="layer"><input type="checkbox" data-layer="frames" checked> Trusses</label><label class="layer"><input type="checkbox" data-layer="purlins" checked> Purlins</label><label class="layer"><input type="checkbox" data-layer="roof" checked> Roof</label><label class="layer"><input type="checkbox" data-layer="columns" checked> Columns</label><label class="layer"><input type="checkbox" data-layer="lacing" checked> Lacing</label><label class="layer"><input type="checkbox" data-layer="bracing" checked> Bracing</label><label class="layer"><input type="checkbox" data-layer="labels" checked> Labels</label><label class="layer"><input type="checkbox" data-layer="loads" checked> Loads</label><label class="layer"><input type="checkbox" data-layer="grid" checked> Grid</label></div></section>
+</aside>
+
+<main class="scene"><div class="toolbar"><div class="views"><button class="active" data-view="3d">3D</button><button data-view="front">FRONT</button><button data-view="plan">PLAN</button><button data-view="side">SIDE</button></div><div class="scene-note">Click any member, joint, purlin or column</div></div><div class="legend">CYAN = primary steel · GREY = columns · GOLD = roof/purlins<br>Repeated transverse frames follow building length</div></main>
+<aside class="right" id="right"><div class="card" id="inspector"></div><div class="card"><h2>Design status</h2><div class="checklist" id="checks"></div></div><div class="card"><h2>Design Recommendations</h2><div id="recommendations"></div></div><div class="card"><h2>What controls the result?</h2><div id="reason" class="result warn">Select an element to see the governing calculation and why it matters.</div></div><div class="card"><h2>Relevant code path</h2><div class="hint">IS 875 Part 2 → roof imposed load<br>IS 875 Part 3 → wind pressure / Cpe / Cpi<br>IS 800 Cl. 6 → tension members<br>IS 800 Cl. 7.1–7.2.4 → compression & effective length<br>IS 800 Cl. 7.6–7.8 → lacing / built-up 2C columns<br>IS 800 Cl. 8.9 → purlins<br>IS 800 Section 10 → connections</div></div></aside>
+
+<section class="study" id="studyPanel">
+  <div class="studyhead">
+    <div>
+      <b id="studyTitle">Step 1 — Given Data</b>
+      <small id="studySub">GROUP G4 · STEPWISE DESIGN SOLUTION</small>
+    </div>
+    <span>Student-assignment format · equation → substitution → result</span>
+  </div>
+  <div class="solution-tabs" id="solutionTabs">
+    <button class="solution-tab active" data-solution-step="0"><b>01</b><span>Given Data</span></button>
+    <button class="solution-tab" data-solution-step="1"><b>02</b><span>Geometry</span></button>
+    <button class="solution-tab" data-solution-step="2"><b>03</b><span>Loads</span></button>
+    <button class="solution-tab" data-solution-step="3"><b>04</b><span>Analysis</span></button>
+    <button class="solution-tab" data-solution-step="4"><b>05</b><span>Truss Members</span></button>
+    <button class="solution-tab" data-solution-step="5"><b>06</b><span>Purlins</span></button>
+    <button class="solution-tab" data-solution-step="6"><b>07</b><span>Columns + Lacing</span></button>
+    <button class="solution-tab" data-solution-step="7"><b>08</b><span>Connections</span></button>
+  </div>
+  <div class="solution-paper" id="solutionPaper">
+    <div class="solution-kicker">ASSIGNMENT 3A · GROUP ID G4</div>
+    <div class="solution-title-row">
+      <h2 id="solutionHeading">Step 1 — Given Data</h2>
+      <span class="solution-badge">SUPPLIED VALUES</span>
+    </div>
+    <div id="solutionContent"></div>
+  </div>
+</section>
+
+<div class="workflow-overlay" id="workflowOverlay"><div class="workflow-panel"><div class="workflow-head"><div><b>Design Workflow</b><span>Step-by-step Assignment 3A study & design</span></div><button class="btn" id="closeWorkflow">Close</button></div><div class="workflow-steps" id="workflowSteps"><button class="workflow-step" data-step="0"><b>01</b><span>Problem Statement</span></button><button class="workflow-step" data-step="1"><b>02</b><span>Geometry</span></button><button class="workflow-step" data-step="2"><b>03</b><span>Loads</span></button><button class="workflow-step" data-step="3"><b>04</b><span>Analysis</span></button><button class="workflow-step" data-step="4"><b>05</b><span>Members</span></button><button class="workflow-step" data-step="5"><b>06</b><span>Purlins</span></button><button class="workflow-step" data-step="6"><b>07</b><span>Columns</span></button><button class="workflow-step" data-step="7"><b>08</b><span>Connections</span></button></div><div class="workflow-content"><div class="workflow-main"><h3 id="wfTitle">Problem Statement</h3><div id="wfBody"></div></div><div class="workflow-equation"><div class="wf-label">Relevant equation</div><div id="wfEq"></div><div class="wf-note">Every assumption is explicitly marked; nothing is silently invented.</div></div></div></div></div><div class="mobilebar"><button id="mLeft">INPUT</button><button id="mRight">INSPECT</button><button id="mFit">FIT</button></div>
+</div>
+
+<script>
+const GROUPS={G1:{loc:'Dhule',truss:'Howe',span:18,height:15,length:70,roof:'GI',conn:'Welded',age:30,terrain:2,cpi:.2,Vb:39},G2:{loc:'Bhopal',truss:'Howe',span:16,height:13,length:80,roof:'AC',conn:'Bolted',age:60,terrain:3,cpi:.2,Vb:39},G3:{loc:'Raipur',truss:'Pratt',span:16,height:11,length:54,roof:'GI',conn:'Welded',age:50,terrain:2,cpi:.2,Vb:39},G4:{loc:'Gaya',truss:'Howe',span:16,height:12,length:98,roof:'AC',conn:'Welded',age:45,terrain:2,cpi:.2,Vb:39},G5:{loc:'Nashik',truss:'Fink',span:16,height:11,length:54,roof:'GI',conn:'Welded',age:50,terrain:2,cpi:.2,Vb:39},G6:{loc:'Bangalore',truss:'Howe',span:16,height:10,length:73,roof:'GI',conn:'Bolted',age:40,terrain:4,cpi:.2,Vb:33},G7:{loc:'Delhi',truss:'Pratt',span:12,height:14,length:94,roof:'GI',conn:'Welded',age:60,terrain:4,cpi:.2,Vb:47},G8:{loc:'Satara',truss:'Howe',span:15,height:10,length:78,roof:'GI',conn:'Welded',age:40,terrain:4,cpi:.2,Vb:39},G9:{loc:'Hyderabad',truss:'Howe',span:18,height:12,length:58,roof:'AC',conn:'Bolted',age:45,terrain:3,cpi:.2,Vb:44},G10:{loc:'Dhule',truss:'Pratt',span:18,height:15,length:70,roof:'GI',conn:'Welded',age:30,terrain:2,cpi:.2,Vb:39},G11:{loc:'Palghar',truss:'Howe',span:15,height:12,length:58,roof:'AC',conn:'Welded',age:45,terrain:3,cpi:.2,Vb:44},G12:{loc:'Beed',truss:'Pratt',span:12,height:10,length:50,roof:'GI',conn:'Welded',age:40,terrain:2,cpi:.2,Vb:39}};
+const ANGLES={'ISA 50×50×6':{A:552,r:9.6,wt:4.34},'ISA 65×65×6':{A:730,r:12.6,wt:5.72},'ISA 75×75×6':{A:849,r:14.6,wt:6.66},'ISA 90×90×6':{A:1027,r:17.6,wt:8.06},'ISA 100×100×8':{A:1539,r:19.6,wt:12.08},'ISA 130×130×10':{A:2467,r:25.5,wt:19.36}};
+const CH={'ISMC 75':{A:871,r:15.1,wt:6.8},'ISMC 100':{A:1176,r:18.7,wt:9.2},'ISMC 125':{A:1702,r:23.9,wt:13.1},'ISMC 150':{A:2036,r:28.3,wt:16.4}};
+const S={
+  stabilitySystem:'not_specified',group:'G5',truss:'Fink',span:16,length:54,height:11,spacing:4,panels:8,slope:10,overhang:.6,section:'ISA 75×75×6',grade:'E250',purlin:'ISMC 125',purlinSpacing:1.4,column:'ISMC 125',K:1,lacing:.6,connection:'Welded',weldSize:6,weldLength:65,roof:'GI',cpi:.2,Vb:39,cpe:-.7,step:0,view:'3d',selected:null,frameCountManual:null,panelsOpen:true,workflowOpen:false,layers:{frames:true,purlins:true,roof:true,columns:true,lacing:true,bracing:true,labels:true,loads:true,grid:true}};
+
+let scene,camera,renderer,root,ray,mouse;
+const objs=[];
+let sceneObjects=[];
+let camDist=22, camAngleX=0.5, camAngleY=0.65;
+let targetCamDist=22, targetAngleX=0.5, targetAngleY=0.65;
+let target=new THREE.Vector3(6,4,0), displayTarget=new THREE.Vector3(6,4,0);
+let isDragging=false, prevX=0, prevY=0, lastInteraction=Date.now();
+
+const layerState={
+  showColumns:true, showPurlins:true, showRoof:true,
+  showLabels:true, showLoadArrow:true, showGrid:true
+};
+
+function el(id){return document.getElementById(id)}
+function frameCount(){
+  if(Number.isFinite(S.frameCountManual)&&S.frameCountManual>=2)
+    return Math.min(80,Math.round(S.frameCountManual));
+  return Math.max(2,Math.ceil(S.length/S.spacing)+1);
+}
+
+function truss(){
+  const type=S.truss||'Howe';
+  const n=Math.max(4,Math.round(S.panels||8));
+  const W=(Number(S.span)||16)/n;
+  const rise=Math.max(.30,(Number(S.span)||16)*Math.tan((Number(S.slope)||0)*Math.PI/180)/2);
+  const eaveGap=.75;
+  const nodes=[];
+  for(let i=0;i<=n;i++) nodes.push({x:i*W,y:0});
+  // Keep a finite truss depth at the eaves; the roof rise is controlled by slope.
+  // This avoids coincident top/bottom nodes while preserving the pitched roof.
+  for(let i=0;i<=n;i++){
+    const y=eaveGap+rise*(1-Math.abs(i-n/2)/(n/2));
+    nodes.push({x:i*W,y});
+  }
+  const m=[];
+  const T=i=>n+1+i;
+  for(let i=0;i<n;i++){
+    m.push([i,i+1,'bottom']);
+    m.push([T(i),T(i+1),'top']);
+  }
+
+  if(type==='Pratt'){
+    // Pratt: verticals plus diagonals that rise toward the centre.
+    for(let i=0;i<=n;i++) m.push([i,T(i),'vertical']);
+    for(let i=0;i<n;i++){
+      if(i<n/2) m.push([i,T(i+1),'diag']);
+      else m.push([i+1,T(i),'diag']);
+    }
+  }else if(type==='Howe'){
+    // Howe: verticals plus diagonals opposite to Pratt.
+    for(let i=0;i<=n;i++) m.push([i,T(i),'vertical']);
+    for(let i=0;i<n;i++){
+      if(i<n/2) m.push([i+1,T(i),'diag']);
+      else m.push([i,T(i+1),'diag']);
+    }
+  }else if(type==='Warren'){
+    // Warren-with-verticals: continuous alternating triangular web with
+    // vertical panel posts for a stable, reviewable roof truss.
+    for(let i=0;i<=n;i++) m.push([i,T(i),'vertical']);
+    for(let i=0;i<n;i++){
+      if(i%2===0) m.push([i,T(i+1),'diag']);
+      else m.push([T(i),i+1,'diag']);
+    }
+  }else{ // Fink
+    // Fink-style fan web: full vertical panel lines with diagonals that
+    // converge toward the ridge, producing smaller triangular subdivisions.
+    for(let i=0;i<=n;i++) m.push([i,T(i),'vertical']);
+    const mid=Math.floor(n/2);
+    for(let i=0;i<mid;i++) m.push([i,T(i+1),'diag']);
+    for(let i=mid;i<n;i++) m.push([i+1,T(i),'diag']);
+    for(let i=0;i<mid-1;i++) m.push([i,T(i+2),'diag']);
+    for(let i=mid+1;i<n;i++) m.push([i+1,T(i-1),'diag']);
+  }
+  return {nodes,m,pin:0,roller:n};
+}
+
+function v6Truss(){
+  const t=truss();
+  const h=Number(S.height)||0;
+  return {
+    nodes:t.nodes.map((n,i)=>({x:n.x,y:n.y+h,i})),
+    members:t.m.map(q=>({a:q[0],b:q[1],type:q[2]})),
+    pin:t.pin, roller:t.roller, span:Number(S.span)||16,
+    names:t.nodes.map((_,i)=>'N'+(i+1))
+  };
+}
+
+const steelBase=new THREE.Color(0xaab4bd);
+
+function cylinderBetween(p1,p2,radius,color,opacity=1){
+  const dir=new THREE.Vector3().subVectors(p2,p1);
+  const len=dir.length();
+  const geo=new THREE.CylinderGeometry(radius,radius,len,12);
+  const tint=new THREE.Color(color);
+  const blended=steelBase.clone().lerp(tint,0.55);
+  const material=new THREE.MeshPhysicalMaterial({
+    color:blended,roughness:0.32,metalness:0.82,
+    clearcoat:0.35,clearcoatRoughness:0.25,
+    emissive:tint,emissiveIntensity:0.14,
+    transparent:opacity<1,opacity
+  });
+  const mesh=new THREE.Mesh(geo,material);
+  mesh.position.copy(new THREE.Vector3().addVectors(p1,p2).multiplyScalar(.5));
+  mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.normalize());
+  mesh.castShadow=true;mesh.receiveShadow=true;
+  return mesh;
+}
+
+function makeLabelSprite(text){
+  const canvas=document.createElement('canvas');
+  canvas.width=180;canvas.height=44;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='rgba(8,12,16,.86)';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.strokeStyle='rgba(111,163,192,.8)';
+  ctx.strokeRect(.5,.5,canvas.width-1,canvas.height-1);
+  ctx.fillStyle='#dbe7ee';
+  ctx.font='18px monospace';
+  ctx.fillText(text,10,29);
+  const tex=new THREE.CanvasTexture(canvas);
+  const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false}));
+  sprite.scale.set(1.35,.33,1);
+  return sprite;
+}
+
+function makeRoofTexture(material){
+  if(makeRoofTexture.cache&&makeRoofTexture.cache[material])return makeRoofTexture.cache[material];
+  const size=128,canvas=document.createElement('canvas');
+  canvas.width=size;canvas.height=size;
+  const ctx=canvas.getContext('2d');
+  const base=material==='AC'?'#7c8894':'#c3cad1';
+  const stripe=material==='AC'?'#5f6b76':'#eef2f5';
+  ctx.fillStyle=base;ctx.fillRect(0,0,size,size);
+  ctx.strokeStyle=stripe;ctx.lineWidth=material==='AC'?7:4;
+  for(let x=-size;x<size*2;x+=material==='AC'?16:10){
+    ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,size);ctx.stroke();
+  }
+  const tex=new THREE.CanvasTexture(canvas);
+  tex.wrapS=tex.wrapT=THREE.RepeatWrapping;
+  if(!makeRoofTexture.cache)makeRoofTexture.cache={};
+  makeRoofTexture.cache[material]=tex;
+  return tex;
+}
+
+function buildColumnAssembly(x,heightM,z){
+  const group=[];
+  const chWidth=.18,chDepth=.09,gap=.08;
+  const colMat=new THREE.MeshPhysicalMaterial({color:0x8a97a4,roughness:.4,metalness:.7,clearcoat:.2});
+  [-1,1].forEach(side=>{
+    const mesh=new THREE.Mesh(new THREE.BoxGeometry(chWidth,heightM,chDepth),colMat);
+    mesh.position.set(x+side*(gap/2+chWidth/2),heightM/2,z);
+    mesh.castShadow=true;mesh.receiveShadow=true;
+    group.push(mesh);
+  });
+  const laceMat=new THREE.MeshPhysicalMaterial({color:0x6f7d89,roughness:.5,metalness:.6});
+  const panelH=1.2,nPanels=Math.max(1,Math.round(heightM/panelH));
+  const realH=heightM/nPanels,xL=x-gap/2,xR=x+gap/2;
+  for(let p=0;p<nPanels;p++){
+    const y0=p*realH,y1=(p+1)*realH;
+    [[xL,y0,xR,y1],[xR,y0,xL,y1]].forEach(([x1,yA,x2,yB])=>{
+      const a=new THREE.Vector3(x1,yA,z),b=new THREE.Vector3(x2,yB,z);
+      const mesh=cylinderBetween(a,b,.025,0x6f7d89);
+      mesh.material=laceMat;
+      group.push(mesh);
+    });
+  }
+  const plate=new THREE.Mesh(new THREE.BoxGeometry(chWidth*2+gap+.1,.04,chDepth+.1),laceMat);
+  plate.position.set(x,.02,z);group.push(plate);
+  return group;
+}
+
+function addColumnLongitudinals(vt){
+  const count=frameCount(), L=Math.max(Number(S.length)||0,Number(S.spacing)||1);
+  if(count<2) return [];
+  const out=[], levels=[Math.max(.25,(Number(S.height)||0)*.55),Math.max(.25,(Number(S.height)||0)-.05)];
+  const nodes=[vt.pin,vt.roller], dz=L/(count-1);
+  levels.forEach((y,li)=>nodes.forEach((ni,si)=>{
+    const n=vt.nodes[ni];
+    for(let f=0;f<count-1;f++){
+      const beam=cylinderBetween(new THREE.Vector3(n.x,y,f*dz),new THREE.Vector3(n.x,y,(f+1)*dz),.045,0x788894);
+      beam.userData={kind:(li===1?'eaves_strut':'side_rail'),level:li,side:si,frame:f}; out.push(beam);
+    }
+  }));
+  return out;
+}
+
+function addSupports(vt,z){
+  const pin=vt.nodes[vt.pin],rol=vt.nodes[vt.roller];
+  const baseGeo=new THREE.ConeGeometry(.42,.6,3);
+  const pinMat=new THREE.MeshPhysicalMaterial({color:0xe8a33d,roughness:.4,metalness:.6,clearcoat:.3});
+  const rolMat=new THREE.MeshPhysicalMaterial({color:0x8a97a4,roughness:.35,metalness:.7,clearcoat:.3});
+  const add=(o,ud)=>{o.userData=ud||{kind:'support'};scene.add(o);sceneObjects.push(o);objs.push(o)};
+  [pin,rol].forEach((n,idx)=>{
+    const m=new THREE.Mesh(baseGeo,idx?rolMat:pinMat);
+    m.rotation.y=Math.PI;m.position.set(n.x,n.y-.36,z);add(m,{kind:'support',frame:Math.round(z/(Math.max(1,S.length/(frameCount()-1))))});
+    const hatch=new THREE.Mesh(new THREE.BoxGeometry(.9,.08,.5),new THREE.MeshStandardMaterial({color:0x2a3540,roughness:.7}));
+    hatch.position.set(n.x,n.y-.66,z);add(hatch);
+    if(idx){
+      [-.18,.18].forEach(off=>{
+        const r=new THREE.Mesh(new THREE.CylinderGeometry(.09,.09,.5,10),rolMat);
+        r.rotation.z=Math.PI/2;r.position.set(n.x,n.y-.68,z+off);add(r);
+      });
+    }
+  });
+}
+
+function addNodes(vt,z,frame){
+  const discGeo=new THREE.CylinderGeometry(.19,.19,.05,6);
+  const boltGeo=new THREE.CylinderGeometry(.06,.06,.09,8);
+  const discMat=new THREE.MeshPhysicalMaterial({color:0x2c3742,roughness:.5,metalness:.6,clearcoat:.2});
+  const boltMat=new THREE.MeshPhysicalMaterial({color:0xd8dee3,roughness:.25,metalness:.85,clearcoat:.5});
+  vt.nodes.forEach((n,i)=>{
+    const d=new THREE.Mesh(discGeo,discMat);
+    d.rotation.x=Math.PI/2;d.position.set(n.x,n.y,z);d.userData={kind:'node',frame,index:i};
+    scene.add(d);sceneObjects.push(d);objs.push(d);
+    const bolt=new THREE.Mesh(boltGeo,boltMat);
+    bolt.rotation.x=Math.PI/2;bolt.position.set(n.x,n.y,z+.03);
+    bolt.userData={kind:'node',frame,index:i};
+    scene.add(bolt);sceneObjects.push(bolt);objs.push(bolt);
+    if(S.layers.labels&&frame===0){
+      const lab=makeLabelSprite(vt.names[i]);
+      lab.position.set(n.x,n.y+.42,z);scene.add(lab);sceneObjects.push(lab);
+    }
+  });
+}
+
+function addPurlinsAndRoof(vt){
+  const group=[];
+  const L=Math.max(Number(S.length)||0,Number(S.spacing)||1);
+
+  // Use the actual top-chord node set, not an elevation test. This keeps
+  // both eave/end nodes (N10 and N18 for an 8-panel truss) and therefore
+  // makes the purlin layout exactly follow the roof chord.
+  const topCount=(Number(S.panels)||0)+1;
+  const top=vt.nodes.slice(topCount);
+  if(top.length<2)return group;
+
+  const sorted=[...top].sort((a,b)=>a.x-b.x);
+  const overhang=Math.max(0,Number(S.overhang)||0);
+  const xLeft=sorted[0].x-overhang;
+  const xRight=sorted[sorted.length-1].x+overhang;
+  const purlinLength=L;
+  const pMat=new THREE.MeshPhysicalMaterial({color:0x5b7a91,roughness:.45,metalness:.6});
+
+  if(S.layers.purlins){
+    // Longitudinal purlins are made as individual spans between adjacent
+    // transverse trusses. This makes the physical connection explicit:
+    // every roof node on Frame f is connected to the matching roof node on
+    // Frame f+1. End segments continue to the roof overhang.
+    const count=frameCount();
+    const dz=count>1?L/(count-1):L;
+    const pRadius=.035;
+    sorted.forEach((n,i)=>{
+      const y=n.y+.08;
+      for(let f=0;f<count-1;f++){
+        const z0=f*dz, z1=(f+1)*dz;
+        const mesh=cylinderBetween(
+          new THREE.Vector3(n.x,y,z0),
+          new THREE.Vector3(n.x,y,z1),
+          pRadius,0x5b7a91
+        );
+        mesh.userData={kind:'purlin',x:n.x,frame:f};
+        group.push(mesh);
+      }
+      if(i===0 && overhang>0){
+        const mesh=cylinderBetween(
+          new THREE.Vector3(n.x,y,-overhang),
+          new THREE.Vector3(n.x,y,0),
+          pRadius,0x5b7a91
+        );
+        mesh.userData={kind:'purlin',x:n.x,frame:0,overhang:true};
+        group.push(mesh);
+      }
+      if(i===sorted.length-1 && overhang>0){
+        const mesh=cylinderBetween(
+          new THREE.Vector3(n.x,y,L),
+          new THREE.Vector3(n.x,y,L+overhang),
+          pRadius,0x5b7a91
+        );
+        mesh.userData={kind:'purlin',x:n.x,frame:count-1,overhang:true};
+        group.push(mesh);
+      }
+    });
+  }
+
+  if(S.layers.roof){
+    // Build the complete roof strip from the left eave through the apex to
+    // the right eave, then extrude it through the building length.
+    const shape=new THREE.Shape();
+    const first=sorted[0], last=sorted[sorted.length-1];
+    shape.moveTo(xLeft,first.y+.13);
+    for(let i=1;i<sorted.length;i++)shape.lineTo(sorted[i].x,sorted[i].y+.13);
+    shape.lineTo(xRight,last.y+.13);
+    shape.lineTo(xRight,last.y+.10);
+    for(let i=sorted.length-1;i>=0;i--)shape.lineTo(sorted[i].x,sorted[i].y+.10);
+    shape.lineTo(xLeft,first.y+.10);
+    shape.closePath();
+
+    const geo=new THREE.ExtrudeGeometry(shape,{depth:L,bevelEnabled:false,curveSegments:1});
+    const tex=makeRoofTexture(S.roof);
+    const tc=tex.clone();tc.needsUpdate=true;
+    tc.repeat.set(Math.max(1,(xRight-xLeft)/1.5),Math.max(1,L/1.5));
+    const mat=new THREE.MeshPhysicalMaterial({
+      map:tc,color:0xffffff,roughness:.6,metalness:.15,
+      side:THREE.DoubleSide,transparent:true,opacity:.9
+    });
+    const roof=new THREE.Mesh(geo,mat);
+    roof.castShadow=true;roof.receiveShadow=true;roof.userData={kind:'roof'};
+    group.push(roof);
+  }
+  return group;
+}
+
+function clear(){
+  sceneObjects.forEach(o=>{if(o.parent)o.parent.remove(o)});
+  sceneObjects=[];objs.length=0;
+  if(root)root.clear();
+}
+
+function updateCam(){
+  camera.position.x=displayTarget.x+camDist*Math.sin(camAngleY)*Math.cos(camAngleX);
+  camera.position.z=displayTarget.z+camDist*Math.cos(camAngleY)*Math.cos(camAngleX);
+  camera.position.y=displayTarget.y+camDist*Math.sin(camAngleX);
+  camera.lookAt(displayTarget);
+}
+
+function fit(view=S.view){
+  const box=new THREE.Box3();
+  sceneObjects.forEach(o=>{if(!o||!o.visible)return;if(o.userData&&(o.userData.kind==='ground'||o.userData.kind==='grid'))return;box.expandByObject(o)});
+  if(box.isEmpty()) box.set(new THREE.Vector3(0,0,0),new THREE.Vector3(Number(S.span)||16,Number(S.height)||11,Number(S.length)||54));
+  const size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
+  target.copy(center);displayTarget.copy(center);
+  let width,height,ax,ay;
+  if(view==='front'){width=Math.max(size.x,1);height=Math.max(size.y,1);ax=.08;ay=0}
+  else if(view==='side'){width=Math.max(size.z,1);height=Math.max(size.y,1);ax=.08;ay=Math.PI/2}
+  else if(view==='plan'){width=Math.max(size.x,1);height=Math.max(size.z,1);ax=1.48;ay=0}
+  else{width=Math.max(Math.hypot(size.x,size.z),1);height=Math.max(size.y,1);ax=.45;ay=.65}
+  camAngleX=ax;camAngleY=ay;
+  const fov=THREE.MathUtils.degToRad(camera.fov),aspect=Math.max(camera.aspect||1,.5);
+  const margin=view==='3d'?0.58:0.82;
+  targetCamDist=Math.max((height*.5)/Math.tan(fov*.5),(width*.5)/(aspect*Math.tan(fov*.5)),8)*margin;
+  camDist=targetCamDist;lastInteraction=Date.now();updateCam();
+}
+
+function init(){
+  const wrap=document.querySelector('.scene');
+  scene=new THREE.Scene();
+  scene.fog=new THREE.FogExp2(0x10141a,.010);
+  camera=new THREE.PerspectiveCamera(42,1,.1,2000);
+  renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  wrap.appendChild(renderer.domElement);
+  root=new THREE.Group();scene.add(root);
+  ray=new THREE.Raycaster();mouse=new THREE.Vector2();
+
+  scene.add(new THREE.AmbientLight(0xffffff, 1.15));
+  const key=new THREE.DirectionalLight(0xfff4e0,1.15);key.position.set(24,34,26);scene.add(key);
+  const fill=new THREE.DirectionalLight(0x6fa3c0,.45);fill.position.set(-22,14,-18);scene.add(fill);
+  const rim=new THREE.DirectionalLight(0xe8a33d,.35);rim.position.set(-6,8,-30);scene.add(rim);
+  scene.add(new THREE.HemisphereLight(0x2a3540,0x0a0e12,.4));
+
+  renderer.domElement.addEventListener('pointerdown',e=>{
+    isDragging=true;prevX=e.clientX;prevY=e.clientY;lastInteraction=Date.now();
+  });
+  window.addEventListener('pointerup',()=>isDragging=false);
+  window.addEventListener('pointermove',e=>{
+    if(!isDragging)return;
+    const dx=e.clientX-prevX,dy=e.clientY-prevY;
+    camAngleY-=dx*.006;camAngleX=Math.max(.1,Math.min(1.3,camAngleX+dy*.006));
+    prevX=e.clientX;prevY=e.clientY;lastInteraction=Date.now();updateCam();
+  });
+  renderer.domElement.addEventListener('wheel',e=>{
+    camDist=Math.max(6,Math.min(180,camDist+e.deltaY*.02));
+    targetCamDist=camDist;lastInteraction=Date.now();updateCam();e.preventDefault();
+  },{passive:false});
+  renderer.domElement.addEventListener('pointerdown',pick);
+  window.addEventListener('resize',resize);
+  resize();
+  bindUI();refresh();animate();
+}
+
+function build(){
+  clear();
+  const vt=v6Truss(),count=frameCount(),L=Math.max(Number(S.length)||0,Number(S.spacing)||1);
+  for(let f=0;f<count;f++){
+    const z=count===1?0:f*L/(count-1);
+    if(S.layers.frames){
+      vt.members.forEach((q,i)=>{
+        const a=vt.nodes[q.a],bb=vt.nodes[q.b];
+        const o=cylinderBetween(new THREE.Vector3(a.x,a.y,z),new THREE.Vector3(bb.x,bb.y,z),.045,
+          q.type==='chord'?0x70b8dc:0x79a9bd);
+        o.userData={kind:'member',frame:f,index:i,role:q.type};
+        scene.add(o);sceneObjects.push(o);objs.push(o);
+      });
+    }
+    if(S.layers.frames) addNodes(vt,z,f);
+    if(S.layers.columns){
+      [vt.pin,vt.roller].forEach((ni,si)=>{
+        const n=vt.nodes[ni];
+        buildColumnAssembly(n.x,Number(S.height)||0,z).forEach(o=>{
+          const isLacing=o.material&&o.material.color&&o.material.color.getHex()===0x6f7d89; o.userData={kind:isLacing?'lacing':'column',frame:f,side:si};
+          scene.add(o);sceneObjects.push(o);objs.push(o);
+        });
+      });
+    }
+    if(S.layers.columns) addSupports(vt,z);
+  }
+
+  if(S.layers.columns) addColumnLongitudinals(vt).forEach(o=>{scene.add(o);sceneObjects.push(o);objs.push(o)});
+
+  addPurlinsAndRoof(vt).forEach(o=>{scene.add(o);sceneObjects.push(o);objs.push(o)});
+  // Longitudinal stability is built separately after the transverse frame is complete.
+
+  if(S.layers.loads){
+    const topY=Math.max(...vt.nodes.map(n=>n.y));
+    const arrow=cylinderBetween(
+      new THREE.Vector3(vt.span/2,topY+.85,L/2),
+      new THREE.Vector3(vt.span/2,topY+.12,L/2),
+      .06,0xe06c61
+    );
+    arrow.scale.set(1.7,1.7,1.7);arrow.userData={kind:'load'};scene.add(arrow);sceneObjects.push(arrow);objs.push(arrow);
+  }
+
+  const ground=new THREE.Mesh(
+    new THREE.PlaneGeometry(Math.max(120,L*2),Math.max(120,L*2)),
+    new THREE.MeshStandardMaterial({color:0x0c1017,roughness:.55,metalness:.15})
+  );
+  ground.rotation.x=-Math.PI/2;ground.position.set(vt.span/2,0,L/2);
+  ground.visible=S.layers.grid;scene.add(ground);sceneObjects.push(ground);
+
+  const gh=new THREE.GridHelper(Math.max(120,L*2),80,0x22303a,0x161c22);
+  gh.position.set(vt.span/2,.01,L/2);gh.visible=S.layers.grid;
+  scene.add(gh);sceneObjects.push(gh);
+
+  fit();
+}
+
+function resize(){
+  const wrap=document.querySelector('.scene');
+  const r=wrap.getBoundingClientRect();
+  renderer.setSize(Math.max(1,r.width),Math.max(1,r.height));
+  camera.aspect=Math.max(1,r.width)/Math.max(1,r.height);
+  camera.updateProjectionMatrix();
+}
+
+function pick(e){
+  if(!renderer||!renderer.domElement)return;
+  const r=renderer.domElement.getBoundingClientRect();
+  mouse.x=(e.clientX-r.left)/r.width*2-1;
+  mouse.y=-(e.clientY-r.top)/r.height*2+1;
+  ray.setFromCamera(mouse,camera);
+  const hit=ray.intersectObjects(objs,false)[0];
+  S.selected=hit?hit.object.userData:null;
+  refreshInspector();
+}
+
+function animate(){
+  requestAnimationFrame(animate);
+  if(S.view==='3d'&&!isDragging&&Date.now()-lastInteraction>3500){
+    camAngleY+=.0022;
+  }
+  camDist+=(targetCamDist-camDist)*.06;
+  displayTarget.lerp(target,.06);
+  updateCam();
+  renderer.render(scene,camera);
+}
+
+function clearLongitudinalStability(){
+  const old=scene.getObjectByName('longitudinal-stability');
+  if(old){old.traverse(o=>{if(o.geometry)o.geometry.dispose();});scene.remove(old);}
+}
+function addStabilityMember(parent,a,b,r=.055){
+  const m=cylinderBetween(a,b,r,0xd32f2f);
+  m.userData={kind:'bracing'};
+  parent.add(m);
+}
+function buildLongitudinalStability(){
+  clearLongitudinalStability();
+  const sys=S.stabilitySystem||'not_specified';
+  if(sys==='not_specified'||!S.layers.bracing||frameCount()<2)return;
+  const g=new THREE.Group();g.name='longitudinal-stability';
+  const L=Math.max(Number(S.length)||0,Number(S.spacing)||1);
+  const count=frameCount();
+  const bay=L/(count-1);
+  const f0=0,f1=1;
+  const z0=f0*bay,z1=f1*bay,zm=(z0+z1)/2;
+  const span=Number(S.span)||16,height=Math.max(.1,Number(S.height)||11),slope=Number(S.slope)||10;
+  const rise=span*Math.tan(slope*Math.PI/180)/2;
+  const yBase=.15,yEave=Math.max(.25,height-.05),yApex=height+rise;
+  const xL=0,xR=span,xC=span/2;
+
+  const addWallSingle=(x)=>{
+    if(sys==='single_diagonal'){
+      addStabilityMember(g,new THREE.Vector3(x,yBase,z0),new THREE.Vector3(x,yEave,z1));
+    }else if(sys==='x_bracing'){
+      addStabilityMember(g,new THREE.Vector3(x,yBase,z0),new THREE.Vector3(x,yEave,z1));
+      addStabilityMember(g,new THREE.Vector3(x,yEave,z0),new THREE.Vector3(x,yBase,z1));
+    }else if(sys==='k_bracing'){
+      addStabilityMember(g,new THREE.Vector3(x,yBase,z0),new THREE.Vector3(x,yEave*.52,zm));
+      addStabilityMember(g,new THREE.Vector3(x,yEave,z0),new THREE.Vector3(x,yEave*.52,zm));
+      addStabilityMember(g,new THREE.Vector3(x,yBase,z1),new THREE.Vector3(x,yEave*.52,zm));
+      addStabilityMember(g,new THREE.Vector3(x,yEave,z1),new THREE.Vector3(x,yEave*.52,zm));
+    }else if(sys==='portalised_bay'){
+      addStabilityMember(g,new THREE.Vector3(x,yBase,z0),new THREE.Vector3(x,yEave,z0),.08);
+      addStabilityMember(g,new THREE.Vector3(x,yBase,z1),new THREE.Vector3(x,yEave,z1),.08);
+    }
+  };
+  const addRoofSlope=(side)=>{
+    const xe=side==='left'?xL:xR;
+    const p0e=new THREE.Vector3(xe,yEave,z0),p1e=new THREE.Vector3(xe,yEave,z1);
+    const p0c=new THREE.Vector3(xC,yApex,z0),p1c=new THREE.Vector3(xC,yApex,z1);
+    if(sys==='single_diagonal'){
+      addStabilityMember(g,p0e,p1c);
+    }else if(sys==='x_bracing'){
+      addStabilityMember(g,p0e,p1c);
+      addStabilityMember(g,p0c,p1e);
+    }else if(sys==='k_bracing'){
+      const mid=new THREE.Vector3(xC,yEave+(yApex-yEave)*.5,zm);
+      addStabilityMember(g,p0e,mid);
+      addStabilityMember(g,p0c,mid);
+      addStabilityMember(g,p1e,mid);
+      addStabilityMember(g,p1c,mid);
+    }else if(sys==='portalised_bay'){
+      addStabilityMember(g,p0e,p0c,.08);
+      addStabilityMember(g,p1e,p1c,.08);
+    }
+  };
+  [xL,xR].forEach(addWallSingle);
+  addRoofSlope('left');addRoofSlope('right');
+  g.traverse(o=>o.userData={...(o.userData||{}),kind:'bracing',stabilitySystem:sys});
+  scene.add(g);
+}
+function escStable(v){
+  return String(v??'').replace(/[&<>"']/g,function(m){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];
+  });
+}
+function linearSolveStable(A,b){
+  const n=b.length,M=A.map((r,i)=>r.slice().concat([b[i]]));
+  for(let k=0;k<n;k++){
+    let p=k;
+    for(let i=k+1;i<n;i++)if(Math.abs(M[i][k])>Math.abs(M[p][k]))p=i;
+    if(Math.abs(M[p][k])<1e-10)return null;
+    [M[k],M[p]]=[M[p],M[k]];
+    for(let i=k+1;i<n;i++){
+      const f=M[i][k]/M[k][k];
+      for(let j=k;j<=n;j++)M[i][j]-=f*M[k][j];
+    }
+  }
+  const x=Array(n).fill(0);
+  for(let i=n-1;i>=0;i--){
+    let q=M[i][n];
+    for(let j=i+1;j<n;j++)q-=M[i][j]*x[j];
+    x[i]=q/M[i][i];
+  }
+  return x;
+}
+function stableAnalysis(){
+  const t=truss(),nd=t.nodes.length,dof=2*nd,E=200000;
+  const sec=ANGLES[S.section]||Object.values(ANGLES)[0];
+  const A=2*sec.A;
+  const Kmat=Array.from({length:dof},()=>Array(dof).fill(0));
+
+  t.m.forEach(q=>{
+    const a=t.nodes[q[0]],b=t.nodes[q[1]],dx=b.x-a.x,dy=b.y-a.y;
+    const L=Math.max(.001,Math.hypot(dx,dy)),c=dx/L,ss=dy/L;
+    const k=E*A*1e-6/L,d=[2*q[0],2*q[0]+1,2*q[1],2*q[1]+1];
+    const m=[
+      [c*c,c*ss,-c*c,-c*ss],
+      [c*ss,ss*ss,-c*ss,-ss*ss],
+      [-c*c,-c*ss,c*c,c*ss],
+      [-c*ss,-ss*ss,c*ss,ss*ss]
+    ];
+    for(let i=0;i<4;i++)for(let j=0;j<4;j++)Kmat[d[i]][d[j]]+=k*m[i][j];
+  });
+
+  const span=Math.max(.1,Number(S.span)||16),
+        panels=Math.max(4,Math.round(Number(S.panels)||8)),
+        spacing=Math.max(.1,Number(S.spacing)||4),
+        slope=Math.max(.1,Number(S.slope)||10),
+        th=slope*Math.PI/180;
+  const dl=((150/Math.max(Math.cos(th),.001))+100+10*(span/3+5)+15)/1000;
+  const ll=Math.max(0,.75-Math.max(0,slope-10)*.02);
+  const cpe=Number(S.cpe??-.7),cpi=Number(S.cpi??.2);
+  const wind=.6*Math.pow(Number(S.Vb)||0,2)/1000*Math.max(Math.abs(cpe-cpi),Math.abs(cpe+cpi));
+
+  const makeLoads=(uplift)=>{
+    const F=Array(dof).fill(0),q=1.5*(dl+ll)*spacing,qw=1.5*wind*spacing,top=panels+1;
+    for(let i=0;i<=panels;i++){
+      const trib=(i===0||i===panels)?span/panels/2:span/panels;
+      const j=top+i;
+      F[2*j+1]=uplift?(qw*.75-q*.25)*trib:-q*trib;
+    }
+    return F;
+  };
+
+  const cases=[];
+  for(const F of [makeLoads(false),makeLoads(true)]){
+    const fixed=[0,1,2*t.roller+1],free=[];
+    for(let i=0;i<dof;i++)if(!fixed.includes(i))free.push(i);
+    const reduced=free.map(i=>free.map(j=>Kmat[i][j]));
+    const ur=linearSolveStable(reduced,free.map(i=>F[i]));
+    if(!ur)return{mechanism:true,reason:'Current truss geometry/support arrangement is unstable.'};
+    const u=Array(dof).fill(0);
+    free.forEach((d,i)=>u[d]=ur[i]);
+    const forces=t.m.map(q=>{
+      const a=t.nodes[q[0]],b=t.nodes[q[1]],dx=b.x-a.x,dy=b.y-a.y;
+      const L=Math.max(.001,Math.hypot(dx,dy)),c=dx/L,ss=dy/L;
+      const du=(u[2*q[1]]-u[2*q[0]])*c+(u[2*q[1]+1]-u[2*q[0]+1])*ss;
+      return E*A*1e-6/L*du;
+    });
+    const reac=Kmat.map((r,i)=>r.reduce((z,v,j)=>z+v*u[j],0)-F[i]);
+    cases.push({forces,reac});
+  }
+
+  const maxForces=t.m.map((_,i)=>Math.max(...cases.map(c=>Math.abs(c.forces[i]))));
+  const fy=S.grade==='E350'?350:250,r=Math.max(1,sec.r),At=2*sec.A;
+  const members=t.m.map((q,i)=>{
+    const L=Math.max(.001,Math.hypot(t.nodes[q[1]].x-t.nodes[q[0]].x,t.nodes[q[1]].y-t.nodes[q[0]].y))*1000;
+    const Nt=At*fy/1.1/1000;
+    const I=At*r*r;
+    const Ncr=Math.PI*Math.PI*E*I/Math.pow(Math.max(.3,Number(S.K)||1)*L,2)/1000;
+    const Nc=Math.min(Nt,Ncr);
+    const util=maxForces[i]/Math.max(Nc,.001);
+    return{i,force:maxForces[i],capacity:Nc,util,L:L/1000,role:q[2]};
+  });
+  const gm=members.reduce((a,b)=>b.util>a.util?b:a,members[0]);
+
+  const ps=CH[S.purlin]||Object.values(CH)[0],
+        sp=Math.max(.1,Number(S.purlinSpacing)||1.4),
+        Lp=spacing,
+        pI=Math.max(1,ps.A*Math.pow(ps.r*1.55,2)),
+        pZ=Math.max(ps.A*ps.r*1.55,1),
+        w=1.5*(dl+ll)*sp;
+  const M=w*Lp*Lp/8,Md=pZ*250/1.1/1e6,V=w*Lp/2,Vd=.6*250*ps.A/1.1/1000;
+  const delta=5*w*1000*Math.pow(Lp*1000,4)/(384*E*pI),dlim=Lp*1000/240;
+  const purlin={M,Md,V,Vd,delta,dlim,util:Math.max(M/Math.max(Md,.001),V/Math.max(Vd,.001),delta/Math.max(dlim,.001))};
+
+  const col=CH[S.column]||Object.values(CH)[0],ca=2*col.A,cr=Math.max(1,col.r),
+        H=Math.max(.1,Number(S.height)||12)*1000,kc=Math.max(.3,Number(S.K)||1),
+        Icol=ca*cr*cr,Ny=ca*(S.grade==='E350'?350:250)/1.1/1000;
+  const Ne=Math.PI*Math.PI*E*Icol/Math.pow(kc*H,2)/1000,Ncol=Math.min(Ny,Ne);
+  const pinR=Math.abs(cases[0].reac[2*t.pin+1]||0)/1000,
+        rollR=Math.abs(cases[0].reac[2*t.roller+1]||0)/1000,
+        reaction=Math.max(pinR,rollR),colUtil=reaction/Math.max(Ncol,.001);
+
+  const lp=Math.max(.05,Number(S.lacing)||.6),
+        ld=.025*reaction/(2*Math.sin(Math.PI/4)),
+        lA=400,lr=8/Math.sqrt(12),llen=lp*1000/Math.sin(Math.PI/4),
+        le=Math.PI*Math.PI*E*lA*lr*lr/Math.pow(llen,2)/1000,
+        lcap=Math.min(lA*250/1.1/1000,le),lu=ld/Math.max(lcap,.001);
+
+  const ws=Math.max(4,Number(S.weldSize)||6),wl=Math.max(20,Number(S.weldLength)||65),
+        fwd=.7*ws*410/(Math.sqrt(3)*1.25),reqW=gm.force*1000/fwd,
+        connInc=S.connection!=='Welded',connPass=!connInc&&(2*wl>=reqW);
+
+  const checks=[
+    {id:'geometry',label:'Geometry',pass:Number(S.span)>0&&Number(S.length)>0&&Number(S.height)>0&&Number(S.spacing)>0&&Number(S.panels)>=4&&Number(S.slope)>0&&Number(S.slope)<=45},
+    {id:'members',label:'Truss members',pass:gm.util<=1},
+    {id:'purlins',label:'Purlins',pass:purlin.util<=1},
+    {id:'column',label:'2C column',pass:colUtil<=1},
+    {id:'lacing',label:'Lacing',pass:lu<=1},
+    {id:'connection',label:'Connection',pass:connPass,incomplete:connInc}
+  ];
+  return{
+    mechanism:false,checks,members,gm,purlin,
+    column:{demand:reaction,capacity:Ncol,util:colUtil,lambda:kc*H/cr},
+    lacing:{demand:ld,capacity:lcap,util:lu},
+    connection:{required:reqW,available:2*wl,fwd},
+    load:{dl,ll,wind},span,panels,spacing,slope
+  };
+}
+function overallStatusHTML(){
+  const d=stableAnalysis();
+  if(d.mechanism)return'<div class="result bad"><b>OVERALL: FAIL — UNSTABLE</b><br>'+escStable(d.reason)+'</div>';
+  const f=d.checks.filter(x=>!x.pass&&!x.incomplete),inc=d.checks.filter(x=>x.incomplete);
+  if(f.length)return'<div class="result bad"><b>OVERALL: FAIL</b><br>'+f.map(x=>escStable(x.label)+' fails.').join('<br>')+'</div>';
+  if(inc.length)return'<div class="result warn"><b>OVERALL: INCOMPLETE</b><br>'+inc.map(x=>escStable(x.label)+' needs input.').join('<br>')+'</div>';
+  return'<div class="result ok"><b>OVERALL: PRELIMINARY PASS</b><br>All implemented screening checks pass.</div>';
+}
+function stableRecommendationValues(){
+  const d=stableAnalysis(),r=[];
+  if(d.mechanism)return {items:[],values:{}};
+  const ns=Object.keys(ANGLES),cs=Object.keys(CH),values={};
+  if(d.checks.some(x=>x.id==='members'&&!x.pass)){
+    const i=Math.max(0,ns.indexOf(S.section)),next=ns[Math.min(ns.length-1,i+1)];
+    if(next!==S.section){values.section=next;r.push(['Primary truss section',next,`Governing utilization ${(d.gm.util*100).toFixed(0)}%.`]);}
+  }
+  if(d.checks.some(x=>x.id==='purlins'&&!x.pass)){
+    const i=Math.max(0,cs.indexOf(S.purlin)),next=cs[Math.min(cs.length-1,i+1)];
+    const nextSp=Math.max(.6,Number(S.purlinSpacing)*.8);
+    if(next!==S.purlin||nextSp<Number(S.purlinSpacing)){values.purlin=next;values.purlinSpacing=Number(nextSp.toFixed(2));r.push(['Purlin / spacing',`${next} / ${nextSp.toFixed(2)} m`,`Purlin utilization ${(d.purlin.util*100).toFixed(0)}%.`]);}
+  }
+  if(d.checks.some(x=>x.id==='column'&&!x.pass)){
+    const i=Math.max(0,cs.indexOf(S.column)),next=cs[Math.min(cs.length-1,i+1)];
+    if(next!==S.column){values.column=next;r.push(['2C column',next,`Column utilization ${(d.column.util*100).toFixed(0)}%.`]);}
+  }
+  if(d.checks.some(x=>x.id==='lacing'&&!x.pass)){
+    const lp=Number(Math.max(.25,Number(S.lacing)*.5).toFixed(2));
+    if(lp<Number(S.lacing)){values.lacing=lp;r.push(['Lacing pitch',lp.toFixed(2)+' m',`Lacing utilization ${(d.lacing.util*100).toFixed(0)}%.`]);}
+  }
+  if(d.checks.some(x=>x.id==='connection'&&!x.pass&&!x.incomplete)){
+    const wl=Math.ceil(d.connection.required/2/5)*5;
+    if(wl>Number(S.weldLength)){values.weldLength=wl;r.push(['Weld length / side',wl+' mm',`Required total weld ≈ ${d.connection.required.toFixed(0)} mm.`]);}
+  }
+  return {items:r,values};
+}
+function stableRecommendations(){
+  const q=stableRecommendationValues();
+  if(!q.items.length)return'<div class="result ok"><b>No adjustment required by the implemented screening.</b></div>';
+  return '<div class="hint" style="margin-bottom:7px"><b>Concrete next inputs</b><br>These are preliminary sizing adjustments derived from the active screening. They still require final IS 800/IS 875 verification.</div>'+q.items.map(x=>`<div class="rec-row"><b>${escStable(x[0])}</b><span>${escStable(x[1])}</span><small>${escStable(x[2])}</small></div>`).join('');
+}
+function refreshRecommendedInputs(){
+  const box=el('recommendedInputs');if(!box)return;
+  const q=stableRecommendationValues();
+  if(!q.items.length){box.innerHTML='<div class="result ok"><b>Current inputs do not require an adjustment from the implemented screening.</b></div>';return}
+  box.innerHTML=q.items.map(x=>`<div class="rec-input-row"><div><b>${escStable(x[0])}</b><small>${escStable(x[2])}</small></div><span>${escStable(x[1])}</span></div>`).join('');
+}
+function applyRecommendedInputs(){
+  const q=stableRecommendationValues(),v=q.values;
+  Object.keys(v).forEach(k=>{if(k==='section'||k==='purlin'||k==='column')S[k]=v[k];else S[k]=Number(v[k]);});
+  refresh();
+}
+function updateReasonPanel(d,sel){
+  const box=el('reason');if(!box)return;
+  if(sel&&sel.kind==='member'&&d.members[sel.index]){
+    const m=d.members[sel.index];
+    box.className='result '+(m.util<=1?'ok':'bad');
+    box.innerHTML=`<b>${m.util<=1?'Member passes':'Member needs adjustment'}</b><br>Design force ${m.force.toFixed(1)} kN vs screening capacity ${m.capacity.toFixed(1)} kN; utilization ${(m.util*100).toFixed(1)}%.`;
+    return;
+  }
+  if(sel&&sel.kind==='column'){
+    const c=d.column;
+    box.className='result '+(c.util<=1?'ok':'bad');
+    box.innerHTML=`<b>${c.util<=1?'Column passes':'Column needs adjustment'}</b><br>Demand ${c.demand.toFixed(1)} kN vs screening capacity ${c.capacity.toFixed(1)} kN; utilization ${(c.util*100).toFixed(1)}%.`;
+    return;
+  }
+  const fails=d.checks.filter(x=>!x.pass&&!x.incomplete).map(x=>x.label+' failed');
+  const incompletes=d.checks.filter(x=>x.incomplete).map(x=>x.label+' requires explicit design inputs');
+  box.className='result '+(fails.length?'bad':incompletes.length?'warn':'ok');
+  box.innerHTML=fails.length?'<b>Governing screening issues</b><br>'+fails.join('<br>'):
+    incompletes.length?'<b>Remaining design input</b><br>'+incompletes.join('<br>'):
+    '<b>Current screening is clear</b><br>All implemented checks pass; final project load combinations and connection details remain to be verified.';
+}
+function refresh(){
+  syncInputs();
+  build();
+  buildLongitudinalStability();
+  refreshInspector();
+  refreshChecks();
+  refreshStudy();
+}
+function syncInputs(){
+  const g=GROUPS[S.group]||{};
+  el('group').value=S.group;
+  el('loc').value=g.loc||'Custom';
+  el('terrain').value='Cat '+(g.terrain??'—');
+  el('span').value=S.span;el('length').value=S.length;el('height').value=S.height;el('spacing').value=S.spacing;el('frames').value=frameCount();
+  el('truss').value=S.truss;el('panels').value=S.panels;el('slope').value=S.slope;el('overhang').value=S.overhang;
+  el('section').value=S.section;el('purlin').value=S.purlin;el('purlinSpacing').value=S.purlinSpacing;el('column').value=S.column;
+  el('K').value=S.K;el('lacing').value=S.lacing;
+  el('weldSize').value=S.weldSize;el('weldLength').value=S.weldLength;
+  const stab=el('stabilitySystem');if(stab)stab.value=S.stabilitySystem||'not_specified';
+  el('roof').value=S.roof;el('cpi').value=S.cpi;el('Vb').value=S.Vb;el('cpe').value=S.cpe;
+  ['weld','bolt'].forEach(id=>el(id).classList.toggle('active',S.connection===(id==='weld'?'Welded':'Bolted')));
+  document.querySelectorAll('[data-grade]').forEach(b=>b.classList.toggle('active',b.dataset.grade===S.grade));
+  document.querySelectorAll('[data-layer]').forEach(c=>c.checked=S.layers[c.dataset.layer]);
+}
+function refreshInspector(){
+  const d=stableAnalysis(),sel=S.selected;
+  let h='<h2>Inspector</h2>'+overallStatusHTML();
+  if(!sel){
+    h+='<div class="inspect-title"><b>Live structural screening</b><span class="tag">CALCULATED</span></div><div class="checklist">'+d.checks.map(x=>`<div class="checkrow"><span>${escStable(x.label)}</span><b>${x.incomplete?'INCOMPLETE':x.pass?'PASS':'FAIL'}</b></div>`).join('')+'</div>';
+  }else if(sel.kind==='member'&&d.members[sel.index]){
+    const m=d.members[sel.index];
+    h+=`<div class="inspect-title"><b>Member M${sel.index+1}</b><span class="tag">FRAME ${Number(sel.frame||0)+1}</span></div><div class="inspect-sub">${escStable(m.role)} · ${m.force<0?'compression':'tension'}</div><div class="inspectgrid"><div class="icell"><span>Length</span>${m.L.toFixed(2)} m</div><div class="icell"><span>Force</span>${m.force.toFixed(1)} kN</div><div class="icell"><span>Capacity</span>${m.capacity.toFixed(1)} kN</div><div class="icell"><span>Utilization</span>${(m.util*100).toFixed(1)}%</div><div class="icell"><span>Section</span>${escStable(S.section)}</div><div class="icell"><span>Status</span>${m.util<=1?'PASS':'FAIL'}</div></div>`;
+  }else if(sel.kind==='column'){
+    const c=d.column;
+    h+=`<div class="inspect-title"><b>2C Column</b><span class="tag">FRAME ${Number(sel.frame||0)+1}</span></div><div class="inspect-sub">Two channels back-to-back with lacing</div><div class="inspectgrid"><div class="icell"><span>Section</span>2 × ${escStable(S.column)}</div><div class="icell"><span>Demand</span>${c.demand.toFixed(1)} kN</div><div class="icell"><span>Capacity</span>${c.capacity.toFixed(1)} kN</div><div class="icell"><span>KL/r</span>${c.lambda.toFixed(1)}</div><div class="icell"><span>Utilization</span>${(c.util*100).toFixed(1)}%</div><div class="icell"><span>Lacing</span>${Number(S.lacing).toFixed(2)} m pitch</div></div>`;
+  }else if(sel.kind==='purlin'){
+    const p=d.purlin;
+    h+=`<div class="inspect-title"><b>Purlin</b><span class="tag">MODEL</span></div><div class="inspectgrid"><div class="icell"><span>Section</span>${escStable(S.purlin)}</div><div class="icell"><span>Spacing</span>${Number(S.purlinSpacing).toFixed(2)} m</div><div class="icell"><span>Bending</span>${p.M.toFixed(2)} / ${p.Md.toFixed(2)} kNm</div><div class="icell"><span>Shear</span>${p.V.toFixed(2)} / ${p.Vd.toFixed(2)} kN</div><div class="icell"><span>Deflection</span>${p.delta.toFixed(1)} / ${p.dlim.toFixed(1)} mm</div><div class="icell"><span>Utilization</span>${(p.util*100).toFixed(1)}%</div></div>`;
+  }else if(sel.kind==='node'){
+    const t=truss(),n=t.nodes[sel.index];
+    h+=`<div class="inspect-title"><b>Joint N${Number(sel.index)+1}</b><span class="tag">FRAME ${Number(sel.frame||0)+1}</span></div><div class="inspect-sub">Geometry + support role</div><div class="inspectgrid"><div class="icell"><span>X</span>${n.x.toFixed(2)} m</div><div class="icell"><span>Y</span>${n.y.toFixed(2)} m</div><div class="icell"><span>Support</span>${sel.index===t.pin?'PIN':sel.index===t.roller?'ROLLER':'JOINT'}</div><div class="icell"><span>Frame line</span>${((sel.frame||0)*S.spacing).toFixed(2)} m</div></div>`;
+  }else{
+    h+=`<div class="inspect-title"><b>${escStable(sel.kind||'MODEL').toUpperCase()}</b><span class="tag">MODEL</span></div><div class="inspect-sub">Visibility and load-transfer element.</div>`;
+  }
+  el('inspector').innerHTML=h;
+  const rec=el('recommendations');if(rec)rec.innerHTML=stableRecommendations();
+  updateReasonPanel(d,sel);
+}
+function refreshChecks(){
+  const d=stableAnalysis();
+  el('checks').innerHTML=overallStatusHTML()+
+    d.checks.map(x=>`<div class="checkrow"><span>${escStable(x.label)}</span><b>${x.incomplete?'INCOMPLETE':x.pass?'PASS':'FAIL'}</b></div>`).join('')+
+    `<div class="checkrow"><span>Stability system</span><b>${escStable(stabilityText())}</b></div><div class="checkrow"><span>Column longitudinal links</span><b>${frameCount()>1?'CONNECTED':'NONE'}</b></div>`;
+}
+function refreshAssignmentSnapshot(){
+  const g=GROUPS[S.group]||{},box=el('assignmentSnapshot');if(!box)return;
+  box.innerHTML=`<div class="snapshot-grid"><div><small>Group</small><b>${escStable(S.group)}</b></div><div><small>Location</small><b>${escStable(g.loc||'Custom')}</b></div><div><small>Truss</small><b>${escStable(S.truss)}</b></div><div><small>Span</small><b>${Number(S.span).toFixed(2)} m</b></div><div><small>Length</small><b>${Number(S.length).toFixed(2)} m</b></div><div><small>Height</small><b>${Number(S.height).toFixed(2)} m</b></div><div><small>Spacing</small><b>${Number(S.spacing).toFixed(2)} m</b></div><div><small>Slope</small><b>${Number(S.slope).toFixed(1)}°</b></div><div><small>Stability</small><b>${escStable(stabilityText())}</b></div></div>`;
+}
+function liveNumbers(){
+  const span=Math.max(0.1,Number(S.span)||16);
+  const height=Math.max(0.1,Number(S.height)||12);
+  const spacing=Math.max(0.1,Number(S.spacing)||4);
+  const panels=Math.max(4,Math.round(Number(S.panels)||8));
+  const slopeDeg=Number(S.slope)||0;
+  const slope=Math.tan(slopeDeg*Math.PI/180);
+  const rise=span*slope/2;
+  const rafter=Math.hypot(span/2,rise);
+  const panel=span/panels;
+  const frames=Math.max(2,Number.isFinite(Number(S.frameCountManual))&&Number(S.frameCountManual)>=2?Math.round(S.frameCountManual):Math.ceil(Number(S.length||54)/spacing)+1);
+  const purlinS=Math.max(0.1,Number(S.purlinSpacing)||1.4);
+  const dlSheet=150/Math.max(Math.cos(slopeDeg*Math.PI/180),.001);
+  const dl= (dlSheet+100+10*(span/3+5)+15)/1000;
+  const ll=Math.max(0,.75-Math.max(0,slopeDeg-10)*.02);
+  const nodalDL=dl*spacing*panel, nodalLL=ll*spacing*panel;
+  const factored=1.5*(nodalDL+nodalLL);
+  const reaction=factored*panels/2;
+  const line=1.5*(dl+ll)*purlinS;
+  const wz=line*Math.cos(slopeDeg*Math.PI/180), wy=line*Math.sin(slopeDeg*Math.PI/180);
+  const Mz=wz*spacing*spacing/10, My=wy*spacing*spacing/10;
+  const sec=ANGLES[S.section]||ANGLES[Object.keys(ANGLES)[0]];
+  const purl=CH[S.purlin]||CH[Object.keys(CH)[0]];
+  const col=CH[S.column]||CH[Object.keys(CH)[0]];
+  const topForce=36.3;
+  const tensionCap=sec.A*250/1.1/1000;
+  const compressionScreen=sec.A*180/1.1/1000;
+  const colLambda=(Number(S.K)||1)*height*1000/Math.max(col.r,1);
+  const colCap=2*col.A*250/1.1/1000;
+  const weldSize=6, fu=410, gammaMw=1.25;
+  const fwd=.7*weldSize*fu/(Math.sqrt(3)*gammaMw);
+  const weldLen=topForce*1000/fwd;
+  return {span,height,spacing,panels,slopeDeg,rise,rafter,panel,frames,purlinS,dl,ll,nodalDL,nodalLL,factored,reaction,line,wz,wy,Mz,My,sec,purl,col,colLambda,colCap,topForce,tensionCap,compressionScreen,fwd,weldLen};
+}
+
+function stabilityText(){
+  return ({not_specified:'Not specified / assess separately',single_diagonal:'Single diagonal',x_bracing:'X-bracing',k_bracing:'K-bracing',portalised_bay:'Portalised / moment-resisting bay'}[S.stabilitySystem]||'Not specified / assess separately');
+}
+const LIVE_SOLUTION = [
+  {title:'Step 1 — Given Data',badge:'CURRENT INPUTS',body:N=>`
+    <div class="solution-grid">
+      <div class="solution-block wide"><h3>Current project</h3>
+      <table class="solution-data">
+      <tr><th>Parameter</th><th>Current value</th><th>Basis</th></tr>
+      <tr><td>Group</td><td>${escSafe(S.group)}</td><td>GROUP</td></tr>
+      <tr><td>Location</td><td>${escSafe((GROUPS[S.group]||{}).loc||'Custom')}</td><td>GROUP</td></tr>
+      <tr><td>Truss type</td><td>${escSafe(S.truss)}</td><td>INPUT</td></tr>
+      <tr><td>Span</td><td>${N.span.toFixed(2)} m</td><td>INPUT</td></tr>
+      <tr><td>Building length</td><td>${Number(S.length).toFixed(2)} m</td><td>INPUT</td></tr>
+      <tr><td>Building height</td><td>${N.height.toFixed(2)} m</td><td>INPUT</td></tr>
+      <tr><td>Frame spacing</td><td>${N.spacing.toFixed(2)} m</td><td>INPUT</td></tr>
+      <tr><td>Panels</td><td>${N.panels}</td><td>INPUT</td></tr>
+      <tr><td>Roof slope</td><td>${N.slopeDeg.toFixed(1)}°</td><td>INPUT</td></tr>
+      <tr><td>Purlin</td><td>${escSafe(S.purlin)}</td><td>INPUT</td></tr>
+      <tr><td>Column</td><td>2 × ${escSafe(S.column)}</td><td>INPUT</td></tr>
+      <tr><td>Connection</td><td>${escSafe(S.connection)}</td><td>INPUT</td></tr>
+      <tr><td>Stability</td><td>${escSafe(stabilityText())}</td><td>DESIGN OPTION</td></tr>
+      </table></div>
+      <div class="solution-block"><h3>How to read</h3><p><b>GROUP</b> values come from the selected problem group. <b>INPUT</b> values are live design controls. Changing either updates this sheet.</p></div>
+      <div class="solution-block"><h3>Design order</h3><p>Given data → geometry → loads → analysis → members → purlins → columns/lacing → connections.</p></div>
+    </div>`},
+  {title:'Step 2 — Geometry',badge:'GEOMETRY',body:N=>`
+    <div class="solution-grid">
+      <div class="solution-block"><h3>Rise</h3>
+        <div class="solution-equation" data-math="R=\\frac{L}{2}\\tan\\theta=\\frac{${N.span.toFixed(2)}}{2}\\tan(${N.slopeDeg.toFixed(1)}^\\circ)=\\mathbf{${N.rise.toFixed(3)}\\ m}"></div>
+      </div>
+      <div class="solution-block"><h3>Principal rafter</h3>
+        <div class="solution-equation" data-math="l_r=\\sqrt{\\left(\\frac{L}{2}\\right)^2+R^2}=\\mathbf{${N.rafter.toFixed(3)}\\ m}"></div>
+      </div>
+      <div class="solution-block"><h3>Panels</h3>
+        <div class="solution-equation" data-math="n=\\mathbf{${N.panels}}"></div>
+        <div class="solution-equation solution-substitution" data-math="a=\\frac{L}{n}=\\frac{${N.span.toFixed(2)}}{${N.panels}}=\\mathbf{${N.panel.toFixed(3)}\\ m}"></div>
+      </div>
+      <div class="solution-block"><h3>Frame repetition</h3>
+        <div class="solution-equation" data-math="N_f=\\mathbf{${N.frames}}"></div>
+        <p>Frames are repeated along the building length at the selected frame spacing.</p>
+      </div>
+      <div class="solution-block wide"><h3>Client geometry control</h3><p>The roof slope is a direct input. Therefore a client request such as a small-rise truss can be retained while other variables are optimized around it.</p></div>
+    </div>`},
+  {title:'Step 3 — Loads',badge:'LOAD PATH',body:N=>`
+    <div class="solution-grid">
+      <div class="solution-block"><h3>Dead load</h3>
+        <div class="solution-equation" data-math="w_{sheet}=\\frac{150}{\\cos\\theta}"></div>
+        <div class="solution-equation" data-math="w_{DL}=\\frac{w_{sheet}+100+10(L/3+5)+15}{1000}=\\mathbf{${N.dl.toFixed(3)}\\ kN/m^2}"></div>
+        <div class="solution-equation solution-result" data-math="P_{DL}=w_{DL}Sa=\\mathbf{${N.nodalDL.toFixed(2)}\\ kN}"></div>
+      </div>
+      <div class="solution-block"><h3>Live load</h3>
+        <div class="solution-equation" data-math="w_{LL}=\\mathbf{${N.ll.toFixed(3)}\\ kN/m^2}"></div>
+        <div class="solution-equation solution-result" data-math="P_{LL}=w_{LL}Sa=\\mathbf{${N.nodalLL.toFixed(2)}\\ kN}"></div>
+      </div>
+      <div class="solution-block wide"><h3>Wind load</h3>
+        <div class="solution-equation" data-math="V_z=V_bk_1k_2k_3k_4"></div>
+        <div class="solution-equation" data-math="p_z=0.6V_z^2"></div>
+        <div class="solution-callout">Wind coefficients, wind zones and the governing C<sub>pe</sub>/C<sub>pi</sub> case should be entered/verified for the active project. The interface deliberately does not invent missing coefficients.</div>
+      </div>
+      <div class="solution-block wide"><h3>Load path</h3><p>Roof area load → purlin line load → truss joint load → reactions → member forces.</p></div>
+    </div>`},
+  {title:'Step 4 — Analysis',badge:'EQUILIBRIUM',body:N=>`
+    <div class="solution-grid">
+      <div class="solution-block"><h3>Factored nodal load</h3>
+        <div class="solution-equation" data-math="P_u=1.5(P_{DL}+P_{LL})=\\mathbf{${N.factored.toFixed(2)}\\ kN}"></div>
+      </div>
+      <div class="solution-block"><h3>Symmetric reaction</h3>
+        <div class="solution-equation" data-math="R_A=\\frac{nP_u}{2}=\\mathbf{${N.reaction.toFixed(2)}\\ kN}"></div>
+      </div>
+      <div class="solution-block wide"><h3>Equilibrium equations</h3>
+        <div class="solution-equation" data-math="\\sum F_x=0"></div>
+        <div class="solution-equation" data-math="\\sum F_y=0"></div>
+        <div class="solution-equation" data-math="\\sum M=0"></div>
+        <p class="solution-note">The full governing analysis remains a separate Inspector calculation; this panel shows the transparent design sequence.</p>
+      </div>
+    </div>`},
+  {title:'Step 5 — Truss Members',badge:'IS 800',body:N=>`
+    <div class="solution-grid">
+      <div class="solution-block"><h3>Top chord — compression example</h3>
+        <div class="solution-equation" data-math="P_u\\approx\\mathbf{${N.topForce.toFixed(1)}\\ kN}"></div>
+        <div class="solution-result"><b>Current section: ${escSafe(S.section)}</b></div>
+        <p>Check effective length, slenderness and buckling resistance.</p>
+      </div>
+      <div class="solution-block"><h3>Bottom chord — tension screening</h3>
+        <div class="solution-equation" data-math="N_{dt}=\\frac{A f_y}{\\gamma_{m0}}=\\mathbf{${N.tensionCap.toFixed(1)}\\ kN}"></div>
+        <p>Compare design strength against the governing tension force.</p>
+      </div>
+      <div class="solution-block wide"><h3>Design logic</h3><p>Member action → section properties → effective length/slenderness where applicable → design resistance → utilization.</p></div>
+    </div>`},
+  {title:'Step 6 — Purlins',badge:'IS 800 Cl. 8.9',body:N=>`
+    <div class="solution-grid">
+      <div class="solution-block"><h3>Line load</h3>
+        <div class="solution-equation" data-math="w=1.5(w_{DL}+w_{LL})s_p=\\mathbf{${N.line.toFixed(3)}\\ kN/m}"></div>
+      </div>
+      <div class="solution-block"><h3>Resolve load</h3>
+        <div class="solution-equation" data-math="w_z=w\\cos\\theta=\\mathbf{${N.wz.toFixed(3)}\\ kN/m}"></div>
+        <div class="solution-equation" data-math="w_y=w\\sin\\theta=\\mathbf{${N.wy.toFixed(3)}\\ kN/m}"></div>
+      </div>
+      <div class="solution-block"><h3>Bending</h3>
+        <div class="solution-equation" data-math="M_z=\\frac{w_zL_p^2}{10}=\\mathbf{${N.Mz.toFixed(2)}\\ kNm}"></div>
+        <div class="solution-equation" data-math="M_y=\\frac{w_yL_p^2}{10}=\\mathbf{${N.My.toFixed(2)}\\ kNm}"></div>
+      </div>
+      <div class="solution-block"><h3>Current section</h3><div class="solution-result"><b>${escSafe(S.purlin)}</b><br>Spacing = ${N.purlinS.toFixed(2)} m</div></div>
+    </div>`},
+  {title:'Step 7 — Columns + Lacing',badge:'BUILT-UP COLUMN',body:N=>`
+    <div class="solution-grid">
+      <div class="solution-block"><h3>2C column</h3>
+        <div class="solution-equation" data-math="KL=K h=\\mathbf{${(Number(S.K)*N.height).toFixed(2)}\\ m}"></div>
+        <div class="solution-equation" data-math="\\lambda=\\frac{KL}{r}=\\mathbf{${N.colLambda.toFixed(1)}}"></div>
+        <div class="solution-result"><b>2 × ${escSafe(S.column)} back-to-back</b></div>
+      </div>
+      <div class="solution-block"><h3>Lacing</h3>
+        <div class="solution-equation" data-math="V_t=0.025P=\\mathbf{6.25\\ kN}\\quad(P=250\\ kN\\text{ preliminary})"></div>
+        <div class="solution-equation" data-math="P_l=\\frac{6.25/2}{\\sin45^\\circ}=\\mathbf{${(6.25/2/Math.sin(Math.PI/4)).toFixed(2)}\\ kN}"></div>
+        <div class="solution-result"><b>Lacing pitch = ${Number(S.lacing).toFixed(2)} m</b></div>
+      </div>
+    </div>`},
+  {title:'Step 8 — Connections',badge:'IS 800 SECTION 10',body:N=>`
+    <div class="solution-grid">
+      <div class="solution-block"><h3>Connection type</h3><div class="solution-result"><b>${escSafe(S.connection)}</b></div></div>
+      <div class="solution-block"><h3>Weld screening</h3>
+        <div class="solution-equation" data-math="f_{wd}=\\frac{0.7s_w f_u}{\\sqrt3\\gamma_{mw}}=\\mathbf{${N.fwd.toFixed(0)}\\ N/mm}"></div>
+        <div class="solution-equation" data-math="L_w=\\frac{P_u}{f_{wd}}=\\mathbf{${N.weldLen.toFixed(0)}\\ mm}"></div>
+      </div>
+      <div class="solution-block wide"><h3>Connection design</h3><p>Exact gusset dimensions, weld layout or bolt arrangement must be explicit design inputs; the software does not silently invent them.</p></div>
+    </div>`}
+];
+
+function escSafe(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function renderSolutionMathSafe(){
+  document.querySelectorAll('#solutionContent [data-math]').forEach(n=>{
+    const src=n.dataset.math||'';
+    if(typeof katex==='undefined'){
+      n.innerHTML='<div class="fallback-math">'+escSafe(src)+'</div>';
+      return;
+    }
+    try{katex.render(src,n,{displayMode:true,throwOnError:false})}
+    catch(e){n.innerHTML='<div class="fallback-math">'+escSafe(src)+'</div>'}
+  });
+}
+
+function setSolutionStep(i){
+  renderLiveSolution(i);
+}
+function refreshStudy(){
+  refreshLivePanels();
+}
+
+function renderLiveSolution(i){
+  const idx=Math.max(0,Math.min(7,Number(i)||0));
+  const st=LIVE_SOLUTION[idx];
+  if(!st || !el('solutionContent')) return;
+  const N=liveNumbers();
+  try{el('solutionHeading').textContent=st.title;
+  el('studySub').textContent=`${S.group} · ${st.badge} · LIVE`;
+  el('solutionContent').innerHTML=st.body(N);
+  const paper=el('solutionPaper');
+  if(paper){
+    const k=paper.querySelector('.solution-kicker'); if(k) k.textContent=`${S.group} · ${(GROUPS[S.group]||{}).loc||'Custom'} · LIVE DESIGN SHEET`;
+    const b=paper.querySelector('.solution-badge'); if(b) b.textContent=st.badge;
+  }
+  document.querySelectorAll('.solution-tab').forEach((b,j)=>b.classList.toggle('active',j===idx));
+  renderSolutionMathSafe();
+  S.step=idx;
+  }catch(e){
+    const box=el('solutionContent'); if(box) box.innerHTML='<div class="solution-callout"><b>Solution display error.</b><br>Please check the current design inputs.</div>';
+  }
+}
+function refreshLivePanels(){
+  const idx=Math.max(0,Math.min(7,Number(S.step)||0));
+  const snap=el('assignmentSnapshot');
+  if(snap){
+    const g=GROUPS[S.group]||{};
+    snap.innerHTML=`<div class="snapshot-grid">
+      <div><small>Group</small><b>${escSafe(S.group)}</b></div>
+      <div><small>Location</small><b>${escSafe(g.loc||'Custom')}</b></div>
+      <div><small>Truss</small><b>${escSafe(S.truss)}</b></div>
+      <div><small>Span</small><b>${Number(S.span).toFixed(2)} m</b></div>
+      <div><small>Length</small><b>${Number(S.length).toFixed(2)} m</b></div>
+      <div><small>Height</small><b>${Number(S.height).toFixed(2)} m</b></div>
+      <div><small>Frame spacing</small><b>${Number(S.spacing).toFixed(2)} m</b></div>
+      <div><small>Panels</small><b>${Math.round(Number(S.panels))}</b></div>
+      <div><small>Slope</small><b>${Number(S.slope).toFixed(1)}°</b></div>
+      <div><small>Roof</small><b>${escSafe(S.roof)}</b></div>
+      <div><small>Connection</small><b>${escSafe(S.connection)}</b></div>
+      <div><small>Stability</small><b>${escSafe(stabilityText())}</b></div>
+    </div>`;
+  }
+  renderLiveSolution(idx);
+}
+
+function bindUI(){
+  Object.keys(GROUPS).forEach(k=>{
+    const o=document.createElement('option');o.value=k;o.textContent=k+' · '+GROUPS[k].loc;el('group').appendChild(o);
+  });
+  ['Warren','Pratt','Howe','Fink'].forEach(x=>{
+    const o=document.createElement('option');o.textContent=x;el('truss').appendChild(o);
+  });
+  Object.keys(ANGLES).forEach(x=>{
+    const o=document.createElement('option');o.textContent=x;el('section').appendChild(o);
+  });
+  Object.keys(CH).forEach(x=>{
+    const o=document.createElement('option');o.textContent=x;
+    el('column').appendChild(o);
+    el('purlin').appendChild(o.cloneNode(true));
+  });
+
+  el('group').onchange=e=>{
+    S.group=e.target.value;
+    const g=GROUPS[S.group]||{};
+    Object.assign(S,{
+      truss:g.truss,span:g.span,length:g.length,height:g.height,
+      roof:g.roof,connection:g.conn,cpi:g.cpi,Vb:g.Vb,
+      frameCountManual:null,selected:null
+    });
+    refresh();
+  };
+
+  [['span','span'],['length','length'],['height','height'],['spacing','spacing'],['panels','panels'],
+   ['slope','slope'],['overhang','overhang'],['frames','frameCountManual'],['section','section'],
+   ['purlin','purlin'],['purlinSpacing','purlinSpacing'],['column','column'],['lacing','lacing'],
+   ['weldSize','weldSize'],['weldLength','weldLength'],['roof','roof'],['cpi','cpi'],['Vb','Vb'],['cpe','cpe']]
+  .forEach(([id,k])=>{
+    const x=el(id);
+    x.addEventListener('change',e=>{
+      S[k]=['span','length','height','spacing','panels','slope','overhang','frameCountManual','purlinSpacing','lacing','weldSize','weldLength','Vb','cpe'].includes(k)?Number(e.target.value):e.target.value;
+      refresh();
+    });
+  });
+
+  el('truss').onchange=e=>{S.truss=e.target.value;refresh()};
+  el('K').onchange=e=>{S.K=Number(e.target.value);refresh()};
+  const stab=el('stabilitySystem');if(stab)stab.onchange=e=>{S.stabilitySystem=e.target.value;refresh()};
+  const applyRec=el('applyRecommendedInputs');if(applyRec)applyRec.onclick=applyRecommendedInputs;
+  el('weld').onclick=()=>{S.connection='Welded';refresh()};
+  el('bolt').onclick=()=>{S.connection='Bolted';refresh()};
+  document.querySelectorAll('[data-grade]').forEach(b=>b.onclick=()=>{S.grade=b.dataset.grade;refresh()});
+  document.querySelectorAll('[data-layer]').forEach(c=>c.onchange=e=>{S.layers[e.target.dataset.layer]=e.target.checked;refresh()});
+  document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{
+    S.view=b.dataset.view;
+    document.querySelectorAll('[data-view]').forEach(x=>x.classList.toggle('active',x===b));
+    fit();
+  });
+  document.querySelectorAll('.solution-tab').forEach(b=>b.onclick=()=>{
+    setSolutionStep(Number(b.dataset.solutionStep)||0);
+  });
+  el('fit').onclick=fit;
+  el('reset').onclick=()=>location.reload();
+  el('mFit').onclick=fit;
+  el('mLeft').onclick=()=>el('left').classList.toggle('collapsed');
+  el('mRight').onclick=()=>el('right').classList.toggle('collapsed');
+  el('toggleLeft').onclick=()=>el('left').classList.toggle('panel-hidden');
+  el('toggleRight').onclick=()=>el('right').classList.toggle('panel-hidden');
+  el('toggleStudy').onclick=openWorkflow;
+  el('closeWorkflow').onclick=()=>el('workflowOverlay').classList.remove('open');
+  document.querySelectorAll('.workflow-step').forEach(b=>b.onclick=()=>renderWorkflow(Number(b.dataset.step)||0));
+  el('workflowOverlay').addEventListener('click',e=>{if(e.target===el('workflowOverlay'))el('workflowOverlay').classList.remove('open')});
+}
+function workflowText(i){const data=[
+['Problem Statement','Start with the exact group data: span, building length, height, spacing, roof, terrain, connection and column arrangement. Do not mix building length with truss span.',''],
+['Geometry','Create one transverse truss, then repeat the selected number of trusses along the building length. Columns sit under the truss support nodes. Purlins connect corresponding roof points longitudinally.','\\text{Frame\\ count}=N'],
+['Loads','Apply dead load, roof imposed load and wind actions. Convert area loads to the tributary loads carried by purlins and then into truss joint loads.','V_z=V_bk_1k_2k_3k_4\\quad p_z=0.6V_z^2'],
+['Analysis','Solve support reactions and member axial forces for each governing load case.','\\sum F_x=0\\quad \\sum F_y=0\\quad \\sum M=0'],
+['Members','Classify each truss member as tension or compression and check design strength and slenderness.','\\lambda=\\frac{KL}{r}'],
+['Purlins','Purlins are longitudinal secondary members. Their elevation follows the roof point they support; they are not copies of the transverse truss geometry.','M=\\frac{wL^2}{8}'],
+['Columns','Design the 2C back-to-back built-up columns and then design the lacing system for the required transverse shear.','V_t\\ge0.025P'],
+['Connections','Check the selected welded or bolted connection using the actual connection geometry.','R_d\\ge R_u']];return data[i]}
+function openWorkflow(){el('workflowOverlay').classList.add('open');renderWorkflow(S.step)}
+function renderWorkflow(i){const d=workflowText(i);el('wfTitle').textContent=d[0];el('wfBody').innerHTML='<p>'+d[1]+'</p>';el('wfEq').innerHTML=d[2]?katex.renderToString(d[2],{displayMode:true}):'<span style="color:var(--muted)">No single equation</span>';document.querySelectorAll('.workflow-step').forEach((b,j)=>b.classList.toggle('active',j===i));S.step=i}
+
+init();resize();
+</script>
+<script id="responsive-complete-js">
+(function(){
+  const LKEY='truss-studio-layout-v4';
+  const D={left:275,right:345,study:215};
+  const get=(k)=>document.documentElement.style.getPropertyValue(k).trim();
+  function n(v,d){const x=parseFloat(v);return Number.isFinite(x)?x:d}
+  function layout(){return {left:n(get('--left-panel-w'),D.left),right:n(get('--right-panel-w'),D.right),study:n(get('--study-panel-h'),D.study)}}
+  function apply(v,save){
+    const vw=window.innerWidth||1440, vh=window.innerHeight||900;
+    const maxSide=Math.min(430,Math.max(250,vw*.38));
+    const left=Math.max(210,Math.min(maxSide,Number(v.left)||D.left));
+    const right=Math.max(240,Math.min(maxSide,Number(v.right)||D.right));
+    const study=Math.max(155,Math.min(Math.min(430,vh*.55),Number(v.study)||D.study));
+    document.documentElement.style.setProperty('--left-panel-w',left+'px');
+    document.documentElement.style.setProperty('--right-panel-w',right+'px');
+    document.documentElement.style.setProperty('--study-panel-h',study+'px');
+    if(save)localStorage.setItem(LKEY,JSON.stringify({left,right,study}));
+    if(typeof resize==='function') requestAnimationFrame(()=>resize());
+  }
+  function reset(){localStorage.removeItem(LKEY);apply(D,false)}
+  try{const x=JSON.parse(localStorage.getItem(LKEY)||'null');apply(x&&x.left&&x.right&&x.study?x:D,false)}catch(e){apply(D,false)}
+
+  document.getElementById('resetLayout')?.addEventListener('click',reset);
+  const defs=[['leftResizer','left'],['rightResizer','right'],['studyResizer','study']];
+  defs.forEach(([id,type])=>{
+    const h=document.getElementById(id); if(!h)return;
+    h.addEventListener('pointerdown',ev=>{
+      if(window.innerWidth<=780)return;
+      ev.preventDefault(); h.classList.add('dragging');
+      const st={...layout(),x:ev.clientX,y:ev.clientY};
+      const move=e=>{
+        const v={...st};
+        if(type==='left')v.left=st.left+(e.clientX-st.x);
+        if(type==='right')v.right=st.right-(e.clientX-st.x);
+        if(type==='study')v.study=st.study-(e.clientY-st.y);
+        apply(v,false);
+      };
+      const up=()=>{
+        h.classList.remove('dragging');
+        localStorage.setItem(LKEY,JSON.stringify(layout()));
+        window.removeEventListener('pointermove',move);
+        window.removeEventListener('pointerup',up);
+      };
+      window.addEventListener('pointermove',move);
+      window.addEventListener('pointerup',up,{once:true});
+    });
+  });
+
+  refreshLivePanels();
+})();
+</script>
+</body></html>

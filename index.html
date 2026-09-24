@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Structural Design Studio — Assignment 3A (IS 800:2007 / IS 875)</title>
+
+  <!-- External CDNs: Three.js & KaTeX -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+
+  <!-- Modular CSS -->
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/panels.css">
+  <link rel="stylesheet" href="css/study.css">
+</head>
+<body>
+  <div class="app">
+    <!-- Top Header -->
+    <header class="top">
+      <div class="brand">
+        <span class="dot"></span>
+        <div>
+          <b>Structural Design Studio</b>
+          <small>Assignment 3A · IS 800:2007 / IS 875 · Limit State Design</small>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button class="btn" id="toggleLeft">Inputs</button>
+        <button class="btn" id="toggleStudy">Workflow</button>
+        <button class="btn" id="toggleRight">Inspector</button>
+        <button class="btn hideMob" id="fit">Fit</button>
+        <button class="btn hideMob" id="reset">Reset</button>
+        <button class="btn hideMob" id="resetLayout">Reset Layout</button>
+        <span class="status" id="status">IS 800 READY</span>
+      </div>
+    </header>
+
+    <!-- Draggable Layout Dividers -->
+    <div class="layout-resizer layout-left" id="leftResizer" title="Drag to resize inputs panel"></div>
+    <div class="layout-resizer layout-right" id="rightResizer" title="Drag to resize inspector panel"></div>
+    <div class="layout-resizer layout-bottom" id="studyResizer" title="Drag to resize solution sheet"></div>
+
+    <!-- Left Input Panel -->
+    <aside class="left" id="left">
+      <!-- 00. Assignment Summary Snapshot -->
+      <section class="section" id="assignmentData">
+        <h2>Current Project Data</h2>
+        <div class="hint">Live summary of selected problem group and active inputs.</div>
+        <div id="assignmentSnapshot"></div>
+      </section>
+
+      <!-- 01. Problem Assignment -->
+      <section class="section">
+        <h2>01 · Assignment</h2>
+        <div class="field">
+          <label>Problem group <span class="tag given">GIVEN</span></label>
+          <select id="group"></select>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Location</label><input id="loc" type="text" disabled></div>
+          <div class="field"><label>Terrain</label><input id="terrain" type="text" disabled></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Truss span (m)</label><input id="span" type="number" step="0.5"></div>
+          <div class="field"><label>Building length (m)</label><input id="length" type="number" step="1"></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Building height (m)</label><input id="height" type="number" step="0.5"></div>
+          <div class="field"><label>Frame spacing (m)</label><input id="spacing" type="number" step="0.25"></div>
+        </div>
+        <div class="hint">Span is transverse truss geometry. Building length controls repeated frame count.</div>
+      </section>
+
+      <!-- 02. Structural Geometry -->
+      <section class="section">
+        <h2>02 · Structural Geometry</h2>
+        <div class="field">
+          <label>Truss type <span class="tag given">GROUP</span></label>
+          <select id="truss"></select>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Panels</label><input id="panels" type="number" min="4" max="16"></div>
+          <div class="field"><label>Roof slope (°) <span class="tag inputtag">INPUT</span></label><input id="slope" type="number" min="0" max="45" step="0.5"></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Overhang (m)</label><input id="overhang" type="number" step="0.1"></div>
+          <div class="field"><label>Number of trusses <span class="tag inputtag">INPUT</span></label><input id="frames" type="number" min="2" max="80"></div>
+        </div>
+        <div class="hint">Purlins run longitudinally between matching roof points on repeated frames.</div>
+      </section>
+
+      <!-- 03. Materials & Sections -->
+      <section class="section">
+        <h2>03 · Materials & Members</h2>
+        <div class="field">
+          <label>Primary truss member (2 ISA) <span class="tag inputtag">INPUT</span></label>
+          <select id="section"></select>
+        </div>
+        <div class="field">
+          <label>Steel grade</label>
+          <div class="seg">
+            <button class="active" data-grade="E250">E250 / Fe410</button>
+            <button data-grade="E350">E350 / Fe490</button>
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Purlin (ISMC)</label><select id="purlin"></select></div>
+          <div class="field"><label>Purlin spacing (m)</label><input id="purlinSpacing" type="number" step="0.1"></div>
+        </div>
+        <div class="field"><label>Column: 2C back-to-back</label><select id="column"></select></div>
+      </section>
+
+      <!-- 04. Connections & Stability -->
+      <section class="section">
+        <h2>04 · Connections & Stability</h2>
+        <div class="field">
+          <label>Truss connection <span class="tag given">GROUP</span></label>
+          <div class="seg">
+            <button id="weld">Welded</button>
+            <button id="bolt">Bolted</button>
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label>Column K factor</label>
+            <select id="K">
+              <option value="0.65">0.65</option>
+              <option value="0.8">0.80</option>
+              <option value="1.0" selected>1.00</option>
+              <option value="1.2">1.20</option>
+              <option value="2.0">2.00</option>
+            </select>
+          </div>
+          <div class="field"><label>Lacing pitch (m)</label><input id="lacing" type="number" step="0.05"></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Weld size (mm) <span class="tag inputtag">INPUT</span></label><input id="weldSize" type="number" min="3" step="1" value="6"></div>
+          <div class="field"><label>Weld length / side (mm) <span class="tag inputtag">INPUT</span></label><input id="weldLength" type="number" min="20" step="5" value="65"></div>
+        </div>
+        <div class="hint">IS 800:2007 Section 10 provisions applied for shop fillet welds.</div>
+      </section>
+
+      <!-- 05. IS 875 Loads -->
+      <section class="section">
+        <h2>05 · Loads (IS 875)</h2>
+        <div class="row2">
+          <div class="field">
+            <label>Roof Cladding</label>
+            <select id="roof">
+              <option value="GI">GI Corrugated</option>
+              <option value="AC">AC Asbestos</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Internal Cpi</label>
+            <select id="cpi">
+              <option value="0.2">+0.2 (Normal)</option>
+              <option value="-0.2">−0.2 (Normal)</option>
+              <option value="0.5">+0.5 (Medium)</option>
+              <option value="-0.5">−0.5 (Medium)</option>
+            </select>
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Basic wind Vb (m/s)</label><input id="Vb" type="number"></div>
+          <div class="field"><label>Cpe <span class="tag inputtag">INPUT</span></label><input id="cpe" type="number" step="0.05"></div>
+        </div>
+        <div class="hint">IS 875 (Part 3) computes Vz = Vb·k1·k2·k3·k4 and design wind pressure pz = 0.6·Vz².</div>
+      </section>
+
+      <!-- 06. Longitudinal Stability -->
+      <section class="section">
+        <h2>06 · Longitudinal Stability</h2>
+        <div class="field">
+          <label>Stability System</label>
+          <select id="stabilitySystem">
+            <option value="not_specified" selected>Not specified / assess separately</option>
+            <option value="single_diagonal">Single diagonal</option>
+            <option value="x_bracing">X-bracing</option>
+            <option value="k_bracing">K-bracing</option>
+            <option value="portalised_bay">Portalised / moment bay</option>
+          </select>
+        </div>
+        <div class="hint">Select bracing to stabilize columns and end bays against longitudinal wind actions.</div>
+      </section>
+
+      <!-- 07. Visibility Layers -->
+      <section class="section">
+        <h2>07 · Visibility Layers</h2>
+        <div class="layers">
+          <label class="layer"><input type="checkbox" data-layer="frames" checked> Trusses</label>
+          <label class="layer"><input type="checkbox" data-layer="purlins" checked> Purlins</label>
+          <label class="layer"><input type="checkbox" data-layer="roof" checked> Roof</label>
+          <label class="layer"><input type="checkbox" data-layer="columns" checked> Columns</label>
+          <label class="layer"><input type="checkbox" data-layer="lacing" checked> Lacing</label>
+          <label class="layer"><input type="checkbox" data-layer="bracing" checked> Bracing</label>
+          <label class="layer"><input type="checkbox" data-layer="labels" checked> Labels</label>
+          <label class="layer"><input type="checkbox" data-layer="loads" checked> Loads</label>
+          <label class="layer"><input type="checkbox" data-layer="grid" checked> Grid</label>
+        </div>
+      </section>
+    </aside>
+
+    <!-- 3D Scene Viewport -->
+    <main class="scene">
+      <div class="toolbar">
+        <div class="views">
+          <button class="active" data-view="3d">3D</button>
+          <button data-view="front">FRONT</button>
+          <button data-view="plan">PLAN</button>
+          <button data-view="side">SIDE</button>
+        </div>
+        <div class="scene-note">Click any member, joint, purlin or column to inspect</div>
+      </div>
+      <div class="legend">
+        CYAN = Primary Steel Chords · GREY = 2C Laced Columns · BLUE = Purlins<br>
+        RED = Bracing & Load Vectors · Real Direct Stiffness FEA Formulation
+      </div>
+    </main>
+
+    <!-- Right Inspector Panel -->
+    <aside class="right" id="right">
+      <div class="card" id="inspector"></div>
+      <div class="card">
+        <h2>Design Status (IS 800)</h2>
+        <div class="checklist" id="checks"></div>
+      </div>
+      <div class="card" id="recommendationsCard" style="display:none;">
+        <h2>Optimum Recommendations</h2>
+        <div id="recommendations"></div>
+        <button class="btn" id="applyRecommendedInputs" style="width:100%;margin-top:10px;background:var(--panel);border-color:var(--accent);color:var(--accent);font-weight:600;">APPLY OPTIMAL SIZING</button>
+      </div>
+      <div class="card">
+        <h2>Governing Analysis</h2>
+        <div id="reason" class="result warn">Select an element in 3D to inspect its governing load combination.</div>
+      </div>
+      <div class="card">
+        <h2>Relevant Code Path</h2>
+        <div class="hint">
+          <b>IS 875 (Part 1)</b> → Dead loads (roof sheet, purlins, truss)<br>
+          <b>IS 875 (Part 2)</b> → Roof imposed load (min 0.40 kN/m²)<br>
+          <b>IS 875 (Part 3)</b> → Wind speed Vz (k1·k2·k3·k4) & pz = 0.6·Vz²<br>
+          <b>IS 800 Cl. 6</b> → Tension capacity (yielding Tdg & rupture Tdn)<br>
+          <b>IS 800 Cl. 7.1.2</b> → Perry-Robertson compressive strength fcd (Class c)<br>
+          <b>IS 800 Cl. 7.6</b> → Built-up 2C columns & lacing shear (Vt = 0.025 P)<br>
+          <b>IS 800 Cl. 8.2 & 9.3.1</b> → Purlin biaxial bending (Mz, My) & deflection<br>
+          <b>IS 800 Section 10</b> → Welded / bolted connections
+        </div>
+      </div>
+    </aside>
+
+    <!-- Bottom Study Panel (KaTeX Assignment Solution Sheet) -->
+    <section class="study" id="studyPanel">
+      <div class="studyhead">
+        <div>
+          <b id="studyTitle">Step 1 — Given Data & Code Basis</b>
+          <small id="studySub">GROUP G5 · IS 800 / IS 875 · LIMIT STATE</small>
+        </div>
+        <span>Student-Assignment Format · Equation → Substitution → Result</span>
+      </div>
+      <div class="solution-tabs" id="solutionTabs">
+        <button class="solution-tab active" data-solution-step="0"><b>01</b><span>Given Data</span></button>
+        <button class="solution-tab" data-solution-step="1"><b>02</b><span>Geometry</span></button>
+        <button class="solution-tab" data-solution-step="2"><b>03</b><span>Loads</span></button>
+        <button class="solution-tab" data-solution-step="3"><b>04</b><span>Analysis</span></button>
+        <button class="solution-tab" data-solution-step="4"><b>05</b><span>Truss Members</span></button>
+        <button class="solution-tab" data-solution-step="5"><b>06</b><span>Purlins</span></button>
+        <button class="solution-tab" data-solution-step="6"><b>07</b><span>Columns + Lacing</span></button>
+        <button class="solution-tab" data-solution-step="7"><b>08</b><span>Connections</span></button>
+      </div>
+      <div class="solution-paper" id="solutionPaper">
+        <div class="solution-kicker">ASSIGNMENT 3A · GROUP G5</div>
+        <div class="solution-title-row">
+          <h2 id="solutionHeading">Step 1 — Given Data & Code Basis</h2>
+          <span class="solution-badge">IS 800 / IS 875</span>
+        </div>
+        <div id="solutionContent"></div>
+      </div>
+    </section>
+
+    <!-- Workflow Modal Overlay -->
+    <div class="workflow-overlay" id="workflowOverlay">
+      <div class="workflow-panel">
+        <div class="workflow-head">
+          <div>
+            <b>Design Workflow & Code Principles</b>
+            <span>Step-by-step IS 800 / IS 875 limit state design methodology</span>
+          </div>
+          <button class="btn" id="closeWorkflow">Close</button>
+        </div>
+        <div class="workflow-steps" id="workflowSteps">
+          <button class="workflow-step active" data-step="0"><b>01</b><span>Problem Statement</span></button>
+          <button class="workflow-step" data-step="1"><b>02</b><span>Geometry</span></button>
+          <button class="workflow-step" data-step="2"><b>03</b><span>Loads</span></button>
+          <button class="workflow-step" data-step="3"><b>04</b><span>Analysis</span></button>
+          <button class="workflow-step" data-step="4"><b>05</b><span>Members</span></button>
+          <button class="workflow-step" data-step="5"><b>06</b><span>Purlins</span></button>
+          <button class="workflow-step" data-step="6"><b>07</b><span>Columns</span></button>
+          <button class="workflow-step" data-step="7"><b>08</b><span>Connections</span></button>
+        </div>
+        <div class="workflow-content">
+          <div class="workflow-main">
+            <h3 id="wfTitle">Problem Statement</h3>
+            <div id="wfBody"></div>
+          </div>
+          <div class="workflow-equation">
+            <div class="wf-label">Governing Code Equation</div>
+            <div id="wfEq"></div>
+            <div class="wf-note">Every formula and coefficient strictly complies with IS 800:2007 and IS 875.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Toolbar -->
+    <div class="mobilebar">
+      <button id="mLeft">INPUTS</button>
+      <button id="mRight">INSPECT</button>
+      <button id="mFit">FIT 3D</button>
+    </div>
+  </div>
+
+  <!-- Modular Scripts in Dependency Order -->
+  <script src="js/data/standards.js"></script>
+  <script src="js/data/groups.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/engine/geometry.js"></script>
+  <script src="js/engine/wind.js"></script>
+  <script src="js/engine/solver.js"></script>
+  <script src="js/engine/code_is800.js"></script>
+  <script src="js/engine/analysis.js"></script>
+  <script src="js/engine/scene.js"></script>
+  <script src="js/ui/study.js"></script>
+  <script src="js/ui/inspector.js"></script>
+  <script src="js/ui/resizer.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
