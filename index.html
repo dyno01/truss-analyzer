@@ -207,16 +207,19 @@
     </aside>
 
     <!-- 3D Scene Viewport -->
-    <main class="scene">
+    <main class="scene" id="sceneViewport">
       <div class="toolbar">
         <div class="views">
           <button class="active" data-view="3d">3D</button>
+          <button data-view="iso">ISO</button>
           <button data-view="front">FRONT</button>
           <button data-view="plan">PLAN</button>
           <button data-view="side">SIDE</button>
+          <button class="view-tool-btn" id="btnFitModel" title="Fit Entire Model into View">⛶ FIT</button>
         </div>
-        <div class="scene-note">Click any member, joint, purlin or column to inspect</div>
+        <div class="scene-note hideMob">Touch / Click any member, purlin or column to inspect</div>
       </div>
+
       <div class="legend">
         CYAN = Primary Steel Chords · GREY = 2C Laced Columns · BLUE = Purlins<br>
         RED = Bracing & Load Vectors · Real Direct Stiffness FEA Formulation

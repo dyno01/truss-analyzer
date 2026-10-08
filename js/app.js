@@ -73,6 +73,7 @@
   function refresh() {
     syncInputs();
     if (root.build) root.build();
+    if (root.updateSelectionHighlight) root.updateSelectionHighlight();
     if (root.InspectorModule) {
       root.InspectorModule.renderInspector();
       root.InspectorModule.refreshAssignmentSnapshot();

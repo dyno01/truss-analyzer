@@ -27,8 +27,57 @@
       return;
     }
 
-    const sel = S.selected;
-    let h = '<h2>Element Inspector</h2>';
+    // Build selectable element list for mobile and mouse-free inspection
+    const selectableList = [];
+    if (d.members) {
+      d.members.forEach((m, i) => {
+        selectableList.push({
+          key: 'member_' + i,
+          label: `M${i + 1} · ${m.role} (${m.governingForce < 0 ? 'Comp' : 'Tens'})`,
+          data: { kind: 'member', index: i, frame: 0, role: m.role }
+        });
+      });
+    }
+    selectableList.push({
+      key: 'col_0',
+      label: 'Column Left (2× ' + (S.column || 'ISMC 150') + ')',
+      data: { kind: 'column', side: 0, frame: 0 }
+    });
+    selectableList.push({
+      key: 'col_1',
+      label: 'Column Right (2× ' + (S.column || 'ISMC 150') + ')',
+      data: { kind: 'column', side: 1, frame: 0 }
+    });
+    selectableList.push({
+      key: 'purlin_0',
+      label: 'Roof Purlin (' + (S.purlin || 'ISMC 125') + ')',
+      data: { kind: 'purlin', purlinIndex: 0, frame: 0 }
+    });
+    selectableList.push({
+      key: 'bracing_0',
+      label: 'Wind Bracing System',
+      data: { kind: 'bracing', bay: 0 }
+    });
+
+    let activeKey = '';
+    if (sel) {
+      if (sel.kind === 'member') activeKey = 'member_' + sel.index;
+      else if (sel.kind === 'column') activeKey = 'col_' + (sel.side || 0);
+      else if (sel.kind === 'purlin') activeKey = 'purlin_0';
+      else if (sel.kind === 'bracing') activeKey = 'bracing_0';
+    }
+
+    const quickNavHTML = `
+      <div class="inspector-quicknav">
+        <button id="quickPrevElem" class="nav-arrow-btn" title="Previous element (or Left Arrow)">◀</button>
+        <select id="quickElemSelect" class="quick-select" aria-label="Select element to inspect">
+          ${selectableList.map(item => `<option value="${item.key}" ${item.key === activeKey ? 'selected' : ''}>${root.escSafe(item.label)}</option>`).join('')}
+        </select>
+        <button id="quickNextElem" class="nav-arrow-btn" title="Next element (or Right Arrow)">▶</button>
+        <button id="quickFocusElem" class="nav-focus-btn" title="Focus 3D View on this element">🎯 Focus</button>
+      </div>`;
+
+    h += quickNavHTML;
 
     if (!sel) {
       const gm = d.governingMember || (d.members && d.members[0]) || { idx: 0, role: 'chord', governingForce: 0, governingCapacity: 1, util: 0, lambda: 0, lambdaLimit: 180, pass: true, governingLC: '1.5(DL+LL)' };
@@ -36,7 +85,7 @@
       h += `
         <div class="solution-callout" style="margin-bottom:10px; border:1px solid #233748; background:#0f171f; color:#a3bccf;">
           <b style="color:var(--accent);">Interactive 3D Inspector</b><br>
-          Click any <b>truss chord</b>, <b>web diagonal</b>, <b>column</b>, <b>purlin</b>, or <b>joint</b> in the 3D viewport to inspect real-time axial forces, capacities, slenderness ratio (&lambda;), and IS 800 code checks.
+          Click any <b>truss chord</b>, <b>web diagonal</b>, <b>column</b>, <b>purlin</b>, or <b>joint</b> in the 3D viewport (or use the dropdown above) to inspect real-time axial forces, capacities, slenderness ratio (&lambda;), and IS 800 code checks.
         </div>
         <div class="inspect-title"><b>Governing Member Overview</b><span class="tag" style="color:var(--accent);border-color:#315267;">M${gm.idx + 1}</span></div>
         <div class="inspect-sub">${root.escSafe(gm.role)} · ${isComp ? 'Compression' : 'Tension'} (${root.escSafe(gm.governingLC)})</div>
@@ -103,7 +152,7 @@
       const totalBays = Math.max(1, root.frameCount() - 1);
       const isEndBay = bIdx === 0 || bIdx === totalBays - 1;
       h += `<div class="inspect-title"><b>Longitudinal Wind Bracing</b><span class="tag">IS 800 CL. 4.3</span></div>`;
-      h += `<div class="inspect-sub">${root.escSafe(root.stabilityText())} · Bay ${bIdx + 1} (${isEndBay ? 'Gable End Bay' : 'Intermediate Expansion Bay'})</div>`;
+      h += `<div class="inspect-sub">${root.escSafe(root.stabilityText ? root.stabilityText() : 'X-Bracing')} · Bay ${bIdx + 1} (${isEndBay ? 'Gable End Bay' : 'Intermediate Expansion Bay'})</div>`;
       h += `<div class="inspectgrid">
         <div class="icell"><span>Configuration</span>${root.escSafe(S.stabilitySystem || 'x_bracing').toUpperCase()}</div>
         <div class="icell"><span>Positioning</span>${isEndBay ? 'Gable End Bay (Direct Wind Path)' : 'Intermediate Expansion Bay'}</div>
@@ -128,9 +177,61 @@
     }
 
     box.innerHTML = h;
+
+    // Attach quick navigation event listeners
+    const selEl = document.getElementById('quickElemSelect');
+    if (selEl) {
+      selEl.onchange = (e) => {
+        const item = selectableList.find(x => x.key === e.target.value);
+        if (item) {
+          root.S.selected = item.data;
+          renderInspector();
+          if (root.updateSelectionHighlight) root.updateSelectionHighlight();
+          if (root.focusSelection) root.focusSelection(item.data);
+        }
+      };
+    }
+    const prevBtn = document.getElementById('quickPrevElem');
+    if (prevBtn) {
+      prevBtn.onclick = () => {
+        let curIdx = selectableList.findIndex(x => x.key === activeKey);
+        if (curIdx <= 0) curIdx = selectableList.length - 1;
+        else curIdx--;
+        const item = selectableList[curIdx];
+        if (item) {
+          root.S.selected = item.data;
+          renderInspector();
+          if (root.updateSelectionHighlight) root.updateSelectionHighlight();
+          if (root.focusSelection) root.focusSelection(item.data);
+        }
+      };
+    }
+    const nextBtn = document.getElementById('quickNextElem');
+    if (nextBtn) {
+      nextBtn.onclick = () => {
+        let curIdx = selectableList.findIndex(x => x.key === activeKey);
+        if (curIdx < 0 || curIdx >= selectableList.length - 1) curIdx = 0;
+        else curIdx++;
+        const item = selectableList[curIdx];
+        if (item) {
+          root.S.selected = item.data;
+          renderInspector();
+          if (root.updateSelectionHighlight) root.updateSelectionHighlight();
+          if (root.focusSelection) root.focusSelection(item.data);
+        }
+      };
+    }
+    const focusBtn = document.getElementById('quickFocusElem');
+    if (focusBtn) {
+      focusBtn.onclick = () => {
+        if (root.focusSelection) root.focusSelection();
+      };
+    }
+
     refreshChecks(d);
     refreshRecommendations(d);
     updateReasonPanel(d, sel);
+  }
   }
 
   function refreshChecks(d) {

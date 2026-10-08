@@ -152,9 +152,16 @@
     display: none;
   }
   .scene {
-    height: 58vh;
-    min-height: 380px;
+    height: 56vh;
+    min-height: 360px;
     order: 1;
+    touch-action: none;
+  }
+  .scene canvas {
+    touch-action: none;
+  }
+  .legend {
+    display: none;
   }
   .left {
     order: 2;

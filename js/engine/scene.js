@@ -325,6 +325,10 @@
   }
 
   function updateCamera() {
+    if (controls) {
+      controls.update();
+      return;
+    }
     camera.position.x = displayTarget.x + camDist * Math.sin(camAngleY) * Math.cos(camAngleX);
     camera.position.z = displayTarget.z + camDist * Math.cos(camAngleY) * Math.cos(camAngleX);
     camera.position.y = displayTarget.y + camDist * Math.sin(camAngleX);
@@ -350,23 +354,55 @@
     target.copy(center);
     displayTarget.copy(center);
 
-    let width, height, ax, ay;
-    if (view === 'front') {
-      width = Math.max(size.x, 1); height = Math.max(size.y, 1); ax = 0.08; ay = 0;
-    } else if (view === 'side') {
-      width = Math.max(size.z, 1); height = Math.max(size.y, 1); ax = 0.08; ay = Math.PI / 2;
-    } else if (view === 'plan') {
-      width = Math.max(size.x, 1); height = Math.max(size.z, 1); ax = 1.48; ay = 0;
-    } else {
-      width = Math.max(Math.hypot(size.x, size.z), 1); height = Math.max(size.y, 1); ax = 0.45; ay = 0.65;
-    }
-    camAngleX = ax;
-    camAngleY = ay;
+    const maxDim = Math.max(size.x, size.y, size.z, 10);
     const fov = THREE.MathUtils.degToRad(camera.fov);
     const aspect = Math.max(camera.aspect || 1, 0.5);
-    const margin = view === '3d' ? 0.58 : 0.82;
-    targetCamDist = Math.max((height * 0.5) / Math.tan(fov * 0.5), (width * 0.5) / (aspect * Math.tan(fov * 0.5)), 8) * margin;
-    camDist = targetCamDist;
+    const dist = Math.max(
+      (maxDim * 0.5) / Math.tan(fov * 0.5),
+      (maxDim * 0.5) / (aspect * Math.tan(fov * 0.5)),
+      12
+    ) * 1.32;
+
+    targetCamDist = dist;
+    camDist = dist;
+
+    if (view === 'front') {
+      camAngleX = 0.05; camAngleY = 0;
+      if (controls) {
+        controls.target.copy(center);
+        camera.position.set(center.x, center.y, center.z + dist);
+      }
+    } else if (view === 'side') {
+      camAngleX = 0.05; camAngleY = Math.PI / 2;
+      if (controls) {
+        controls.target.copy(center);
+        camera.position.set(center.x + dist, center.y, center.z);
+      }
+    } else if (view === 'plan') {
+      camAngleX = 1.48; camAngleY = 0;
+      if (controls) {
+        controls.target.copy(center);
+        camera.position.set(center.x, center.y + dist, center.z + 0.001);
+      }
+    } else if (view === 'iso') {
+      camAngleX = 0.61; camAngleY = Math.PI / 4;
+      if (controls) {
+        controls.target.copy(center);
+        camera.position.set(center.x + dist * 0.72, center.y + dist * 0.58, center.z + dist * 0.72);
+      }
+    } else {
+      // 3d elevated perspective
+      camAngleX = 0.45; camAngleY = 0.65;
+      if (controls) {
+        controls.target.copy(center);
+        camera.position.set(center.x + dist * 0.6, center.y + dist * 0.48, center.z + dist * 0.65);
+      }
+    }
+
+    if (controls) {
+      controls.target.copy(center);
+      controls.update();
+    }
     lastInteraction = Date.now();
     updateCamera();
   }
@@ -563,6 +599,11 @@
     fitCamera();
   }
 
+  let controls = null;
+  let selectionHighlightGroup = null;
+  let hudMode = 'orbit'; // 'orbit' or 'pan'
+  let autoRotateEnabled = true;
+
   function resizeRenderer() {
     const wrap = document.querySelector('.scene');
     if (!wrap || !renderer || !camera) return;
@@ -572,25 +613,237 @@
     camera.updateProjectionMatrix();
   }
 
+  function updateSelectionHighlight() {
+    if (!scene) return;
+    if (!selectionHighlightGroup) {
+      selectionHighlightGroup = new THREE.Group();
+      scene.add(selectionHighlightGroup);
+    }
+    selectionHighlightGroup.clear();
+
+    const sel = root.S && root.S.selected;
+    if (!sel) return;
+
+    const targets = pickableObjects.filter((o) => {
+      const u = o.userData;
+      if (!u) return false;
+      if (sel.kind === 'member' && u.kind === 'member') {
+        return u.index === sel.index && (sel.frame === undefined || u.frame === sel.frame);
+      }
+      if (sel.kind === 'column' && u.kind === 'column') {
+        return u.side === sel.side && (sel.frame === undefined || u.frame === sel.frame);
+      }
+      if (sel.kind === 'purlin' && u.kind === 'purlin') {
+        return u.purlinIndex === sel.purlinIndex;
+      }
+      if (sel.kind === 'bracing' && u.kind === 'bracing') {
+        return u.bay === sel.bay;
+      }
+      if (sel.kind === 'node' && u.kind === 'node') {
+        return u.index === sel.index;
+      }
+      return false;
+    });
+
+    targets.forEach((obj) => {
+      const box = new THREE.Box3().setFromObject(obj);
+      const center = box.getCenter(new THREE.Vector3());
+      const size = box.getSize(new THREE.Vector3());
+
+      const sx = Math.max(size.x + 0.16, 0.28);
+      const sy = Math.max(size.y + 0.16, 0.28);
+      const sz = Math.max(size.z + 0.16, 0.28);
+
+      const boxGeo = new THREE.BoxGeometry(sx, sy, sz);
+      const wireMat = new THREE.MeshBasicMaterial({
+        color: 0xffd166,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.95
+      });
+      const wireMesh = new THREE.Mesh(boxGeo, wireMat);
+      wireMesh.position.copy(center);
+      selectionHighlightGroup.add(wireMesh);
+
+      const auraMat = new THREE.MeshBasicMaterial({
+        color: 0xff9f1c,
+        transparent: true,
+        opacity: 0.22,
+        side: THREE.DoubleSide
+      });
+      const auraMesh = new THREE.Mesh(boxGeo.clone(), auraMat);
+      auraMesh.position.copy(center);
+      selectionHighlightGroup.add(auraMesh);
+    });
+  }
+
+  function focusSelection(userData = root.S && root.S.selected) {
+    if (!userData) {
+      fitCamera();
+      return;
+    }
+    const found = pickableObjects.find((o) => {
+      const u = o.userData;
+      if (!u) return false;
+      if (userData.kind === 'member' && u.kind === 'member') {
+        return u.index === userData.index && (userData.frame === undefined || u.frame === userData.frame);
+      }
+      if (userData.kind === 'column' && u.kind === 'column') {
+        return u.side === userData.side && (userData.frame === undefined || u.frame === userData.frame);
+      }
+      if (userData.kind === 'purlin' && u.kind === 'purlin') {
+        return u.purlinIndex === userData.purlinIndex;
+      }
+      if (userData.kind === 'bracing' && u.kind === 'bracing') {
+        return u.bay === userData.bay;
+      }
+      return false;
+    });
+
+    if (found) {
+      const box = new THREE.Box3().setFromObject(found);
+      const c = box.getCenter(new THREE.Vector3());
+      const sz = box.getSize(new THREE.Vector3());
+      const maxDim = Math.max(sz.x, sz.y, sz.z, 2);
+
+      target.copy(c);
+      displayTarget.copy(c);
+      targetCamDist = Math.max(maxDim * 2.2, 5.5);
+
+      if (controls) {
+        controls.target.copy(c);
+        const dir = new THREE.Vector3().subVectors(camera.position, controls.target).normalize();
+        if (dir.lengthSq() < 0.001) dir.set(0.6, 0.5, 0.65).normalize();
+        camera.position.copy(c).addScaledVector(dir, targetCamDist);
+        controls.update();
+      }
+      lastInteraction = Date.now();
+      updateCamera();
+      updateSelectionHighlight();
+    } else {
+      fitCamera();
+    }
+  }
+
+  function panCamera(dx, dy) {
+    const scale = (controls ? camera.position.distanceTo(controls.target) : camDist) * 0.0016;
+    const forward = new THREE.Vector3();
+    camera.getWorldDirection(forward);
+    const right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
+    const up = new THREE.Vector3().crossVectors(right, forward).normalize();
+    const panOffset = new THREE.Vector3()
+      .addScaledVector(right, -dx * scale)
+      .addScaledVector(up, dy * scale);
+
+    target.add(panOffset);
+    displayTarget.add(panOffset);
+    if (controls) {
+      controls.target.add(panOffset);
+      camera.position.add(panOffset);
+      controls.update();
+    }
+    lastInteraction = Date.now();
+    updateCamera();
+  }
+
+  function orbitCamera(dPitch, dYaw) {
+    lastInteraction = Date.now();
+    if (controls) {
+      const eye = new THREE.Vector3().subVectors(camera.position, controls.target);
+      const radius = eye.length();
+      const theta = Math.atan2(eye.x, eye.z) + dYaw;
+      let phi = Math.acos(Math.max(-1, Math.min(1, eye.y / radius))) - dPitch;
+      phi = Math.max(0.08, Math.min(Math.PI * 0.49, phi));
+      camera.position.set(
+        controls.target.x + radius * Math.sin(phi) * Math.sin(theta),
+        controls.target.y + radius * Math.cos(phi),
+        controls.target.z + radius * Math.sin(phi) * Math.cos(theta)
+      );
+      controls.update();
+    } else {
+      camAngleY += dYaw;
+      camAngleX = Math.max(0.05, Math.min(1.45, camAngleX + dPitch));
+      updateCamera();
+    }
+  }
+
+  function zoomCamera(factor) {
+    lastInteraction = Date.now();
+    if (controls) {
+      if (factor < 1) controls.dollyIn(1 / factor);
+      else controls.dollyOut(factor);
+      controls.update();
+    } else {
+      targetCamDist = Math.max(5, Math.min(220, targetCamDist * factor));
+      camDist = targetCamDist;
+      updateCamera();
+    }
+  }
+
   function pickObject(e) {
-    if (!renderer || !renderer.domElement) return;
+    if (!renderer || !renderer.domElement || !camera) return;
     const r = renderer.domElement.getBoundingClientRect();
-    mouse.x = ((e.clientX - r.left) / r.width) * 2 - 1;
-    mouse.y = -((e.clientY - r.top) / r.height) * 2 + 1;
+    const cx = e.clientX, cy = e.clientY;
+
+    // Direct raycast
+    mouse.x = ((cx - r.left) / r.width) * 2 - 1;
+    mouse.y = -((cy - r.top) / r.height) * 2 + 1;
     ray.setFromCamera(mouse, camera);
-    const hit = ray.intersectObjects(pickableObjects, false)[0];
+    let hit = ray.intersectObjects(pickableObjects, false)[0];
+
+    // Surrounding touch tolerance for mobile fingertips & small screens
+    if (!hit) {
+      const isTouch = e.pointerType === 'touch' || window.innerWidth < 780;
+      const step = isTouch ? 14 : 7;
+      const offsets = [
+        [-step, 0], [step, 0], [0, -step], [0, step],
+        [-step, -step], [step, step], [-step, step], [step, -step],
+        [-step * 1.5, 0], [step * 1.5, 0], [0, -step * 1.5], [0, step * 1.5]
+      ];
+      for (let i = 0; i < offsets.length; i++) {
+        const testX = ((cx + offsets[i][0] - r.left) / r.width) * 2 - 1;
+        const testY = -((cy + offsets[i][1] - r.top) / r.height) * 2 + 1;
+        ray.setFromCamera(new THREE.Vector2(testX, testY), camera);
+        const nearHit = ray.intersectObjects(pickableObjects, false)[0];
+        if (nearHit) {
+          hit = nearHit;
+          break;
+        }
+      }
+    }
+
     root.S.selected = hit ? hit.object.userData : null;
+    updateSelectionHighlight();
     if (root.refreshInspector) root.refreshInspector();
   }
 
   function animateLoop() {
     requestAnimationFrame(animateLoop);
-    if (root.S.view === '3d' && !isDragging && Date.now() - lastInteraction > 3500) {
-      camAngleY += 0.0022;
+    const now = Date.now();
+
+    if (controls) {
+      // Gentle auto-rotation only when idle in 3D / ISO views
+      const isIdle = !isDragging && (now - lastInteraction > 4500);
+      controls.autoRotate = autoRotateEnabled && isIdle && (root.S.view === '3d' || root.S.view === 'iso');
+      controls.autoRotateSpeed = 0.75;
+      controls.update();
+    } else {
+      if (autoRotateEnabled && root.S.view === '3d' && !isDragging && now - lastInteraction > 4500) {
+        camAngleY += 0.002;
+      }
+      camDist += (targetCamDist - camDist) * 0.06;
+      displayTarget.lerp(target, 0.06);
+      updateCamera();
     }
-    camDist += (targetCamDist - camDist) * 0.06;
-    displayTarget.lerp(target, 0.06);
-    updateCamera();
+
+    // Animate selection highlight pulse if active
+    if (selectionHighlightGroup && selectionHighlightGroup.children.length > 0) {
+      const pulse = 0.75 + 0.25 * Math.sin(now * 0.005);
+      selectionHighlightGroup.children.forEach((c) => {
+        if (c.material) c.material.opacity = c.material.wireframe ? pulse : pulse * 0.25;
+      });
+    }
+
     renderer.render(scene, camera);
   }
 
@@ -603,6 +856,7 @@
     camera = new THREE.PerspectiveCamera(42, 1, 0.1, 2000);
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.domElement.style.touchAction = 'none';
     wrap.appendChild(renderer.domElement);
 
     sceneGroup = new THREE.Group();
@@ -618,34 +872,84 @@
     const rim = new THREE.DirectionalLight(0xe8a33d, 0.35); rim.position.set(-6, 8, -30); scene.add(rim);
     scene.add(new THREE.HemisphereLight(0x2a3540, 0x0a0e12, 0.4));
 
+    // Initialize OrbitControls for pure native 1-finger orbit, 2-finger pinch & pan
+    if (typeof THREE.OrbitControls !== 'undefined') {
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.08;
+      controls.rotateSpeed = 0.85;
+      controls.zoomSpeed = 1.15;
+      controls.panSpeed = 0.95;
+      controls.screenSpacePanning = true;
+      controls.minDistance = 2.5;
+      controls.maxDistance = 250;
+      controls.maxPolarAngle = Math.PI * 0.49;
+      controls.touches = {
+        ONE: THREE.TOUCH.ROTATE,
+        TWO: THREE.TOUCH.DOLLY_PAN
+      };
+      controls.addEventListener('start', () => {
+        isDragging = true;
+        lastInteraction = Date.now();
+      });
+      controls.addEventListener('end', () => {
+        isDragging = false;
+        lastInteraction = Date.now();
+      });
+    }
+
+    // Tap vs Drag detection: ensures touches only select on clean tap
+    let tapStartX = 0, tapStartY = 0, tapStartTime = 0;
+
     renderer.domElement.addEventListener('pointerdown', (e) => {
+      tapStartX = e.clientX;
+      tapStartY = e.clientY;
+      tapStartTime = Date.now();
+      lastInteraction = Date.now();
       isDragging = true;
       prevX = e.clientX;
       prevY = e.clientY;
-      lastInteraction = Date.now();
     });
-    window.addEventListener('pointerup', () => { isDragging = false; });
-    window.addEventListener('pointermove', (e) => {
-      if (!isDragging) return;
-      const dx = e.clientX - prevX, dy = e.clientY - prevY;
-      camAngleY -= dx * 0.006;
-      camAngleX = Math.max(0.1, Math.min(1.3, camAngleX + dy * 0.006));
-      prevX = e.clientX;
-      prevY = e.clientY;
-      lastInteraction = Date.now();
-      updateCamera();
-    });
-    renderer.domElement.addEventListener('wheel', (e) => {
-      camDist = Math.max(6, Math.min(180, camDist + e.deltaY * 0.02));
-      targetCamDist = camDist;
-      lastInteraction = Date.now();
-      updateCamera();
-      e.preventDefault();
-    }, { passive: false });
 
-    renderer.domElement.addEventListener('pointerdown', pickObject);
+    window.addEventListener('pointerup', (e) => {
+      isDragging = false;
+      lastInteraction = Date.now();
+      const dist = Math.hypot(e.clientX - tapStartX, e.clientY - tapStartY);
+      const dur = Date.now() - tapStartTime;
+      // Clean tap (finger or mouse clicked without dragging/orbiting)
+      if (dist < 8 && dur < 400) {
+        pickObject(e);
+      }
+    });
+
+    const fitBtn = document.getElementById('btnFitModel');
+    if (fitBtn) fitBtn.onclick = () => fitCamera();
+
+    // Keyboard Shortcuts (Arrow keys for orbit, Shift+Arrows for pan, +/- for zoom, F for fit)
+    window.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
+      if (e.key === 'ArrowUp') {
+        if (e.shiftKey) panCamera(0, -25);
+        else orbitCamera(0.06, 0);
+      } else if (e.key === 'ArrowDown') {
+        if (e.shiftKey) panCamera(0, 25);
+        else orbitCamera(-0.06, 0);
+      } else if (e.key === 'ArrowLeft') {
+        if (e.shiftKey) panCamera(25, 0);
+        else orbitCamera(0, 0.07);
+      } else if (e.key === 'ArrowRight') {
+        if (e.shiftKey) panCamera(-25, 0);
+        else orbitCamera(0, -0.07);
+      } else if (e.key === '+' || e.key === '=') {
+        zoomCamera(0.9);
+      } else if (e.key === '-' || e.key === '_') {
+        zoomCamera(1.1);
+      } else if (e.key.toLowerCase() === 'f') {
+        fitCamera();
+      }
+    });
+
     window.addEventListener('resize', resizeRenderer);
-
     resizeRenderer();
     animateLoop();
   }
@@ -655,6 +959,11 @@
     buildScene,
     buildLongitudinalStability,
     fitCamera,
+    focusSelection,
+    updateSelectionHighlight,
+    orbitCamera,
+    panCamera,
+    zoomCamera,
     resizeRenderer
   };
 
@@ -664,6 +973,8 @@
     root.SceneModule = SceneModule;
     root.build = buildScene;
     root.fit = fitCamera;
+    root.focusSelection = focusSelection;
+    root.updateSelectionHighlight = updateSelectionHighlight;
     root.resize = resizeRenderer;
     root.buildLongitudinalStability = buildLongitudinalStability;
   }
