@@ -6,8 +6,8 @@
 (function(root) {
   'use strict';
 
-  const STORAGE_KEY = 'truss-studio-layout-v5';
-  const DEFAULTS = { left: 275, right: 345, study: 215 };
+  const STORAGE_KEY = 'truss-studio-layout-v6';
+  const DEFAULTS = { left: 275, right: 345, study: 390 };
 
   function getCSSProp(prop) {
     return document.documentElement.style.getPropertyValue(prop).trim();
@@ -33,7 +33,7 @@
 
     const left = Math.max(210, Math.min(maxSide, Number(dims.left) || DEFAULTS.left));
     const right = Math.max(240, Math.min(maxSide, Number(dims.right) || DEFAULTS.right));
-    const study = Math.max(155, Math.min(Math.min(450, vh * 0.55), Number(dims.study) || DEFAULTS.study));
+    const study = Math.max(200, Math.min(Math.min(750, vh * 0.75), Number(dims.study) || DEFAULTS.study));
 
     document.documentElement.style.setProperty('--left-panel-w', left + 'px');
     document.documentElement.style.setProperty('--right-panel-w', right + 'px');

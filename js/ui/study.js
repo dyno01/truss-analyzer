@@ -20,6 +20,8 @@
     }
   };
 
+  const Textbook = (root && root.TextbookModule) || (typeof require !== 'undefined' ? require('../engine/textbook.js') : null);
+
   function renderSolutionMathSafe() {
     const rootEl = document.getElementById('solutionContent');
     if (!rootEl) return;
@@ -103,32 +105,36 @@
 
   const LIVE_SOLUTION = [
     {
-      title: 'Step 1 — Given Data & Design Assumptions',
-      badge: 'IS 800 / IS 875',
+      title: 'Design Data & Material Properties',
+      badge: 'DESIGN DATA',
       body: (d, S, G) => {
+        const tb = Textbook ? Textbook.computeTextbookAnalysis(S) : null;
         const grade = (root.Standards && root.Standards.STEEL_GRADES[S.grade || 'E250']) || { fy: 250, fu: 410, E: 200000 };
+        const span = tb ? tb.span : Number(S.span) || 16;
+        const panels = tb ? tb.panels : Number(S.panels) || 6;
+        const trussType = S.truss || G.truss || 'Howe';
+
         return `
           <div class="solution-grid">
             <div class="solution-block wide">
-              <h3>1.1 Problem Statement & Structural Geometry Data</h3>
-              <table class="solution-data">
-                <tr><th>Design Parameter</th><th>Assigned Value</th><th>Design Reference / Notes</th></tr>
-                <tr><td>Problem Group & Location</td><td><b>Group ${root.escSafe(S.group)}</b> · ${root.escSafe(G.loc || 'Custom')}</td><td>Assignment 3A statement</td></tr>
-                <tr><td>Basic Wind Speed ($V_b$)</td><td><b>${S.Vb} m/s</b> (Zone III/IV)</td><td>IS 875 (Part 3): 2015 Appendix A</td></tr>
-                <tr><td>Terrain Category</td><td><b>Category ${S.terrain || G.terrain || 2}</b></td><td>IS 875 (Part 3) Table 2</td></tr>
-                <tr><td>Truss Configuration</td><td><b>${root.escSafe(S.truss)} Pitch Roof Truss</b></td><td>Transverse load carrying framework</td></tr>
-                <tr><td>Truss Span ($L$)</td><td><b>${Number(S.span).toFixed(2)} m</b></td><td>Center-to-center distance between columns</td></tr>
-                <tr><td>Total Shed Length ($L_{\\text{shed}}$)</td><td><b>${Number(S.length).toFixed(2)} m</b></td><td>Longitudinal building dimension</td></tr>
-                <tr><td>Eaves Height ($H$)</td><td><b>${Number(S.height).toFixed(2)} m</b></td><td>Ground level to column head/eaves</td></tr>
-                <tr><td>Truss Frame Spacing ($S$)</td><td><b>${Number(S.spacing).toFixed(2)} m</b></td><td>Center-to-center spacing of trusses</td></tr>
-                <tr><td>Number of Panels ($n$)</td><td><b>${d.panels} panels</b></td><td>${d.panels / 2} panels on each rafter slope</td></tr>
-                <tr><td>Roof Pitch Angle ($\\theta$)</td><td><b>${Number(S.slope).toFixed(1)}°</b> (1 in ${(1 / Math.tan((S.slope * Math.PI) / 180)).toFixed(1)})</td><td>Slope chosen for natural rainwater drainage</td></tr>
-                <tr><td>Roof Cladding Material</td><td><b>${root.escSafe(S.roof)} Corrugated Sheets</b></td><td>Dead load per IS 875 (Part 1)</td></tr>
-                <tr><td>Connection Details</td><td><b>${root.escSafe(S.connection)}</b></td><td>IS 800:2007 Section 10</td></tr>
-              </table>
+              <h3>Design of Industrial Roof Truss (Group ${root.escSafe(S.group || 'G4')})</h3>
+              <p>Standard university design specification for pitched industrial steel roof trusses:</p>
+              
+              <h4>Design Data</h4>
+              <ul>
+                <li><b>Type:</b> ${root.escSafe(trussType)} Roof Truss</li>
+                <li><b>Span:</b> ${span.toFixed(2)} m</li>
+                <li><b>Length of Structure:</b> ${Number(S.length || 98).toFixed(2)} m</li>
+                <li><b>Column/Eave Height:</b> ${Number(S.height || 12).toFixed(2)} m</li>
+                <li><b>Location:</b> ${root.escSafe(G.loc || S.loc || 'Gaya')}</li>
+                <li><b>Roof Covering:</b> ${root.escSafe(S.roof || 'AC')} Sheet</li>
+                <li><b>Panels:</b> ${panels} panels (User Specified)</li>
+                <li><b>Internal Pressure Coeff ($C_{pi}$):</b> $\\pm ${Math.abs(Number(S.cpi) || 0.2).toFixed(1)}$</li>
+              </ul>
             </div>
-            <div class="solution-block">
-              <h3>1.2 Material Properties (IS 2062 / IS 800)</h3>
+
+            <div class="solution-block wide">
+              <h3>Material Properties (IS 2062 / IS 800)</h3>
               <p>Structural steel conforms to grade <b>${grade.name || 'E250 (Fe 410)'}</b>:</p>
               <ul>
                 <li>Yield stress: $f_y = \\mathbf{${grade.fy}\\text{ MPa}}$</li>
@@ -139,364 +145,295 @@
                 <li>Partial safety factor for shop fillet welds: $\\gamma_{mw} = \\mathbf{1.25}$ (Table 5)</li>
               </ul>
               <div class="solution-formula-label">Governing Yield Design Strength Formula:</div>
-              <div class="solution-equation" data-math="f_{yd} = \\frac{f_y}{\\gamma_{m0}}"></div>
-              <div class="solution-formula-label">Numerical Substitution & Result:</div>
-              <div class="solution-equation solution-substitution" data-math="f_{yd} = \\frac{${grade.fy}}{1.10} = \\mathbf{${(grade.fy / 1.10).toFixed(2)}\\text{ MPa}}"></div>
+              <div class="solution-equation" data-math="f_{yd} = \\frac{f_y}{\\gamma_{m0}} = \\frac{${grade.fy}}{1.10} = \\mathbf{${(grade.fy / 1.10).toFixed(2)}\\text{ MPa}}"></div>
               <div class="solution-remarks">
                 <div class="solution-remarks-title">Variable Remarks & Source:</div>
                 • <b>$f_{yd}$ (Design Yield Strength)</b> = $${(grade.fy / 1.10).toFixed(2)}\\text{ MPa}$ — Factored yield stress under Limit State of Strength.<br>
-                • <b>$f_y$ (Characteristic Minimum Yield Stress)</b> = $${grade.fy}\\text{ MPa}$ — For Grade ${grade.name || 'E250'} structural steel (IS 2062:2011 Table 2).<br>
+                • <b>$f_y$ (Characteristic Minimum Yield Stress)</b> = $${grade.fy}\\text{ MPa}$ — Minimum yield stress per IS 2062:2011.<br>
                 • <b>$\\gamma_{m0}$ (Partial Safety Factor against Yielding)</b> = $1.10$ — Material resistance factor per IS 800:2007 Table 5.
               </div>
             </div>
-            <div class="solution-block">
-              <h3>1.3 Student Design Assumptions</h3>
-              <p>For rigorous structural design, the following engineering assumptions are made:</p>
-              <ul>
-                <li>Truss nodes are assumed pin-connected for axial force estimation.</li>
-                <li>Purlins are placed directly over panel nodes to avoid secondary rafter bending.</li>
-                <li>Columns are built-up with 2 ISMC channels placed back-to-back with single lacing.</li>
-                <li>Truss members are double angles placed back-to-back with a 10 mm gusset plate.</li>
-              </ul>
-            </div>
           </div>`;
       }
     },
     {
-      title: 'Step 2 — Structural Geometry, Pitch & Lengths',
+      title: 'i) Geometry of Truss',
       badge: 'GEOMETRY',
       body: (d, S) => {
-        const span = d.span;
-        const slopeDeg = d.slopeDeg;
-        const slopeRad = (slopeDeg * Math.PI) / 180;
-        const rise = (span / 2) * Math.tan(slopeRad);
-        const rafter = Math.hypot(span / 2, rise);
-        const panelWidthPlan = span / d.panels;
-        const panelLengthSlope = rafter / (d.panels / 2);
-        const frames = root.frameCount();
-        const bays = frames - 1;
+        const tb = Textbook ? Textbook.computeTextbookAnalysis(S) : null;
+        const span = tb ? tb.span : Number(S.span) || 16;
+        const rise = tb ? tb.rise : (span / 4);
+        const spacing = tb ? tb.spacing : Number(S.spacing) || 4;
+        const slopeDeg = tb ? tb.slopeDeg : 26.57;
+        const planArea = tb ? tb.planArea : (span * spacing);
+        const slopeArea = tb ? tb.slopeArea : (planArea / Math.cos((slopeDeg * Math.PI) / 180));
+        const panels = tb ? tb.panels : Number(S.panels) || 6;
+        const panelPlan = tb ? tb.panelPlan : (span / panels);
+        const panelSlope = tb ? tb.panelSlope : (panelPlan / Math.cos((slopeDeg * Math.PI) / 180));
+
+        const minSp = tb ? tb.minSpacing : (span / 5).toFixed(2);
+        const maxSp = tb ? tb.maxSpacing : (span / 3).toFixed(2);
 
         return `
           <div class="solution-grid">
-            <div class="solution-block">
-              <h3>2.1 Central Truss Rise (R)</h3>
-              <p>The rise of the pitched roof at the ridge point above the eaves level:</p>
-              <div class="solution-formula-label">Governing Formula:</div>
-              <div class="solution-equation" data-math="R = \\frac{\\text{Span}}{2} \\times \\tan\\theta"></div>
-              <div class="solution-formula-label">Numerical Substitution & Result:</div>
-              <div class="solution-equation solution-substitution" data-math="R = \\frac{${span.toFixed(2)}}{2} \\times \\tan(${slopeDeg.toFixed(1)}^\\circ) = ${ (span / 2).toFixed(2) } \\times ${Math.tan(slopeRad).toFixed(3)} = \\mathbf{${rise.toFixed(3)}\\text{ m}}"></div>
-              <div class="solution-remarks">
-                <div class="solution-remarks-title">Variable Remarks & Source:</div>
-                • <b>$R$ (Central Apex Rise)</b> = $${rise.toFixed(3)}\\text{ m}$ — Vertical height of ridge apex above eaves line.<br>
-                • <b>$\\text{Span}$ (Clear Truss Span)</b> = $${span.toFixed(2)}\\text{ m}$ — Center-to-center distance between column axes (Problem Group ${S.group} data).<br>
-                • <b>$\\theta$ (Roof Pitch Angle)</b> = $${slopeDeg.toFixed(1)}^\\circ$ — Sloping roof angle ($\\tan\\theta = 1/${(1 / Math.tan(slopeRad)).toFixed(1)}$ slope for efficient rainwater runoff).<br>
-                • <b>$\\text{Span} / 2$ (Half Span)</b> = $${(span / 2).toFixed(2)}\\text{ m}$ — Horizontal projection from eave to apex.
-              </div>
-            </div>
-            <div class="solution-block">
-              <h3>2.2 Principal Rafter Sloping Length (Lr)</h3>
-              <p>True sloping centerline length of the inclined top chord from eave to ridge:</p>
-              <div class="solution-formula-label">Governing Formula:</div>
-              <div class="solution-equation" data-math="L_r = \\sqrt{\\left(\\frac{\\text{Span}}{2}\\right)^2 + R^2}"></div>
-              <div class="solution-formula-label">Numerical Substitution & Result:</div>
-              <div class="solution-equation solution-substitution" data-math="L_r = \\sqrt{(${ (span / 2).toFixed(2) })^2 + (${rise.toFixed(3)})^2} = \\sqrt{${((span / 2) ** 2).toFixed(2)} + ${(rise ** 2).toFixed(2)}} = \\mathbf{${rafter.toFixed(3)}\\text{ m}}"></div>
-              <div class="solution-remarks">
-                <div class="solution-remarks-title">Variable Remarks & Source:</div>
-                • <b>$L_r$ (Principal Rafter Sloping Length)</b> = $${rafter.toFixed(3)}\\text{ m}$ — Inclined length of one rafter slope.<br>
-                • <b>$\\text{Span} / 2$</b> = $${(span / 2).toFixed(2)}\\text{ m}$ — Horizontal half-span run.<br>
-                • <b>$R$</b> = $${rise.toFixed(3)}\\text{ m}$ — Apex rise calculated in Step 2.1.<br>
-                • Governs continuous sloping length along which roof purlins are supported.
-              </div>
-            </div>
-            <div class="solution-block">
-              <h3>2.3 Panel Dimensions (Plan & Slope)</h3>
-              <p>Transverse horizontal panel width along bottom chord ($n = ${d.panels}$ equal panels):</p>
-              <div class="solution-formula-label">Governing Formula:</div>
-              <div class="solution-equation" data-math="a_{\\text{plan}} = \\frac{\\text{Span}}{n}"></div>
-              <div class="solution-formula-label">Numerical Substitution & Result:</div>
-              <div class="solution-equation solution-substitution" data-math="a_{\\text{plan}} = \\frac{${span.toFixed(2)}}{${d.panels}} = \\mathbf{${panelWidthPlan.toFixed(3)}\\text{ m}}"></div>
-              <div class="solution-remarks">
-                <div class="solution-remarks-title">Variable Remarks & Source:</div>
-                • <b>$a_{\\text{plan}}$ (Plan Panel Width)</b> = $${panelWidthPlan.toFixed(3)}\\text{ m}$ — Horizontal distance between consecutive bottom chord panel joints.<br>
-                • <b>$\\text{Span}$</b> = $${span.toFixed(2)}\\text{ m}$ — Total truss span.<br>
-                • <b>$n$ (Total Panel Count)</b> = $${d.panels}\\text{ panels}$ ($${d.panels / 2}$$ panels per half-span).
-              </div>
-              <p>Sloping panel length along rafter between consecutive purlins:</p>
-              <div class="solution-formula-label">Governing Formula:</div>
-              <div class="solution-equation" data-math="a_{\\text{slope}} = \\frac{L_r}{n / 2}"></div>
-              <div class="solution-formula-label">Numerical Substitution & Result:</div>
-              <div class="solution-equation solution-substitution" data-math="a_{\\text{slope}} = \\frac{${rafter.toFixed(3)}}{${d.panels / 2}} = \\mathbf{${panelLengthSlope.toFixed(3)}\\text{ m}}"></div>
-              <div class="solution-remarks">
-                <div class="solution-remarks-title">Variable Remarks & Source:</div>
-                • <b>$a_{\\text{slope}}$ (Sloping Panel Length)</b> = $${panelLengthSlope.toFixed(3)}\\text{ m}$ — True rafter length between adjacent purlins.<br>
-                • <b>$L_r$</b> = $${rafter.toFixed(3)}\\text{ m}$ — Principal rafter length from Step 2.2.<br>
-                • <b>$n / 2$</b> = $${d.panels / 2}$$ — Panel divisions along each top chord slope.
-              </div>
-            </div>
-            <div class="solution-block">
-              <h3>2.4 Longitudinal Bay Repetition</h3>
-              <p>Number of longitudinal structural bays along building length:</p>
-              <div class="solution-formula-label">Governing Formula:</div>
-              <div class="solution-equation" data-math="N_{\\text{bays}} = \\frac{L_{\\text{shed}}}{S}"></div>
-              <div class="solution-formula-label">Numerical Substitution & Result:</div>
-              <div class="solution-equation solution-substitution" data-math="N_{\\text{bays}} = \\frac{${Number(S.length).toFixed(1)}}{${Number(S.spacing).toFixed(2)}} = \\mathbf{${bays}\\text{ bays}}"></div>
-              <div class="solution-remarks">
-                <div class="solution-remarks-title">Variable Remarks & Source:</div>
-                • <b>$N_{\\text{bays}}$ (Total Number of Bays)</b> = $${bays}\\text{ bays}$.<br>
-                • <b>$L_{\\text{shed}}$ (Total Building Length)</b> = $${Number(S.length).toFixed(1)}\\text{ m}$ — Problem Group ${S.group} specification.<br>
-                • <b>$S$ (Truss Frame Spacing)</b> = $${Number(S.spacing).toFixed(2)}\\text{ m}$ — Longitudinal center-to-center bay spacing.
-              </div>
-              <p>Total transverse truss frames required along the building:</p>
-              <div class="solution-formula-label">Governing Formula:</div>
-              <div class="solution-equation" data-math="N_f = N_{\\text{bays}} + 1"></div>
-              <div class="solution-formula-label">Numerical Substitution & Result:</div>
-              <div class="solution-equation solution-substitution" data-math="N_f = ${bays} + 1 = \\mathbf{${frames}\\text{ frames}}"></div>
-              <div class="solution-remarks">
-                <div class="solution-remarks-title">Variable Remarks & Source:</div>
-                • <b>$N_f$ (Total Truss Frames)</b> = $${frames}\\text{ frames}$ — Comprising 2 gable end frames and $${bays - 1}$$ intermediate frames.
+            <div class="solution-block wide">
+              <h3>i) Geometry of Truss</h3>
+              <ul>
+                <li><b>Span:</b> ${span.toFixed(2)} m</li>
+                <li><b>Rise ($R$):</b> (Assuming $1/4$ of span)
+                  <div class="solution-equation" data-math="R = \\frac{1}{4} \\times ${span.toFixed(2)} = \\mathbf{${rise.toFixed(2)}\\text{ m (Assumed)}}"></div>
+                </li>
+                <li><b>Spacing of Truss:</b> (Range: $\\frac{1}{5}\\text{Span}$ to $\\frac{1}{3}\\text{Span} = ${minSp}\\text{ m to } ${maxSp}\\text{ m}$)
+                  <div class="solution-equation" data-math="\\text{Spacing} = \\mathbf{${spacing.toFixed(2)}\\text{ m (Assumed)}}"></div>
+                </li>
+                <li><b>Slope of Truss ($\\theta$):</b>
+                  <div class="solution-equation" data-math="\\theta = \\tan^{-1}\\left(\\frac{R}{\\text{Span}/2}\\right) = \\tan^{-1}\\left(\\frac{${rise.toFixed(2)}}{${(span / 2).toFixed(2)}}\\right) = \\mathbf{${slopeDeg.toFixed(2)}^\\circ}"></div>
+                </li>
+                <li><b>Plan Area of Truss:</b>
+                  <div class="solution-equation" data-math="A_{\\text{plan}} = \\text{Span} \\times \\text{Spacing} = ${span.toFixed(2)} \\times ${spacing.toFixed(2)} = \\mathbf{${planArea.toFixed(2)}\\text{ m}^2}"></div>
+                </li>
+                <li><b>Slope Area of Truss:</b>
+                  <div class="solution-equation" data-math="A_{\\text{slope}} = \\frac{\\text{Span} \\times \\text{Spacing}}{\\cos\\theta} = \\frac{${span.toFixed(2)} \\times ${spacing.toFixed(2)}}{\\cos(${slopeDeg.toFixed(2)}^\\circ)} = \\mathbf{${slopeArea.toFixed(2)}\\text{ m}^2}"></div>
+                </li>
+                <li><b>Number of Panels:</b> ${panels} panels</li>
+                <li><b>Panel Length in Plan:</b>
+                  <div class="solution-equation" data-math="L_{\\text{plan}} = \\frac{${span.toFixed(2)}}{${panels}} = \\mathbf{${panelPlan.toFixed(3)}\\text{ m}}"></div>
+                </li>
+                <li><b>Panel Length on Slope:</b>
+                  <div class="solution-equation" data-math="L_{\\text{slope}} = \\frac{${panelPlan.toFixed(3)}}{\\cos(${slopeDeg.toFixed(2)}^\\circ)} = \\mathbf{${panelSlope.toFixed(3)}\\text{ m}}"></div>
+                </li>
+              </ul>
+
+              <h4>Textbook Truss Geometry & Division Diagram</h4>
+              <div class="truss-textbook-wrap">
+                ${tb ? Textbook.renderFullTrussSVG(tb, 'geometry') : ''}
               </div>
             </div>
           </div>`;
       }
     },
     {
-      title: 'Step 3 — Load Calculations (IS 875 Parts 1, 2 & 3)',
-      badge: 'IS 875 LOADS',
+      title: 'ii) Load Calculations',
+      badge: 'LOAD CALCULATIONS',
       body: (d, S, G) => {
-        const w = d.loads.wind;
-        const slopeDeg = d.slopeDeg;
-        const slopeRad = (slopeDeg * Math.PI) / 180;
-        const span = d.span;
-        const spacing = d.spacing;
-        const panelWidthPlan = span / d.panels;
-        const rafter = Math.hypot(span / 2, (span / 2) * Math.tan(slopeRad));
-        const panelSlope = rafter / (d.panels / 2);
+        const tb = Textbook ? Textbook.computeTextbookAnalysis(S) : null;
+        if (!tb) return '<div class="solution-callout">Unable to compute loads.</div>';
 
-        const sheetWeight = S.roof === 'AC' ? 170 : 130;
-        const sheetPlan = sheetWeight / Math.cos(slopeRad);
-        const purlinWeight = 100;
-        const trussSelfWeight = (span / 3 + 5) * 10;
-        const bracingWeight = 15;
-        const totalDL = (sheetPlan + purlinWeight + trussSelfWeight + bracingWeight) / 1000;
-
-        const intermediateDL = totalDL * spacing * panelWidthPlan;
-        const intermediateLL = d.loads.ll_kN_m2 * spacing * panelWidthPlan;
-
-        const windPanelPoint = Math.abs(w.p_net_suction) * spacing * panelSlope;
+        const dl = tb.loads.dl;
+        const ll = tb.loads.ll;
+        const wl = tb.loads.wl;
 
         return `
           <div class="solution-grid">
-            <div class="solution-block">
-              <h3>3.1 Dead Load Calculations (IS 875 Part 1)</h3>
-              <p>Dead load components on plan area:</p>
-              <ul>
-                <li>Roof ${S.roof} sheeting on slope: $\\mathbf{${sheetWeight}\\text{ N/m}^2}$</li>
-                <li>Weight of ISMC purlins: $\\mathbf{${purlinWeight}\\text{ N/m}^2}$</li>
-                <li>Truss self-weight estimate: $\\mathbf{${trussSelfWeight.toFixed(1)}\\text{ N/m}^2}$</li>
-                <li>Weight of wind bracing: $\\mathbf{${bracingWeight}\\text{ N/m}^2}$</li>
-              </ul>
-              <div class="solution-formula-label">Governing Cladding Plan Projection Formula:</div>
-              <div class="solution-equation" data-math="w_{\\text{sheet, plan}} = \\frac{w_{\\text{sheet}}}{\\cos\\theta}"></div>
-              <div class="solution-formula-label">Numerical Substitution & Result:</div>
-              <div class="solution-equation solution-substitution" data-math="w_{\\text{sheet, plan}} = \\frac{${sheetWeight}}{\\cos(${slopeDeg.toFixed(1)}^\\circ)} = \\frac{${sheetWeight}}{${Math.cos(slopeRad).toFixed(4)}} = \\mathbf{${sheetPlan.toFixed(1)}\\text{ N/m}^2}"></div>
-              <div class="solution-remarks">
-                <div class="solution-remarks-title">Variable Remarks & Source:</div>
-                • <b>$w_{\\text{sheet, plan}}$ (Projected Cladding Weight)</b> = $${sheetPlan.toFixed(1)}\\text{ N/m}^2$ — Dead load projected onto horizontal plan area.<br>
-                • <b>$w_{\\text{sheet}}$ (Roof Sheet Weight)</b> = $${sheetWeight}\\text{ N/m}^2$ — Self-weight of ${S.roof} sheeting per unit sloping area (IS 875 Part 1 Table 1).<br>
-                • <b>$\\theta$ (Roof Pitch Angle)</b> = $${slopeDeg.toFixed(1)}^\\circ$ — Roof slope ($\\cos\\theta = ${Math.cos(slopeRad).toFixed(3)}$ converts sloping area to plan area).
-              </div>
-
-              <div class="solution-formula-label">Governing Truss Self-Weight Formula:</div>
-              <div class="solution-equation" data-math="w_{\\text{truss}} = \\left(\\frac{\\text{Span}}{3} + 5\\right) \\times 10"></div>
-              <div class="solution-formula-label">Numerical Substitution & Result:</div>
-              <div class="solution-equation solution-substitution" data-math="w_{\\text{truss}} = \\left(\\frac{${span.toFixed(2)}}{3} + 5\\right) \\times 10 = (${(span / 3).toFixed(2)} + 5) \\times 10 = \\mathbf{${trussSelfWeight.toFixed(1)}\\text{ N/m}^2}"></div>
-              <div class="solution-remarks">
-                <div class="solution-remarks-title">Variable Remarks & Source:</div>
-                • <b>$w_{\\text{truss}}$ (Estimated Truss Self-Weight)</b> = $${trussSelfWeight.toFixed(1)}\\text{ N/m}^2$ — Empirical design formula for pitched steel roof trusses (IS 875 Part 1).<br>
-                • <b>$\\text{Span}$ (Truss Clear Span)</b> = $${span.toFixed(2)}\\text{ m}$.
-              </div>
-
-              <div class="solution-formula-label">Governing Total Dead Load Intensity Formula:</div>
-              <div class="solution-equation" data-math="w_{DL} = \\frac{w_{\\text{sheet, plan}} + w_{\\text{purlin}} + w_{\\text{truss}} + w_{\\text{bracing}}}{1000}"></div>
-              <div class="solution-formula-label">Numerical Substitution & Result:</div>
-              <div class="solution-equation solution-result" data-math="w_{DL} = \\frac{${sheetPlan.toFixed(1)} + ${purlinWeight} + ${trussSelfWeight.toFixed(1)} + ${bracingWeight}}{1000} = \\mathbf{${totalDL.toFixed(3)}\\text{ kN/m}^2}"></div>
-              <div class="solution-remarks">
-                <div class="solution-remarks-title">Variable Remarks & Source:</div>
-                • <b>$w_{DL}$ (Total Dead Load Intensity)</b> = $${totalDL.toFixed(3)}\\text{ kN/m}^2$.<br>
-                • <b>$w_{\\text{sheet, plan}}$</b> = $${sheetPlan.toFixed(1)}\\text{ N/m}^2$ — Projected cladding weight.<br>
-                • <b>$w_{\\text{purlin}}$ (Purlin Self-Weight Allowance)</b> = $${purlinWeight}\\text{ N/m}^2$ — ISMC channel purlins and sag rods.<br>
-                • <b>$w_{\\text{truss}}$ (Truss Steel Allowance)</b> = $${trussSelfWeight.toFixed(1)}\\text{ N/m}^2$.<br>
-                • <b>$w_{\\text{bracing}}$ (Bracing System Allowance)</b> = $${bracingWeight}\\text{ N/m}^2$.<br>
-                • Multiplier $1/1000$ converts $\\text{N/m}^2$ to $\\text{kN/m}^2$.
-              </div>
-
-              <div class="solution-formula-label">Governing Nodal Dead Load Formula:</div>
-              <div class="solution-equation" data-math="W_{DL} = w_{DL} \\times S \\times a_{\\text{plan}}"></div>
-              <div class="solution-formula-label">Numerical Substitution & Result:</div>
-              <div class="solution-equation solution-substitution" data-math="W_{DL} = ${totalDL.toFixed(3)} \\times ${spacing.toFixed(2)} \\times ${panelWidthPlan.toFixed(3)} = \\mathbf{${intermediateDL.toFixed(2)}\\text{ kN}}"></div>
-              <div class="solution-remarks">
-                <div class="solution-remarks-title">Variable Remarks & Source:</div>
-                • <b>$W_{DL}$ (Top Chord Nodal Dead Load)</b> = $${intermediateDL.toFixed(2)}\\text{ kN}$ — Point load applied at each intermediate purlin joint.<br>
-                • <b>$w_{DL}$ (Dead Load Intensity)</b> = $${totalDL.toFixed(3)}\\text{ kN/m}^2$.<br>
-                • <b>$S$ (Truss Spacing)</b> = $${spacing.toFixed(2)}\\text{ m}$.<br>
-                • <b>$a_{\\text{plan}}$ (Plan Panel Width)</b> = $${panelWidthPlan.toFixed(3)}\\text{ m}$ from Step 2.3.<br>
-                • Eaves end nodes carry half tributary load: $W_{DL}/2 = ${(intermediateDL / 2).toFixed(2)}\\text{ kN}$.
-              </div>
-            </div>
-            <div class="solution-block">
-              <h3>3.2 Imposed / Live Load (IS 875 Part 2 Table 2)</h3>
-              <p>For sloping roofs with pitch $\\theta = ${slopeDeg.toFixed(1)}^\\circ$ where access is not provided except for maintenance:</p>
-              ${slopeDeg <= 10 ? `
-                <div class="solution-formula-label">Governing Live Load Formula (Slope ≤ 10°):</div>
-                <div class="solution-equation" data-math="w_{LL} = 0.75\\text{ kN/m}^2"></div>
-                <div class="solution-remarks">
-                  <div class="solution-remarks-title">Variable Remarks & Source:</div>
-                  • <b>$w_{LL}$ (Imposed Live Load)</b> = $0.75\\text{ kN/m}^2$ — Standard roof live load per IS 875 (Part 2) Table 2 for pitch $\\le 10^\\circ$.
-                </div>
-              ` : `
-                <div class="solution-formula-label">Governing Live Load Formula (Slope > 10°):</div>
-                <div class="solution-equation" data-math="w_{LL} = 0.75 - 0.02(\\theta - 10^\\circ)\\quad (\\text{with code minimum } w_{LL} \\ge 0.40\\text{ kN/m}^2)"></div>
-                <div class="solution-formula-label">Numerical Substitution & Result:</div>
-                <div class="solution-equation solution-substitution" data-math="w_{LL} = 0.75 - 0.02(${slopeDeg.toFixed(1)} - 10) = 0.75 - ${(0.02 * (slopeDeg - 10)).toFixed(3)} = \\mathbf{${d.loads.ll_kN_m2.toFixed(3)}\\text{ kN/m}^2}"></div>
-                <div class="solution-remarks">
-                  <div class="solution-remarks-title">Variable Remarks & Source:</div>
-                  • <b>$w_{LL}$ (Imposed Live Load Intensity)</b> = $${d.loads.ll_kN_m2.toFixed(3)}\\text{ kN/m}^2$.<br>
-                  • $0.75\\text{ kN/m}^2$ — Basic design live load for pitch $\\le 10^\\circ$ (IS 875 Part 2 Table 2).<br>
-                  • <b>$\\theta$ (Roof Pitch Angle)</b> = $${slopeDeg.toFixed(1)}^\\circ$.<br>
-                  • $0.02\\text{ kN/m}^2$ — Permissible reduction per degree slope exceeding $10^\\circ$.<br>
-                  • $0.40\\text{ kN/m}^2$ — Mandatory code minimum threshold (IS 875 Part 2 Cl. 4.1).
-                </div>
-              `}
-              <div class="solution-formula-label">Governing Nodal Live Load Formula:</div>
-              <div class="solution-equation" data-math="W_{LL} = w_{LL} \\times S \\times a_{\\text{plan}}"></div>
-              <div class="solution-formula-label">Numerical Substitution & Result:</div>
-              <div class="solution-equation solution-substitution" data-math="W_{LL} = ${d.loads.ll_kN_m2.toFixed(3)} \\times ${spacing.toFixed(2)} \\times ${panelWidthPlan.toFixed(3)} = \\mathbf{${intermediateLL.toFixed(2)}\\text{ kN}}"></div>
-              <div class="solution-remarks">
-                <div class="solution-remarks-title">Variable Remarks & Source:</div>
-                • <b>$W_{LL}$ (Nodal Live Load)</b> = $${intermediateLL.toFixed(2)}\\text{ kN}$ — Applied at each intermediate top chord joint.<br>
-                • <b>$w_{LL}$ (Live Load Intensity)</b> = $${d.loads.ll_kN_m2.toFixed(3)}\\text{ kN/m}^2$.<br>
-                • <b>$S$ (Truss Spacing)</b> = $${spacing.toFixed(2)}\\text{ m}$.<br>
-                • <b>$a_{\\text{plan}}$ (Plan Panel Width)</b> = $${panelWidthPlan.toFixed(3)}\\text{ m}$.<br>
-                • End eaves nodes carry half tributary load: $W_{LL}/2 = ${(intermediateLL / 2).toFixed(2)}\\text{ kN}$.
-              </div>
-            </div>
             <div class="solution-block wide">
-              <h3>3.3 Wind Load Calculations (IS 875 Part 3: 2015)</h3>
-              <p>For basic wind speed $V_b = ${w.Vb}\\text{ m/s}$ at eaves height $H = ${Number(S.height).toFixed(1)}\\text{ m}$ in Terrain Category ${S.terrain || G.terrain || 2}:</p>
+              <h3>ii) Load Calculations</h3>
+
+              <h4>A) Dead Load (DL)</h4>
               <ul>
-                <li>Risk coefficient: $k_1 = \\mathbf{${w.k1}}$ (Table 1, 50-year design life)</li>
-                <li>Terrain & height factor: $k_2 = \\mathbf{${w.k2}}$ (Table 2 linear interpolation for $z = ${Number(S.height).toFixed(1)}\\text{ m}$)</li>
-                <li>Topography factor: $k_3 = \\mathbf{1.00}$ (flat ground slope $\\le 3^\\circ$)</li>
-                <li>Cyclonic importance factor: $k_4 = \\mathbf{1.00}$ (industrial non-cyclonic)</li>
+                <li>DL of Roofing (${root.escSafe(S.roof || 'AC')} Sheets): <b>${dl.sheet.toFixed(2)} N/m²</b></li>
+                <li>DL of Purlins: <b>${dl.purlins.toFixed(2)} N/m²</b></li>
+                <li>DL of Bracings: <b>${dl.bracing.toFixed(2)} N/m²</b></li>
+                <li>Self Weight of Truss:
+                  <div class="solution-equation" data-math="w_{\\text{truss}} = \\left(\\frac{\\text{Span}}{3} + 5\\right) \\times 10 = \\left(\\frac{${tb.span.toFixed(2)}}{3} + 5\\right) \\times 10 = \\mathbf{${dl.trussSelf.toFixed(2)}\\text{ N/m}^2}"></div>
+                </li>
+                <li><b>Total DL Intensity:</b>
+                  <div class="solution-equation" data-math="w_{\\text{DL, total}} = ${dl.sheet} + ${dl.purlins} + ${dl.bracing} + ${dl.trussSelf.toFixed(2)} = \\mathbf{${dl.totalIntensity.toFixed(2)}\\text{ N/m}^2}"></div>
+                </li>
               </ul>
-              <div class="solution-formula-label">Governing Design Wind Speed Formula:</div>
-              <div class="solution-equation" data-math="V_z = V_b \\cdot k_1 \\cdot k_2 \\cdot k_3 \\cdot k_4"></div>
-              <div class="solution-formula-label">Numerical Substitution & Result:</div>
-              <div class="solution-equation solution-substitution" data-math="V_z = ${w.Vb} \\times ${w.k1} \\times ${w.k2} \\times 1.00 \\times 1.00 = \\mathbf{${w.Vz}\\text{ m/s}}"></div>
-              <div class="solution-remarks">
-                <div class="solution-remarks-title">Variable Remarks & Source:</div>
-                • <b>$V_z$ (Design Wind Velocity)</b> = $${w.Vz}\\text{ m/s}$ — Calculated wind speed at eaves height.<br>
-                • <b>$V_b$ (Basic Wind Speed)</b> = $${w.Vb}\\text{ m/s}$ — 50-year return period wind speed for ${G.loc || S.loc || 'site'} (IS 875 Part 3 Appendix A).<br>
-                • <b>$k_1$ (Probability / Risk Factor)</b> = $${w.k1}$ — Multiplier for 50-year design life (Table 1).<br>
-                • <b>$k_2$ (Terrain and Height Factor)</b> = $${w.k2}$ — Velocity profile factor for Terrain Category ${S.terrain || G.terrain || 2} at $z = ${Number(S.height).toFixed(1)}\\text{ m}$ (Table 2).<br>
-                • <b>$k_3$ (Topography Factor)</b> = $1.00$ — Ground slope $\\le 3^\\circ$ (Cl. 6.3).<br>
-                • <b>$k_4$ (Cyclonic Factor)</b> = $1.00$ — Non-cyclonic industrial structure (Cl. 6.4).
-              </div>
+              <div class="solution-formula-label">Nodal Dead Loads:</div>
+              <div class="solution-equation" data-math="\\text{Total DL on Truss} = ${dl.totalIntensity.toFixed(2)} \\times ${tb.planArea.toFixed(2)} = \\mathbf{${dl.total_kN.toFixed(2)}\\text{ kN}}"></div>
+              <div class="solution-equation" data-math="W_{\\text{DL, intermediate}} = \\frac{${dl.total_kN.toFixed(2)}}{${tb.panels}} = \\mathbf{${dl.intermediate_kN.toFixed(2)}\\text{ kN}}"></div>
+              <div class="solution-equation" data-math="W_{\\text{DL, end}} = \\frac{${dl.intermediate_kN.toFixed(2)}}{2} = \\mathbf{${dl.end_kN.toFixed(2)}\\text{ kN}}"></div>
 
-              <div class="solution-formula-label">Governing Design Wind Pressure Formula:</div>
-              <div class="solution-equation" data-math="p_z = 0.6 \\times V_z^2"></div>
-              <div class="solution-formula-label">Numerical Substitution & Result:</div>
-              <div class="solution-equation solution-substitution" data-math="p_z = 0.6 \\times (${w.Vz})^2 = 0.6 \\times ${(w.Vz * w.Vz).toFixed(1)} = \\mathbf{${w.pz}\\text{ N/m}^2} = \\mathbf{${w.pz_kN.toFixed(3)}\\text{ kN/m}^2}"></div>
-              <div class="solution-remarks">
-                <div class="solution-remarks-title">Variable Remarks & Source:</div>
-                • <b>$p_z$ (Design Wind Pressure)</b> = $${w.pz_kN.toFixed(3)}\\text{ kN/m}^2$ ($${w.pz}\\text{ N/m}^2$).<br>
-                • Factor $0.6$ — Aerodynamic mass density factor ($0.5 \\times \\rho_{\\text{air}} = 0.5 \\times 1.2 = 0.6$, IS 875 Part 3 Cl. 7.2).<br>
-                • <b>$V_z$ (Design Wind Velocity)</b> = $${w.Vz}\\text{ m/s}$.
-              </div>
+              <h4>B) Live Load (LL)</h4>
+              <ul>
+                <li>Roof Slope: $\\theta = ${tb.slopeDeg.toFixed(2)}^\\circ > 10^\\circ$</li>
+                <li>LL on Roof:
+                  <div class="solution-equation" data-math="w_{\\text{LL, roof}} = 750 - 20(${tb.slopeDeg.toFixed(2)} - 10) = \\mathbf{${ll.roofIntensity.toFixed(2)}\\text{ N/m}^2}"></div>
+                </li>
+                <li>LL on Truss (with purlin reduction):
+                  <div class="solution-equation" data-math="w_{\\text{LL, truss}} = \\frac{2}{3} \\times ${ll.roofIntensity.toFixed(2)} = \\mathbf{${ll.trussIntensity.toFixed(2)}\\text{ N/m}^2}"></div>
+                </li>
+              </ul>
+              <div class="solution-formula-label">Nodal Live Loads:</div>
+              <div class="solution-equation" data-math="\\text{Total LL on Truss} = ${ll.trussIntensity.toFixed(2)} \\times ${tb.planArea.toFixed(2)} = \\mathbf{${ll.total_kN.toFixed(2)}\\text{ kN}}"></div>
+              <div class="solution-equation" data-math="W_{\\text{LL, intermediate}} = \\frac{${ll.total_kN.toFixed(2)}}{${tb.panels}} = \\mathbf{${ll.intermediate_kN.toFixed(2)}\\text{ kN}}"></div>
+              <div class="solution-equation" data-math="W_{\\text{LL, end}} = \\frac{${ll.intermediate_kN.toFixed(2)}}{2} = \\mathbf{${ll.end_kN.toFixed(2)}\\text{ kN}}"></div>
 
-              <div class="solution-formula-label">Governing Net Wind Pressure Formula on Roof:</div>
-              <div class="solution-equation" data-math="p_{\\text{net}} = p_z \\times (C_{pe} - C_{pi})"></div>
-              <div class="solution-formula-label">Numerical Substitution & Result:</div>
-              <div class="solution-equation solution-result" data-math="p_{\\text{net}} = ${w.pz_kN.toFixed(3)} \\times (${w.cpe} - (${w.cpi >= 0 ? '+' : ''}${w.cpi.toFixed(2)})) = ${w.pz_kN.toFixed(3)} \\times (${(w.cpe - w.cpi).toFixed(2)}) = \\mathbf{${w.p_net_suction.toFixed(3)}\\text{ kN/m}^2\\text{ (Suction Uplift)}}"></div>
-              <div class="solution-remarks">
-                <div class="solution-remarks-title">Variable Remarks & Source:</div>
-                • <b>$p_{\\text{net}}$ (Net Design Wind Pressure)</b> = $${w.p_net_suction.toFixed(3)}\\text{ kN/m}^2$ — Negative sign denotes uplift suction pulling roof sheeting away from rafters.<br>
-                • <b>$p_z$ (Design Wind Pressure)</b> = $${w.pz_kN.toFixed(3)}\\text{ kN/m}^2$.<br>
-                • <b>$C_{pe}$ (External Pressure Coefficient)</b> = $${w.cpe}$ — Aerodynamic coefficient for pitched roof (IS 875 Part 3 Table 5).<br>
-                • <b>$C_{pi}$ (Internal Pressure Coefficient)</b> = $${w.cpi >= 0 ? '+' : ''}${w.cpi.toFixed(2)}$ — Internal pressure for medium building permeability (5% to 20% wall openings, Cl. 7.3.2).
-              </div>
-
-              <div class="solution-formula-label">Governing Nodal Wind Force Normal to Rafter:</div>
-              <div class="solution-equation" data-math="W_w = |p_{\\text{net}}| \\times S \\times a_{\\text{slope}}"></div>
-              <div class="solution-formula-label">Numerical Substitution & Result:</div>
-              <div class="solution-equation solution-substitution" data-math="W_w = ${Math.abs(w.p_net_suction).toFixed(3)} \\times ${spacing.toFixed(2)} \\times ${panelSlope.toFixed(3)} = \\mathbf{${windPanelPoint.toFixed(2)}\\text{ kN}}"></div>
-              <div class="solution-remarks">
-                <div class="solution-remarks-title">Variable Remarks & Source:</div>
-                • <b>$W_w$ (Panel Point Wind Force)</b> = $${windPanelPoint.toFixed(2)}\\text{ kN}$ — Force acting perpendicular to rafter slope at each top chord joint.<br>
-                • <b>$|p_{\\text{net}}|$ (Net Uplift Pressure Magnitude)</b> = $${Math.abs(w.p_net_suction).toFixed(3)}\\text{ kN/m}^2$.<br>
-                • <b>$S$ (Truss Frame Spacing)</b> = $${spacing.toFixed(2)}\\text{ m}$.<br>
-                • <b>$a_{\\text{slope}}$ (Sloping Panel Length)</b> = $${panelSlope.toFixed(3)}\\text{ m}$ — True rafter length between adjacent purlins from Step 2.3.
-              </div>
+              <h4>C) Wind Load (WL)</h4>
+              <ul>
+                <li>Basic Wind Speed ($V_b$): <b>${wl.Vb} m/s</b> (${root.escSafe(G.loc || 'Gaya')})</li>
+                <li>Design Wind Speed ($V_z$):
+                  <div class="solution-equation" data-math="V_z = ${wl.Vb} \\times ${wl.k1} \\times ${wl.k2} \\times ${wl.k3} \\times ${wl.k4} = \\mathbf{${wl.Vz.toFixed(2)}\\text{ m/s}}"></div>
+                </li>
+                <li>Design Wind Pressure ($P_z$):
+                  <div class="solution-equation" data-math="P_z = 0.6(V_z)^2 = 0.6 \\times (${wl.Vz.toFixed(2)})^2 = \\mathbf{${wl.Pz.toFixed(2)}\\text{ N/m}^2}"></div>
+                </li>
+                <li>Design Wind Pressure ($P_d$):
+                  <div class="solution-equation" data-math="P_d = 0.90 \\times 1.0 \\times 0.90 \\times ${wl.Pz.toFixed(2)} = \\mathbf{${wl.Pd.toFixed(2)}\\text{ N/m}^2}"></div>
+                </li>
+                <li>Wind Force ($F$) (Max uplift $C_{pe} = -0.8$, $C_{pi} = \\pm 0.2$):
+                  <div class="solution-equation" data-math="F = (-0.8 - 0.2) \\times ${tb.slopeArea.toFixed(2)} \\times ${wl.Pd.toFixed(2)} = \\mathbf{${wl.total_kN.toFixed(2)}\\text{ kN}}"></div>
+                </li>
+              </ul>
+              <div class="solution-formula-label">Nodal Wind Loads:</div>
+              <div class="solution-equation" data-math="W_{\\text{WL, intermediate}} = \\frac{${wl.total_kN.toFixed(2)}}{${tb.panels}} = \\mathbf{${wl.intermediate_kN.toFixed(2)}\\text{ kN}}"></div>
+              <div class="solution-equation" data-math="W_{\\text{WL, end}} = \\frac{${wl.intermediate_kN.toFixed(2)}}{2} = \\mathbf{${wl.end_kN.toFixed(2)}\\text{ kN}}"></div>
             </div>
           </div>`;
       }
     },
     {
-      title: 'Step 4 — Direct Stiffness FEA Analysis & Equilibrium',
-      badge: 'STIFFNESS ANALYSIS',
-      body: (d) => {
-        const gm = d.governingMember;
+      title: 'iii) Analysis of Truss & iv) Load Combinations',
+      badge: 'ANALYSIS & COMBINATIONS',
+      body: (d, S) => {
+        const tb = Textbook ? Textbook.computeTextbookAnalysis(S) : null;
+        if (!tb) return '<div class="solution-callout">Unable to compute truss analysis.</div>';
+
+        const rGrav = (tb.resGrav && tb.resGrav.reactions.R1y) ? tb.resGrav.reactions.R1y.toFixed(2) : (tb.panels / 2).toFixed(2);
+        const rWind = (tb.resWind && Math.abs(tb.resWind.reactions.R1y)) ? Math.abs(tb.resWind.reactions.R1y).toFixed(2) : '2.68';
+        const wNormDeg = (90 - tb.slopeDeg).toFixed(2);
+
+        // Build Gravity Joint Cards HTML with Key Joint flags
+        let gravJointsHtml = '';
+        tb.joints.forEach((j) => {
+          const isKey = j.isSupport || j.isApex || j.name === 'L1' || j.name === 'U1' || j.name === 'U2';
+          const memberPills = j.members.map(m => `
+            <span class="fbd-mem-pill role-${m.role}">
+              <b>${m.id}</b> (${m.angleDeg >= 0 ? '+' : ''}${m.angleDeg.toFixed(1)}°)
+            </span>`).join('');
+
+          gravJointsHtml += `
+            <div class="fbd-card" data-joint-name="${j.name}" data-key-joint="${isKey ? 'true' : 'false'}">
+              <div class="fbd-card-head">
+                <div class="fbd-head-title">
+                  <b>Joint ${j.name}</b>
+                  <span>(${j.isSupport ? 'Left Eave Support (Pin Shoe)' : (j.isApex ? 'Ridge Apex Node' : (j.name.startsWith('U') ? 'Top Chord Rafter Node' : 'Bottom Chord Tie Node'))})</span>
+                </div>
+                <div class="fbd-head-meta">
+                  <span class="fbd-coord-badge">Coord: (${j.node.x.toFixed(2)}m, ${j.node.y.toFixed(2)}m)</span>
+                  <span class="fbd-badge">${j.isSupport ? 'SUPPORT' : (j.isApex ? 'APEX' : 'INTERMEDIATE')}</span>
+                </div>
+              </div>
+              <div class="fbd-connected-bar">
+                <span class="fbd-conn-label">CONCURRENT MEMBERS:</span>
+                ${memberPills}
+              </div>
+              <div class="fbd-card-body">
+                <div class="fbd-svg-box">
+                  ${Textbook.renderJointFBDSVG(j, 'gravity', tb)}
+                  <div class="fbd-svg-caption">Free-Body Diagram — Joint ${j.name} (Unit Gravity Load)</div>
+                </div>
+                <div class="fbd-eqs">
+                  ${Textbook.formatJointEquations(j, 'gravity', tb)}
+                </div>
+              </div>
+            </div>`;
+        });
+
+        // Build Wind Joint Cards HTML
+        let windJointsHtml = '';
+        tb.joints.slice(0, 5).forEach((j) => {
+          const isKey = j.isSupport || j.isApex || j.name === 'L1' || j.name === 'U1';
+          const memberPills = j.members.map(m => `
+            <span class="fbd-mem-pill role-${m.role}">
+              <b>${m.id}</b> (${m.angleDeg >= 0 ? '+' : ''}${m.angleDeg.toFixed(1)}°)
+            </span>`).join('');
+
+          windJointsHtml += `
+            <div class="fbd-card" data-joint-name="${j.name}" data-key-joint="${isKey ? 'true' : 'false'}">
+              <div class="fbd-card-head">
+                <div class="fbd-head-title">
+                  <b>Joint ${j.name}</b>
+                  <span>(Wind Suction Equilibrium)</span>
+                </div>
+                <div class="fbd-head-meta">
+                  <span class="fbd-coord-badge">Coord: (${j.node.x.toFixed(2)}m, ${j.node.y.toFixed(2)}m)</span>
+                  <span class="fbd-badge">${j.isSupport ? 'SUPPORT' : 'INTERMEDIATE'}</span>
+                </div>
+              </div>
+              <div class="fbd-connected-bar">
+                <span class="fbd-conn-label">CONCURRENT MEMBERS:</span>
+                ${memberPills}
+              </div>
+              <div class="fbd-card-body">
+                <div class="fbd-svg-box">
+                  ${Textbook.renderJointFBDSVG(j, 'wind', tb)}
+                  <div class="fbd-svg-caption">Free-Body Diagram — Joint ${j.name} (Unit Wind Suction)</div>
+                </div>
+                <div class="fbd-eqs">
+                  ${Textbook.formatJointEquations(j, 'wind', tb)}
+                </div>
+              </div>
+            </div>`;
+        });
+
         return `
           <div class="solution-grid">
-            <div class="solution-block">
-              <h3>4.1 Limit State Load Combinations (IS 800 Table 4)</h3>
-              <p>The structure is solved under 4 critical Limit State combinations:</p>
-              <ol>
-                <li><b>Case 1: $1.5(DL + LL)$</b> — Dominant gravity combination.</li>
-                <li><b>Case 2: $1.5(DL + WL_{\\text{pressure}})$</b> — Maximum downwind gravity.</li>
-                <li><b>Case 3: $1.2(DL + LL + WL)$</b> — Simultaneous full action.</li>
-                <li><b>Case 4: $0.9DL + 1.5WL_{\\text{uplift}}$</b> — Maximum suction & stress reversal.</li>
-              </ol>
-            </div>
-            <div class="solution-block">
-              <h3>4.2 Direct Stiffness Global Formulation</h3>
-              <p>Plane truss assembly with $2 \\times               <div class="solution-remarks">
-                <div class="solution-remarks-title">Variable Remarks & Source:</div>
-                • <b>$[K]$ (Global Stiffness Matrix)</b> — Assembled structural stiffness matrix of size $N_{\\text{dof}} \\times N_{\\text{dof}}$.<br>
-                • <b>$\\{u\\}$ (Nodal Displacement Vector)</b> — Unknown joint translation degrees of freedom ($u_x, u_y$).<br>
-                • <b>$\\{F\\}$ (Applied Nodal Load Vector)</b> — Factored nodal force vector for each Limit State combination.
-              </div>
-              <p>Element stiffness matrix for pin-jointed 2D bar with direction cosines $c = \\cos\\alpha, s = \\sin\\alpha$:</p>
-              <div class="solution-formula-label">Governing Bar Element Stiffness Matrix:</div>
-              <div class="solution-equation" data-math="[k_e] = \\frac{EA}{L} \\begin{bmatrix} c^2 & cs & -c^2 & -cs \\\\ cs & s^2 & -cs & -s^2 \\\\ -c^2 & -cs & c^2 & cs \\\\ -cs & -s^2 & cs & s^2 \\end{bmatrix}"></div>
-              <div class="solution-remarks">
-                <div class="solution-remarks-title">Variable Remarks & Source:</div>
-                • <b>$E$ (Modulus of Elasticity)</b> = $2.0 \\times 10^5\\text{ MPa}$ — Structural steel stiffness (IS 800 Cl. 2.2.4.1).<br>
-                • <b>$A$ (Cross-Sectional Area)</b> — Gross cross-sectional area of member from SP: 6(1).<br>
-                • <b>$L$ (Member Length)</b> — Pin-to-pin joint distance.<br>
-                • <b>$c, s$ (Direction Cosines)</b> — $c = \\cos\\alpha, s = \\sin\\alpha$ representing member spatial orientation in global XY coordinates.
-              </div>
-            </div>
             <div class="solution-block wide">
-              <h3>4.3 Support Reactions & Equilibrium Verification</h3>
-              <p>Solved using Gaussian elimination with partial pivoting. Static equilibrium verified across all cases:</p>
-              <div class="solution-formula-label">Governing Vertical Equilibrium Check:</div>
-              <div class="solution-equation" data-math="\\sum F_y = 0,\\quad R_{Ay} = R_{By} = \\frac{\\sum W_{\\text{gravity}}}{2}"></div>
-              <div class="solution-formula-label">Numerical Substitution & Result:</div>
-              <div class="solution-equation solution-result" data-math="R_{\\text{max}} = \\mathbf{${d.maxReaction.toFixed(2)}\\text{ kN}},\\quad \\sum F_x = 0,\\quad \\sum F_y = 0\\quad(\\text{FEA Static Error } < 10^{-12})"></div>
-              <div class="solution-remarks">
-                <div class="solution-remarks-title">Variable Remarks & Source:</div>
-                • <b>$R_{\\text{max}}$ (Maximum Vertical Support Reaction)</b> = $${d.maxReaction.toFixed(2)}\\text{ kN}$ — Downward column load under Case 1: $1.5(DL + LL)$.<br>
-                • <b>$R_{Ay}, R_{By}$ (Support Vertical Reactions)</b> — Left hinge pin and right roller reactions.<br>
-                • <b>$\\sum F_y = 0, \\sum F_x = 0$</b> — Global static equilibrium satisfied with zero numerical residual error.
+              <h3>iii) Analysis of Truss (Unit Load Method)</h3>
+              <p>
+                <b>Methodology:</b> Member axial forces are determined by establishing static equilibrium at each joint (Method of Joints) under unit gravity loading and unit aerodynamic wind suction.
+                All unknown internal member forces are assumed in <b>Tension (+)</b> pointing away from the node to formulate linear equations $\\sum F_x = 0$ and $\\sum F_y = 0$.
+              </p>
+
+              <h4>A) Unit Gravity Load Analysis</h4>
+              <p>
+                A unit load ($1.0\\text{ kN}$) is applied at intermediate top chord panel points and half-load ($0.5\\text{ kN}$) at end eave points acting vertically downwards.
+                <br><b>Vertical Support Reactions:</b> $R_1 = R_2 = \\frac{1}{2} \\times [1.0 \\times (${tb.panels} - 1) + 0.5 \\times 2] = \\mathbf{${rGrav}\\text{ kN (Upwards)}}$.
+              </p>
+
+              <div class="truss-textbook-wrap">
+                ${Textbook.renderFullTrussSVG(tb, 'gravity')}
               </div>
-              <h4>Critical Member Governing Axial Forces:</h4>
-              <table class="solution-data">
-                <tr><th>Member Group</th><th>Governing Member</th><th>Action Type</th><th>Governing Load Case</th><th>Design Force (Pu)</th></tr>
-                <tr><td>Top Chord</td><td>Member M${gm.idx + 1}</td><td>Compression</td><td>${root.escSafe(gm.governingLC)}</td><td><b>${Math.abs(gm.governingForce).toFixed(2)} kN</b></td></tr>
-                <tr><td>Bottom Chord</td><td>Main Tie</td><td>Tension</td><td>1.5(DL + LL)</td><td><b>${d.members.filter(m => m.role.includes('bottom')).reduce((max, m) => Math.max(max, m.maxTension), 0).toFixed(2)} kN</b></td></tr>
-                <tr><td>Bottom Chord Reversal</td><td>Main Tie</td><td>Compression (Wind Suction)</td><td>0.9DL + 1.5WL(Uplift)</td><td><b>${d.members.filter(m => m.role.includes('bottom')).reduce((max, m) => Math.max(max, m.maxCompression), 0).toFixed(2)} kN</b></td></tr>
-              </table>
+
+              <div class="solution-formula-label">Joint Equilibrium Explorer & Free-Body Diagrams (Gravity Load):</div>
+              <div class="joint-filter-bar">
+                <span class="filter-label">SELECT JOINTS:</span>
+                <button class="joint-filter-btn active" data-filter="key">⭐ Critical Joints (Recommended)</button>
+                <button class="joint-filter-btn" data-filter="L0">Joint L0 (Support)</button>
+                <button class="joint-filter-btn" data-filter="U1">Joint U1 (Rafter)</button>
+                <button class="joint-filter-btn" data-filter="L1">Joint L1 (Main Tie)</button>
+                <button class="joint-filter-btn" data-filter="U2">Joint U2</button>
+                <button class="joint-filter-btn" data-filter="apex">Ridge Apex</button>
+                <button class="joint-filter-btn" data-filter="all">All Joints (${tb.joints.length})</button>
+
+                <div class="joint-view-switch">
+                  <span class="filter-label">CARD VIEW:</span>
+                  <button class="joint-view-btn active" id="btnFbdStacked" data-fbd-layout="stacked" title="Diagram on Top, Full-Width Math Below">Stacked (One Below One)</button>
+                  <button class="joint-view-btn" id="btnFbdSide" data-fbd-layout="side" title="Diagram on Left, Math on Right">Side-by-Side</button>
+                </div>
+              </div>
+
+              <div class="fbd-card-grid" id="gravityFbdGrid">
+                ${gravJointsHtml}
+              </div>
+
+              <h4>B) Unit Wind Load Analysis (Perpendicular Suction)</h4>
+              <p>
+                Unit wind force ($1.0\\text{ kN}$) acts outwards (suction) perpendicular to the sloping rafters, with $0.5\\text{ kN}$ at eave joints.
+                Rafter pitch $\\theta = ${tb.slopeDeg.toFixed(2)}^\\circ$, making wind normal angle with the horizontal $\\theta_w = ${(90 + tb.slopeDeg).toFixed(2)}^\\circ$.
+                <br><b>Hold-Down Support Reactions:</b> $R_{V1} = R_{V2} = \\mathbf{${rWind}\\text{ kN (Downwards Uplift Resistance)}}$.
+              </p>
+
+              <div class="truss-textbook-wrap">
+                ${Textbook.renderFullTrussSVG(tb, 'wind')}
+              </div>
+
+              <div class="solution-formula-label">Joint Equilibrium Diagrams (Wind Suction):</div>
+              <div class="fbd-card-grid" id="windFbdGrid">
+                ${windJointsHtml}
+              </div>
+
+              <h3>iv) Design Load Combinations (IS 800:2007 Table 4)</h3>
+              <p>
+                Calculated member forces in kN across Limit State combinations. Positive ($+$) denotes <b>Tension</b>, negative ($-$) denotes <b>Compression</b>.
+                Peak design loads represent governing design demand across:
+                <b>Case 1:</b> $1.5(DL + LL)$, <b>Case 2:</b> $1.2(DL + LL + WL)$, <b>Case 3:</b> $1.5(DL + WL)$, and <b>Case 4:</b> $0.9DL + 1.5WL$ (Stress Reversal).
+              </p>
+
+              <div class="solution-formula-label">Table 1: Governing Design Load Combinations (kN)</div>
+              ${Textbook.renderTable1HTML(tb)}
             </div>
           </div>`;
       }
@@ -995,6 +932,39 @@
     }
   ];
 
+  function setStudyLayout(mode) {
+    const app = document.querySelector('.app');
+    if (!app) return;
+    app.classList.remove('mode-below-wide', 'mode-side-by-side', 'mode-full-sheet');
+    if (mode === 'wide') {
+      app.classList.add('mode-below-wide');
+    } else if (mode === 'side') {
+      app.classList.add('mode-side-by-side');
+    } else if (mode === 'full') {
+      app.classList.add('mode-full-sheet');
+    }
+    document.querySelectorAll('.ctrl-btn[data-layout]').forEach((b) => {
+      b.classList.toggle('active', b.dataset.layout === mode);
+    });
+    try {
+      localStorage.setItem('truss-study-layout-mode', mode);
+    } catch (e) {}
+    if (typeof root.resize === 'function') {
+      requestAnimationFrame(() => root.resize());
+    }
+    setTimeout(renderSolutionMathSafe, 60);
+  }
+
+  function prevStep() {
+    const cur = root.S ? (Number(root.S.step) || 0) : 0;
+    setSolutionStep(Math.max(0, cur - 1));
+  }
+
+  function nextStep() {
+    const cur = root.S ? (Number(root.S.step) || 0) : 0;
+    setSolutionStep(Math.min(7, cur + 1));
+  }
+
   function renderLiveSolution(stepIdx) {
     const S = root.S;
     const d = root.stableAnalysis ? root.stableAnalysis() : null;
@@ -1008,13 +978,17 @@
     const step = LIVE_SOLUTION[idx];
     const G = (root.GROUPS && root.GROUPS[S.group]) || {};
 
-    const heading = document.getElementById('solutionHeading');
+    const studyTitle = document.getElementById('studyTitle');
     const sub = document.getElementById('studySub');
+    const heading = document.getElementById('solutionHeading');
     const content = document.getElementById('solutionContent');
     const paper = document.getElementById('solutionPaper');
+    const stepBadge = document.getElementById('stepCounterBadge');
 
+    if (studyTitle) studyTitle.textContent = step.title;
     if (heading) heading.textContent = step.title;
     if (sub) sub.textContent = `GROUP ${S.group} · ${step.badge} · STUDENT DESIGN SHEET`;
+    if (stepBadge) stepBadge.textContent = `Step ${idx + 1} / 8`;
 
     // Ensure active tab class is updated immediately
     document.querySelectorAll('.solution-tab').forEach((b, j) => {
@@ -1029,7 +1003,74 @@
     }
 
     try {
-      if (content) content.innerHTML = step.body(d, S, G);
+      if (content) {
+        const bodyHtml = step.body(d, S, G);
+        const navFooterHtml = `
+          <div class="solution-nav-footer">
+            <button class="btn-step-nav" id="footerPrevBtn">← Previous Step</button>
+            <span class="solution-step-indicator">Step ${idx + 1} of 8 (${step.badge})</span>
+            <button class="btn-step-nav" id="footerNextBtn">Next Step →</button>
+          </div>
+        `;
+        content.innerHTML = bodyHtml + navFooterHtml;
+
+        // Wire footer buttons
+        const fPrev = content.querySelector('#footerPrevBtn');
+        if (fPrev) fPrev.addEventListener('click', prevStep);
+        const fNext = content.querySelector('#footerNextBtn');
+        if (fNext) fNext.addEventListener('click', nextStep);
+
+        // If Step 4, wire interactive joint filter buttons
+        const filterBar = content.querySelector('.joint-filter-bar');
+        if (filterBar) {
+          filterBar.querySelectorAll('.joint-filter-btn').forEach((btn) => {
+            btn.addEventListener('click', () => {
+              filterBar.querySelectorAll('.joint-filter-btn').forEach((b) => b.classList.remove('active'));
+              btn.classList.add('active');
+              const filter = btn.dataset.filter;
+              content.querySelectorAll('.fbd-card').forEach((card) => {
+                const jName = card.dataset.jointName;
+                const isKey = card.dataset.keyJoint === 'true';
+                if (filter === 'all') {
+                  card.style.display = '';
+                } else if (filter === 'key') {
+                  card.style.display = isKey ? '' : 'none';
+                } else if (filter === 'apex') {
+                  card.style.display = (card.querySelector('.fbd-badge')?.textContent.includes('APEX') || (jName && jName.includes('U' + Math.floor((d.panels || 6) / 2)))) ? '' : 'none';
+                } else {
+                  card.style.display = (jName === filter) ? '' : 'none';
+                }
+              });
+            });
+          });
+
+          // Card layout switcher: Stacked (One Below One) vs Side-by-Side
+          const savedCardLayout = localStorage.getItem('truss_joint_card_view') || 'stacked';
+          function applyCardLayout(mode) {
+            filterBar.querySelectorAll('.joint-view-btn').forEach((b) => {
+              b.classList.toggle('active', b.dataset.fbdLayout === mode);
+            });
+            content.querySelectorAll('.fbd-card-body').forEach((b) => {
+              b.classList.toggle('side-by-side', mode === 'side');
+            });
+            try {
+              localStorage.setItem('truss_joint_card_view', mode);
+            } catch (e) {}
+          }
+
+          filterBar.querySelectorAll('.joint-view-btn').forEach((btn) => {
+            btn.addEventListener('click', () => {
+              applyCardLayout(btn.dataset.fbdLayout);
+            });
+          });
+
+          applyCardLayout(savedCardLayout);
+
+          // Set initial filter to key joints
+          const initialFilterBtn = filterBar.querySelector('.joint-filter-btn[data-filter="key"]');
+          if (initialFilterBtn) initialFilterBtn.click();
+        }
+      }
     } catch (err) {
       console.error('Error rendering step ' + (idx + 1) + ':', err);
       if (content) {
@@ -1049,7 +1090,7 @@
     ['Problem Statement', 'Start with the exact group data: span, building length, height, spacing, roof, terrain, connection and column arrangement. Span is transverse; building length controls frame count.', ''],
     ['Geometry', 'Create one transverse truss, then repeat the selected number of trusses along the building length. Columns sit under the truss support nodes. Purlins connect corresponding roof points longitudinally.', 'R = \\frac{L}{2}\\tan\\theta'],
     ['Loads (IS 875)', 'Apply dead load (Part 1), roof imposed load with slope reduction and 0.4 kN/m² minimum (Part 2), and wind pressure with k1, k2, k3, k4 factors (Part 3).', 'V_z = V_b k_1 k_2 k_3 k_4,\\quad p_z = 0.6 V_z^2'],
-    ['Analysis', 'Formulate direct stiffness matrix [K]{u} = {F} and solve support reactions and member axial forces for all 4 Limit State load combinations.', '[K]\\{u\\} = \\{F\\},\\quad \\sum F_y = 0'],
+    ['Analysis (Unit Load Method)', 'Determine member axial forces using the Unit Load Method (Method of Joints) under unit gravity and unit wind loads with joint equilibrium and comprehensive load combinations.', '1.5(DL + LL),\\quad 1.2(DL + LL + WL),\\quad 1.5(DL + WL)'],
     ['Members (IS 800)', 'Classify each member and check Perry-Robertson compressive strength (Cl. 7.1.2) and tension resistance (Cl. 6). Check slenderness against Table 3 limits.', 'f_{cd} = \\frac{f_y/\\gamma_{m0}}{\\phi + (\\phi^2 - \\lambda^2)^{0.5}}'],
     ['Purlins (IS 800)', 'Purlins are placed on sloping rafters and subjected to biaxial bending (Mz, My). Check interaction ratio Mz/Mdz + My/Mdy <= 1.0 and deflection <= L/180.', '\\frac{M_z}{M_{dz}} + \\frac{M_y}{M_{dy}} \\le 1.0'],
     ['Columns (IS 800)', 'Design the 2C back-to-back built-up columns with web spacing s (Iy >= Iz) and design the lacing system for transverse shear Vt = 0.025 P.', 'V_t \\ge 0.025 P,\\quad \\lambda_e = 1.05 \\lambda_z'],
@@ -1084,9 +1125,44 @@
     root.S.step = idx;
   }
 
+  // Initialize UI controls once DOM is interactive
+  function initStudyUI() {
+    // Layout switcher buttons
+    document.querySelectorAll('.ctrl-btn[data-layout]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        setStudyLayout(btn.dataset.layout);
+      });
+    });
+
+    // Step navigation buttons
+    const prevBtn = document.getElementById('btnStepPrev');
+    if (prevBtn) prevBtn.addEventListener('click', prevStep);
+    const nextBtn = document.getElementById('btnStepNext');
+    if (nextBtn) nextBtn.addEventListener('click', nextStep);
+
+    // Print button
+    const printBtn = document.getElementById('btnPrintSheet');
+    if (printBtn) printBtn.addEventListener('click', () => window.print());
+
+    // Restore saved layout mode
+    try {
+      const savedMode = localStorage.getItem('truss-study-layout-mode') || 'below';
+      setStudyLayout(savedMode);
+    } catch (e) {}
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initStudyUI);
+  } else {
+    initStudyUI();
+  }
+
   const StudyModule = {
     renderLiveSolution,
     setSolutionStep,
+    setStudyLayout,
+    prevStep,
+    nextStep,
     openWorkflow,
     renderWorkflow
   };

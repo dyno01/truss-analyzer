@@ -257,11 +257,40 @@
     <!-- Bottom Study Panel (KaTeX Assignment Solution Sheet) -->
     <section class="study" id="studyPanel">
       <div class="studyhead">
-        <div>
+        <div class="studyhead-title-wrap">
           <b id="studyTitle">Step 1 — Given Data & Code Basis</b>
           <small id="studySub">GROUP G5 · IS 800 / IS 875 · LIMIT STATE</small>
         </div>
-        <span>Student-Assignment Format · Equation → Substitution → Result</span>
+        <div class="studyhead-controls">
+          <div class="layout-switch-bar">
+            <span class="ctrl-label">LAYOUT:</span>
+            <button class="ctrl-btn active" id="btnLayoutBelow" data-layout="below" title="One Below One (Stacked view)">
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h12v4H2zm0 6h12v6H2z"/></svg>
+              <span>Below</span>
+            </button>
+            <button class="ctrl-btn" id="btnLayoutWide" data-layout="wide" title="Wide Below (Full width stacked)">
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M1 2h14v4H1zm0 6h14v6H1z"/></svg>
+              <span>Wide Below</span>
+            </button>
+            <button class="ctrl-btn" id="btnLayoutSide" data-layout="side" title="Side-by-Side (3D on left, Solution on right)">
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h5v12H2zm7 0h5v12H9z"/></svg>
+              <span>Side-by-Side</span>
+            </button>
+            <button class="ctrl-btn" id="btnLayoutFull" data-layout="full" title="Full Sheet (Maximize calculation sheet)">
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M1 1v5h2V3h3V1H1zm9 0v2h3v3h2V1h-5zm3 9v3h-3v2h5v-5h-2zM3 10H1v5h5v-2H3v-3z"/></svg>
+              <span>Full Sheet</span>
+            </button>
+          </div>
+          <div class="step-nav-bar">
+            <button class="ctrl-btn nav-btn" id="btnStepPrev" title="Previous Step">← Prev</button>
+            <span class="step-badge" id="stepCounterBadge">Step 1 / 8</span>
+            <button class="ctrl-btn nav-btn" id="btnStepNext" title="Next Step">Next →</button>
+            <button class="ctrl-btn icon-btn" id="btnPrintSheet" title="Print / Export Full Calculation Sheet">
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M4 1h8v3H4zm9 4H3a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h1v2h8v-2h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm-2 9H5v-3h6v3zm1-7a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/></svg>
+              <span>Print</span>
+            </button>
+          </div>
+        </div>
       </div>
       <div class="solution-tabs" id="solutionTabs">
         <button class="solution-tab active" data-solution-step="0"><b>01</b><span>Given Data</span></button>
@@ -334,6 +363,7 @@
   <script src="js/engine/solver.js"></script>
   <script src="js/engine/code_is800.js"></script>
   <script src="js/engine/analysis.js"></script>
+  <script src="js/engine/textbook.js"></script>
   <script src="js/engine/scene.js"></script>
   <script src="js/ui/study.js"></script>
   <script src="js/ui/inspector.js"></script>
