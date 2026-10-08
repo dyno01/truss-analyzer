@@ -5,14 +5,37 @@
 
 ---
 
-## 👥 Project Team
+## 👥 Project Team & Key Contributions
 
-| Sr. No. | Student Name | Role / Key Contributions |
-| :---: | :--- | :--- |
-| **1** | **Soham Vivekananda Phand** | **Computational Mechanics & Structural FEA Lead**<br>• Formulated 2D truss global stiffness matrix $[K]\{u\} = \{F\}$ using Direct Stiffness Method<br>• Implemented boundary conditions (pinned and roller supports) & static displacement solver<br>• Programmed internal axial force analysis, nodal equilibrium checks, and tension/compression classification |
-| **2** | **Ishwar Ganesh Rathod** | **Concept-to-Visual Architect & IS 800 Design Engineer**<br>• Conceptualized idea-to-visual workflow transforming handwritten textbook notes into an interactive digital studio<br>• Designed academic solution sheet UI, KaTeX LaTeX equation cards, and engineering workbook aesthetic<br>• Implemented IS 800:2007 Limit State Member design (Perry-Robertson Table 9c, tension net rupture & welded joints) |
-| **3** | **Viraj Rajendra Saawant** | **3D WebGL Graphics Engine & Interactive CAD Architect**<br>• Developed real-time Three.js 3D structural CAD viewport with native orbit, pinch-zoom & touch gestures<br>• Engineered parametric longitudinal frame replication across building length, purlin lines & stability bracing<br>• Built responsive multi-pane layout resizers and dynamic 3D element selection highlight with camera framing |
-| **4** | **Ayyan Yunus Sayyed** | **Wind Engineering, Load Combinations & Purlin Design Lead**<br>• Programmed IS 875 (Part 3): 2015 wind analysis engine ($V_z = V_b \cdot k_1 \cdot k_2 \cdot k_3 \cdot k_4$ and design pressure $p_z$)<br>• Formulated critical limit state load combinations ($1.5DL+1.5LL$, $1.5DL+1.5WL$, $1.2DL+1.2LL+1.2WL$, $0.9DL+1.5WL$)<br>• Implemented IS 800 Cl. 8.2 & 9.3.1 channel purlin biaxial bending analysis ($M_z, M_y$), interaction checks & deflection limits |
+### 1. Soham Vivekananda Phand
+**Role:** Computational Mechanics & Structural FEA Lead  
+* **Direct Stiffness Method Solver:** Formulated the 2D truss global stiffness matrix $[K]\{u\} = \{F\}$, transforming local element stiffness into global structural coordinates.
+* **Boundary Conditions & Displacements:** Implemented static boundary restraints for pinned and roller supports to solve for global nodal joint deflections.
+* **Internal Force Recovery:** Developed member axial force calculations, static equilibrium verification ($\sum F_x = 0, \sum F_y = 0$), and tension vs. compression categorization.
+
+---
+
+### 2. Ishwar Ganesh Rathod
+**Role:** Concept-to-Visual Architect & IS 800 Design Engineer  
+* **Concept-to-Visual Architecture:** Conceptualized the end-to-end workflow of transforming textbook handwritten calculations and classroom design notes into an interactive digital engineering studio.
+* **Academic Solution Sheet UI:** Designed the step-by-step calculation cards, KaTeX LaTeX mathematical equation rendering, and authentic university workbook aesthetic.
+* **IS 800:2007 Limit State Member Design:** Implemented code provisions for compression member capacity via the Perry-Robertson formula (Table 9c, Buckling Class $c$), tension tie net rupture ($T_{dn}$), and welded fillet joint connections.
+
+---
+
+### 3. Viraj Rajendra Saawant
+**Role:** 3D WebGL Graphics Engine & Interactive CAD Architect  
+* **Interactive 3D CAD Viewport:** Developed the real-time Three.js 3D structural visualizer featuring native orbit rotation, two-finger pinch zoom, and multi-touch pan gestures.
+* **Parametric Building Assembler:** Engineered dynamic longitudinal frame replication across building length, rafter purlin lines, and lateral wind stability bracing systems.
+* **Responsive CAD Interface:** Built draggable multi-pane layout resizers and dynamic 3D element selection highlighting with smooth camera framing.
+
+---
+
+### 4. Ayyan Yunus Sayyed
+**Role:** Wind Engineering, Load Combinations & Purlin Design Lead  
+* **IS 875 (Part 3): 2015 Wind Engine:** Formulated location-based wind speed calculations ($V_z = V_b \cdot k_1 \cdot k_2 \cdot k_3 \cdot k_4$), terrain multipliers, design wind pressure ($p_z$), and internal/external pressure coefficients ($C_{pe}, C_{pi}$).
+* **Limit State Load Combinations:** Structured the critical design load combinations ($1.5DL+1.5LL$, $1.5DL+1.5WL$, $1.2DL+1.2LL+1.2WL$, and $0.9DL+1.5WL$ for wind uplift).
+* **Channel Purlin Biaxial Bending:** Implemented IS 800 Clause 8.2 & 9.3.1 biaxial bending checks ($M_z, M_y$) on sloping roofs, interaction capacity ratios, and deflection limits ($L/180$).
 
 ---
 
