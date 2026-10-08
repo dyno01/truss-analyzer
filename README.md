@@ -7,12 +7,12 @@
 
 ## 👥 Project Team
 
-| Sr. No. | Student Name | Role / Contribution |
+| Sr. No. | Student Name | Role / Key Contributions |
 | :---: | :--- | :--- |
-| **1** | **Ishwar Ganesh Rathod** | **Concept-to-Visual Design Lead & IS 800 Design Engineer**<br>• Transformed classroom ideas & handwritten calculations into interactive digital visuals<br>• Designed the academic solution sheet UI, mathematical cards & workbook aesthetic<br>• Implemented IS 800:2007 Limit State Member (Perry-Robertson) & Connection logic |
-| **2** | **Soham Vivekananda Phand** | **Structural FEA Engine & Direct Stiffness Solver**<br>• 2D Matrix stiffness formulation, nodal displacement & equilibrium solver |
-| **3** | **Viraj Rajendra Saawant** | **3D WebGL Scene & Viewport Architect**<br>• Three.js 3D CAD visualization, multi-frame rendering, and resizer layout |
-| **4** | **Ayyan Yunus Sayyed** | **Wind Engineering & Load Combinations**<br>• IS 875 (Part 3) wind pressure distribution and multi-load combinations |
+| **1** | **Soham Vivekananda Phand** | **Computational Mechanics & Structural FEA Lead**<br>• Formulated 2D truss global stiffness matrix $[K]\{u\} = \{F\}$ using Direct Stiffness Method<br>• Implemented boundary conditions (pinned and roller supports) & static displacement solver<br>• Programmed internal axial force analysis, nodal equilibrium checks, and tension/compression classification |
+| **2** | **Ishwar Ganesh Rathod** | **Concept-to-Visual Architect & IS 800 Design Engineer**<br>• Conceptualized idea-to-visual workflow transforming handwritten textbook notes into an interactive digital studio<br>• Designed academic solution sheet UI, KaTeX LaTeX equation cards, and engineering workbook aesthetic<br>• Implemented IS 800:2007 Limit State Member design (Perry-Robertson Table 9c, tension net rupture & welded joints) |
+| **3** | **Viraj Rajendra Saawant** | **3D WebGL Graphics Engine & Interactive CAD Architect**<br>• Developed real-time Three.js 3D structural CAD viewport with native orbit, pinch-zoom & touch gestures<br>• Engineered parametric longitudinal frame replication across building length, purlin lines & stability bracing<br>• Built responsive multi-pane layout resizers and dynamic 3D element selection highlight with camera framing |
+| **4** | **Ayyan Yunus Sayyed** | **Wind Engineering, Load Combinations & Purlin Design Lead**<br>• Programmed IS 875 (Part 3): 2015 wind analysis engine ($V_z = V_b \cdot k_1 \cdot k_2 \cdot k_3 \cdot k_4$ and design pressure $p_z$)<br>• Formulated critical limit state load combinations ($1.5DL+1.5LL$, $1.5DL+1.5WL$, $1.2DL+1.2LL+1.2WL$, $0.9DL+1.5WL$)<br>• Implemented IS 800 Cl. 8.2 & 9.3.1 channel purlin biaxial bending analysis ($M_z, M_y$), interaction checks & deflection limits |
 
 ---
 
