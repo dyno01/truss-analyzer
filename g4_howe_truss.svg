@@ -1,0 +1,131 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 440" width="820" height="440" font-family="'Times New Roman', Georgia, serif">
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#111"/>
+    </marker>
+    <marker id="dim" markerWidth="8" markerHeight="8" refX="0" refY="4" orient="auto-start-reverse">
+      <path d="M8,0 L0,4 L8,8" fill="none" stroke="#111" stroke-width="1"/>
+    </marker>
+    <pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="6" stroke="#111" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="820" height="440" fill="#fff"/>
+
+  <!-- Nodal loads -->
+  <g stroke="#111" stroke-width="1.2" marker-end="url(#arr)" fill="none">
+    <line x1="80"     y1="248" x2="80"     y2="296"/>
+    <line x1="186.67" y1="194" x2="186.67" y2="242"/>
+    <line x1="293.33" y1="141" x2="293.33" y2="189"/>
+    <line x1="400"    y1="88"  x2="400"    y2="136"/>
+    <line x1="506.67" y1="141" x2="506.67" y2="189"/>
+    <line x1="613.33" y1="194" x2="613.33" y2="242"/>
+    <line x1="720"    y1="248" x2="720"    y2="296"/>
+  </g>
+  <g font-size="12" text-anchor="middle" fill="#111">
+    <text x="80"     y="242">2.15 kN</text>
+    <text x="186.67" y="188">4.30 kN</text>
+    <text x="293.33" y="135">4.30 kN</text>
+    <text x="400"    y="82">4.30 kN</text>
+    <text x="506.67" y="135">4.30 kN</text>
+    <text x="613.33" y="188">4.30 kN</text>
+    <text x="720"    y="242">2.15 kN</text>
+  </g>
+
+  <!-- Web members (thin) -->
+  <g stroke="#111" stroke-width="1.5" fill="none">
+    <line x1="186.67" y1="246.67" x2="186.67" y2="300"/>
+    <line x1="293.33" y1="193.33" x2="293.33" y2="300"/>
+    <line x1="400"    y1="140"    x2="400"    y2="300"/>
+    <line x1="506.67" y1="193.33" x2="506.67" y2="300"/>
+    <line x1="613.33" y1="246.67" x2="613.33" y2="300"/>
+    <line x1="186.67" y1="300" x2="293.33" y2="193.33"/>
+    <line x1="293.33" y1="300" x2="400"    y2="140"/>
+    <line x1="613.33" y1="300" x2="506.67" y2="193.33"/>
+    <line x1="506.67" y1="300" x2="400"    y2="140"/>
+  </g>
+
+  <!-- Chords (thick) -->
+  <g stroke="#111" stroke-width="3.5" fill="none" stroke-linejoin="round">
+    <polyline points="80,300 186.67,246.67 293.33,193.33 400,140 506.67,193.33 613.33,246.67 720,300"/>
+    <line x1="80" y1="300" x2="720" y2="300"/>
+  </g>
+
+  <!-- Joints -->
+  <g fill="#fff" stroke="#111" stroke-width="1.5">
+    <circle cx="80" cy="300" r="4"/><circle cx="186.67" cy="300" r="4"/><circle cx="293.33" cy="300" r="4"/>
+    <circle cx="400" cy="300" r="4"/><circle cx="506.67" cy="300" r="4"/><circle cx="613.33" cy="300" r="4"/>
+    <circle cx="720" cy="300" r="4"/>
+    <circle cx="186.67" cy="246.67" r="4"/><circle cx="293.33" cy="193.33" r="4"/><circle cx="400" cy="140" r="4"/>
+    <circle cx="506.67" cy="193.33" r="4"/><circle cx="613.33" cy="246.67" r="4"/>
+  </g>
+
+  <!-- Supports: hinge (left), roller (right) -->
+  <polygon points="80,304 68,326 92,326" fill="none" stroke="#111" stroke-width="1.5"/>
+  <rect x="60" y="326" width="40" height="6" fill="url(#hatch)" stroke="none"/>
+  <line x1="60" y1="326" x2="100" y2="326" stroke="#111" stroke-width="1.5"/>
+  <polygon points="720,304 708,322 732,322" fill="none" stroke="#111" stroke-width="1.5"/>
+  <circle cx="712" cy="325" r="3" fill="none" stroke="#111"/><circle cx="728" cy="325" r="3" fill="none" stroke="#111"/>
+  <line x1="700" y1="328" x2="740" y2="328" stroke="#111" stroke-width="1.5"/>
+  <rect x="700" y="328" width="40" height="6" fill="url(#hatch)"/>
+
+  <!-- Slope angle -->
+  <path d="M122,300 A42,42 0 0 0 117.6,281.2" fill="none" stroke="#111" stroke-width="1"/>
+  <text x="128" y="291" font-size="12" font-style="italic">θ = 26.57°</text>
+
+  <!-- Joint labels -->
+  <g font-size="14" font-style="italic" fill="#111">
+    <text x="70" y="290" text-anchor="end">L₀</text>
+    <text x="186.67" y="320" text-anchor="middle">L₁</text>
+    <text x="293.33" y="320" text-anchor="middle">L₂</text>
+    <text x="400" y="320" text-anchor="middle">L₃</text>
+    <text x="506.67" y="320" text-anchor="middle">L₄</text>
+    <text x="613.33" y="320" text-anchor="middle">L₅</text>
+    <text x="730" y="290">L₆</text>
+    <text x="176" y="240" text-anchor="end">U₁</text>
+    <text x="283" y="187" text-anchor="end">U₂</text>
+    <text x="412" y="132">U₃</text>
+    <text x="517" y="187">U₄</text>
+    <text x="624" y="240">U₅</text>
+  </g>
+
+  <!-- Rise dimension -->
+  <g stroke="#111" stroke-width="1" fill="none">
+    <line x1="400" y1="140" x2="780" y2="140" stroke-dasharray="4 3" stroke-width="0.8"/>
+    <line x1="720" y1="300" x2="780" y2="300" stroke-dasharray="4 3" stroke-width="0.8"/>
+    <line x1="770" y1="143" x2="770" y2="297" marker-start="url(#dim)" marker-end="url(#dim)"/>
+  </g>
+  <text x="782" y="225" font-size="13" font-style="italic">R = 4 m</text>
+
+  <!-- Panel dimensions -->
+  <g stroke="#111" stroke-width="1" fill="none">
+    <line x1="80" y1="342" x2="80" y2="372" stroke-width="0.8"/>
+    <line x1="186.67" y1="342" x2="186.67" y2="352" stroke-width="0.8"/>
+    <line x1="293.33" y1="342" x2="293.33" y2="352" stroke-width="0.8"/>
+    <line x1="400" y1="342" x2="400" y2="352" stroke-width="0.8"/>
+    <line x1="506.67" y1="342" x2="506.67" y2="352" stroke-width="0.8"/>
+    <line x1="613.33" y1="342" x2="613.33" y2="352" stroke-width="0.8"/>
+    <line x1="720" y1="342" x2="720" y2="372" stroke-width="0.8"/>
+    <line x1="82" y1="347" x2="718" y2="347" stroke-width="0"/>
+  </g>
+  <g stroke="#111" stroke-width="1" fill="none">
+    <line x1="82" y1="348" x2="184.67" y2="348" marker-start="url(#dim)" marker-end="url(#dim)"/>
+    <line x1="188.67" y1="348" x2="291.33" y2="348" marker-start="url(#dim)" marker-end="url(#dim)"/>
+    <line x1="295.33" y1="348" x2="398" y2="348" marker-start="url(#dim)" marker-end="url(#dim)"/>
+    <line x1="402" y1="348" x2="504.67" y2="348" marker-start="url(#dim)" marker-end="url(#dim)"/>
+    <line x1="508.67" y1="348" x2="611.33" y2="348" marker-start="url(#dim)" marker-end="url(#dim)"/>
+    <line x1="615.33" y1="348" x2="718" y2="348" marker-start="url(#dim)" marker-end="url(#dim)"/>
+  </g>
+  <g font-size="11" text-anchor="middle" fill="#111">
+    <text x="133.3" y="343">2.667</text><text x="240" y="343">2.667</text><text x="346.7" y="343">2.667</text>
+    <text x="453.3" y="343">2.667</text><text x="560" y="343">2.667</text><text x="666.7" y="343">2.667</text>
+  </g>
+
+  <!-- Span dimension -->
+  <line x1="82" y1="368" x2="718" y2="368" stroke="#111" stroke-width="1" marker-start="url(#dim)" marker-end="url(#dim)"/>
+  <text x="400" y="364" font-size="13" font-style="italic" text-anchor="middle" fill="#111" stroke="#fff" stroke-width="4" paint-order="stroke">Span L = 16 m (6 panels @ 2.667 m)</text>
+
+  <!-- Caption -->
+  <text x="400" y="408" font-size="15" font-weight="bold" text-anchor="middle" fill="#111">Fig. 1  Howe Roof Truss (Group G4): Geometry and Nodal Dead Loads</text>
+  <text x="400" y="427" font-size="12" text-anchor="middle" fill="#444">Rise 1/4 span, spacing 4 m, AC sheet roofing, all dimensions in metres</text>
+</svg>

@@ -6,8 +6,8 @@
 (function(root) {
   'use strict';
 
-  const STORAGE_KEY = 'truss-studio-layout-v6';
-  const DEFAULTS = { left: 275, right: 345, study: 390 };
+  const STORAGE_KEY = 'truss-studio-layout-figma';
+  const DEFAULTS = { left: 288, right: 336, study: 460 };
 
   function getCSSProp(prop) {
     return document.documentElement.style.getPropertyValue(prop).trim();
@@ -55,8 +55,10 @@
   function resetLayout() {
     try {
       localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem('truss-study-layout-mode');
     } catch (e) {}
     applyLayout(DEFAULTS, false);
+    if (root.setStudyLayout) root.setStudyLayout('below');
   }
 
   function initResizer() {

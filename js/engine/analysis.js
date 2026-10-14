@@ -141,7 +141,8 @@
 
       // Member Capacities per IS 800:
       const tensionRes = IS800.calcTensionCapacity(At, fy, fu, 1.10, 1.25);
-      const compRes = IS800.calcCompressionCapacity(At, rmin, L_mm, Number(S.K) || 1.0, fy, E);
+      const K_factor = Number(S.K) || 0.85;
+      const compRes = IS800.calcCompressionCapacity(At, rmin, L_mm, K_factor, fy, E);
 
       const utilTension = maxTension / Math.max(0.001, tensionRes.Td);
       const utilCompression = maxCompression / Math.max(0.001, compRes.Pd);
@@ -196,7 +197,8 @@
       dl_kN_m2,
       ll_kN_m2,
       Math.abs(windAnalysis.p_net_suction),
-      grade
+      grade,
+      Number(S.deflectionLimit) || 180
     );
 
     // Built-up Column & Lacing Check
@@ -217,7 +219,8 @@
       Number(S.weldSize) || 6,
       Number(S.weldLength) || 65,
       Number(S.boltDia) || 16,
-      grade
+      grade,
+      S.fabrication || 'shop'
     );
 
     // Structural Checklist
@@ -295,7 +298,7 @@
       const gm = d.governingMember;
       const P_req = Math.abs(gm.governingForce);
       const L_mm = gm.length_m * 1000;
-      const K = Number(S.K) || 1.0;
+      const K = Number(S.K) || 0.85;
       const fy = (Standards.STEEL_GRADES[S.grade || 'E250'] || {}).fy || 250;
       const fu = (Standards.STEEL_GRADES[S.grade || 'E250'] || {}).fu || 410;
       const E = (Standards.STEEL_GRADES[S.grade || 'E250'] || {}).E || 200000;

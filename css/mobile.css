@@ -1,0 +1,1082 @@
+/**
+ * Structural Design Studio — Mobile UI Stylesheet
+ * Faithfully implementing Figma designs:
+ * - 4:4862 (Overview Tab)
+ * - 4:4943 (Inputs Tab)
+ * - 4:5036 (Model Tab)
+ * - 4:5129 (Sheet Tab)
+ * with Persistent 4-Tab Bottom Navigation Bar.
+ */
+
+/* Hidden on desktop (> 860px) */
+.mobile-app-shell {
+  display: none;
+}
+.mobile-bottom-nav {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  /* Hide desktop split grid panels on mobile */
+  .app > .left,
+  .app > .right,
+  .app > .study,
+  .app > .scene,
+  .layout-resizer,
+  .mobilebar {
+    display: none !important;
+  }
+
+  /* Reset app container for mobile view */
+  html, body {
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  .app {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+    padding-bottom: 74px; /* clearance for bottom nav bar */
+    box-sizing: border-box;
+    background: var(--bg);
+  }
+
+  /* ━━━━ MOBILE HEADER — compact, clean ━━━━ */
+  .top {
+    height: 54px;
+    padding: 0 14px;
+    flex: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--line);
+    background: var(--panel);
+    /* subtle bottom shadow for depth */
+    box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+  }
+
+  /* Hide the verbose subtitle line on mobile */
+  .brand-info small {
+    display: none !important;
+  }
+  .brand-info b {
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+  }
+  .studio-mark {
+    width: 32px;
+    height: 32px;
+    flex: none;
+  }
+
+  /* Right side — only keep theme toggle + status badge + group avatar */
+  .top-actions {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  /* Hide all panel toggle buttons and desktop-only buttons */
+  .top-actions #toggleLeft,
+  .top-actions #toggleRight,
+  .top-actions #toggleStudy,
+  .top-actions #fit,
+  .top-actions #reset,
+  .top-actions #resetLayout,
+  .top .hideMob,
+  .top .top-mode-badge,
+  .top .segmented-nav {
+    display: none !important;
+  }
+  /* Theme toggle — icon-only on mobile */
+  #btnThemeToggle span {
+    display: none;
+  }
+  #btnThemeToggle {
+    padding: 7px;
+    min-width: 34px;
+    justify-content: center;
+  }
+  /* Status badge — smaller on mobile */
+  #status {
+    font-size: 10px;
+    padding: 3px 7px;
+    white-space: nowrap;
+  }
+  /* Group avatar — smaller */
+  .profile-avatar {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+    font-weight: 800;
+  }
+
+  /* Mobile App Shell Container */
+  .mobile-app-shell {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 14px 14px 24px 14px;
+    box-sizing: border-box;
+  }
+
+  /* Mobile Tabs Management */
+  .mobile-tab-view {
+    display: none;
+    animation: mobileFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .mobile-tab-view.active {
+    display: block;
+  }
+
+  @keyframes mobileFadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Mobile Section Header */
+  .mobile-page-header {
+    margin-bottom: 14px;
+  }
+  .mobile-page-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text);
+    margin: 0 0 2px 0;
+    letter-spacing: -0.02em;
+  }
+  .mobile-page-subtitle {
+    font-size: 13px;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  /* Universal Mobile Cards */
+  .m-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+    box-sizing: border-box;
+  }
+
+  /* ----------------------------------------------------
+   * TAB 1: OVERVIEW (Figma 4:4862)
+   * ---------------------------------------------------- */
+  .overview-given-card {
+    position: relative;
+    overflow: hidden;
+  }
+  .overview-badge-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .overview-project-tag {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .overview-project-title {
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--text);
+    margin: 0 0 4px 0;
+  }
+  .overview-project-desc {
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-bottom: 12px;
+    line-height: 1.4;
+  }
+  .overview-thumb-wrap {
+    width: 100%;
+    background: var(--panel2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px 6px;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+  }
+  .overview-thumb-wrap svg {
+    width: 100%;
+    max-height: 110px;
+    display: block;
+    background: transparent;
+  }
+  .overview-card-cta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 6px 0 0 0;
+    width: 100%;
+  }
+
+  /* 3-Column Key KPIs Row */
+  .overview-kpis-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .overview-kpi-item {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 8px;
+    text-align: center;
+  }
+  .overview-kpi-val {
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--text);
+    font-family: var(--mono);
+    line-height: 1.2;
+  }
+  .overview-kpi-lbl {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* Overview Status Alert Banner */
+  .overview-status-banner {
+    border-radius: 10px;
+    padding: 13px;
+    margin-bottom: 12px;
+    border-left: 4px solid;
+    font-size: 12.5px;
+    line-height: 1.45;
+  }
+  .overview-status-banner.action {
+    background: rgba(220, 38, 38, 0.08);
+    border-color: #dc2626;
+    color: var(--text);
+  }
+  .overview-status-banner.pass {
+    background: rgba(22, 163, 74, 0.08);
+    border-color: #16a34a;
+    color: var(--text);
+  }
+  .overview-status-title {
+    font-size: 13px;
+    font-weight: 800;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* Overview Task Cards */
+  .overview-task-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 14px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    margin-bottom: 9px;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+  }
+  .overview-task-item:active {
+    background: var(--panel2);
+    transform: scale(0.99);
+  }
+  .overview-task-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    background: var(--accent-light);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+  }
+  .overview-task-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .overview-task-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+  .overview-task-sub {
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ----------------------------------------------------
+   * TAB 2: INPUTS (Figma 4:4943)
+   * ---------------------------------------------------- */
+  .m-accordion {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    margin-bottom: 12px;
+    background: var(--panel);
+    position: relative;
+    transition: border-color 0.15s ease;
+  }
+  .m-accordion:not(.open) {
+    overflow: hidden;
+  }
+  .m-accordion.open {
+    overflow: visible !important;
+  }
+  .m-accordion-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 13px 14px;
+    cursor: pointer;
+    background: var(--panel);
+    user-select: none;
+    border-radius: 10px;
+  }
+  .m-accordion.open .m-accordion-head {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+  .m-accordion-head-left {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+  .m-accordion-num {
+    font-size: 11.5px;
+    font-family: var(--mono);
+    color: var(--muted);
+    font-weight: 700;
+  }
+  .m-accordion-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .m-accordion-chevron {
+    width: 20px;
+    height: 20px;
+    color: var(--muted);
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .m-accordion.open .m-accordion-chevron {
+    transform: rotate(180deg);
+  }
+  .m-accordion-body {
+    display: none;
+    padding: 14px;
+    border-top: 1px solid var(--line);
+    background: var(--panel2);
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+  }
+  .m-accordion.open .m-accordion-body {
+    display: block;
+    overflow: visible !important;
+  }
+
+  /* Mobile Custom Select styling */
+  .m-field .custom-select,
+  .m-step-selector-row .custom-select,
+  .m-insp-member-select-row .custom-select {
+    width: 100%;
+    position: relative;
+  }
+  .m-insp-member-select-row .custom-select {
+    flex: 1;
+  }
+  .m-field .custom-select-trigger,
+  .m-insp-member-select-row .custom-select-trigger {
+    min-height: 44px;
+    height: 44px;
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    padding: 0 14px;
+    font-size: 13.5px;
+    font-weight: 500;
+    background: var(--panel);
+    color: var(--text);
+    box-sizing: border-box;
+  }
+  .m-step-selector-row .custom-select-trigger {
+    min-height: 46px;
+    height: 46px;
+    border: 1.5px solid var(--accent);
+    border-radius: 8px;
+    padding: 0 14px;
+    font-size: 14px;
+    font-weight: 700;
+    background: var(--panel);
+    color: var(--text);
+    box-sizing: border-box;
+  }
+  .m-field .custom-select-menu,
+  .m-step-selector-row .custom-select-menu,
+  .m-insp-member-select-row .custom-select-menu {
+    border-radius: 8px;
+    border: 1.5px solid var(--line-strong);
+    background: var(--panel);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+    max-height: 250px;
+    z-index: 10000;
+  }
+  .m-field .custom-select.open-upward .custom-select-menu,
+  .m-step-selector-row .custom-select.open-upward .custom-select-menu,
+  .m-insp-member-select-row .custom-select.open-upward .custom-select-menu {
+    box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.35);
+  }
+
+  .m-field {
+    margin-bottom: 12px;
+    position: relative;
+  }
+  .m-field:last-child {
+    margin-bottom: 0;
+  }
+  .m-field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 5px;
+    letter-spacing: 0.01em;
+  }
+  .m-field input,
+  .m-field select {
+    width: 100%;
+    min-height: 44px;
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    padding: 0 12px;
+    font-size: 13.5px;
+    background: var(--panel);
+    color: var(--text);
+    box-sizing: border-box;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .m-field input:focus,
+  .m-field select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-light);
+  }
+  .m-field select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    padding-right: 36px;
+  }
+  .m-input-unit {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .m-input-unit input {
+    padding-right: 42px;
+    font-family: var(--mono);
+    font-weight: 600;
+  }
+  .m-input-unit span {
+    position: absolute;
+    right: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    pointer-events: none;
+  }
+  .m-row2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .m-seg-toggle {
+    display: flex;
+    background: var(--panel);
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    padding: 3px;
+    min-height: 44px;
+    box-sizing: border-box;
+  }
+  .m-seg-toggle button {
+    flex: 1;
+    background: none;
+    border: none;
+    padding: 8px 12px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--muted);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .m-seg-toggle button.active {
+    background: var(--accent);
+    color: #ffffff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+
+  /* Sticky Actions on Inputs Tab */
+  .m-inputs-actions-bar {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+    padding-top: 10px;
+  }
+  .m-btn-primary {
+    flex: 1;
+    min-height: 46px;
+    background: var(--accent);
+    color: #ffffff;
+    font-size: 13.5px;
+    font-weight: 700;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: background 0.15s ease, transform 0.1s ease;
+  }
+  .m-btn-primary:active {
+    transform: scale(0.99);
+  }
+  .m-btn-secondary {
+    flex: 1;
+    min-height: 46px;
+    background: var(--panel);
+    border: 1.5px solid var(--line);
+    color: var(--text);
+    font-size: 13.5px;
+    font-weight: 700;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: background 0.15s ease;
+  }
+  .m-btn-secondary:active {
+    background: var(--panel2);
+  }
+
+  /* ----------------------------------------------------
+   * TAB 3: MODEL (Figma 4:5036)
+   * Now: viewport only. Inspector moved to its own tab.
+   * ---------------------------------------------------- */
+  .m-view-segmented {
+    display: flex;
+    background: var(--panel2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 3px;
+    margin-bottom: 12px;
+  }
+  .m-view-segmented button {
+    flex: 1;
+    background: none;
+    border: none;
+    padding: 8px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--muted);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .m-view-segmented button.active {
+    background: var(--panel);
+    color: var(--accent);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+
+  .m-viewport-container {
+    width: 100%;
+    /* Use a tall viewport so the 3D scene is clearly visible */
+    height: 360px;
+    background: #0f172a;
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 14px;
+    border: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+  }
+  /* Force scene element to fill the container completely */
+  .m-viewport-container #sceneViewport,
+  .m-viewport-container .scene {
+    width: 100% !important;
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    position: relative !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: #0f172a !important;
+  }
+  /* Hide scene toolbar chrome — just the raw 3D canvas */
+  .m-viewport-container .toolbar,
+  .m-viewport-container .scene-tabs,
+  .m-viewport-container .scene-statusbar {
+    display: none !important;
+  }
+  .m-viewport-container .scene-viewport-wrap {
+    width: 100% !important;
+    height: 100% !important;
+    flex: 1 1 auto !important;
+    position: relative !important;
+    min-height: 320px !important;
+  }
+  .m-viewport-container canvas {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    display: block !important;
+  }
+
+  .m-viewport-floating-actions {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    display: flex;
+    gap: 6px;
+    z-index: 10;
+  }
+  .m-floating-btn {
+    background: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 6px;
+    padding: 7px 11px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+  }
+
+  /* Easy-tap Member List */
+  .m-member-list-label {
+    font-size: 11.5px;
+    font-weight: 800;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+  }
+  .m-member-pill-scroll {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    margin-bottom: 14px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .m-member-pill {
+    flex: none;
+    background: var(--panel);
+    border: 1.5px solid var(--line);
+    border-radius: 20px;
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+  }
+  .m-member-pill.active {
+    background: var(--accent);
+    color: #ffffff;
+    border-color: var(--accent);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+  }
+
+  /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   * INSPECTOR TAB (Tab 5) — dedicated member analysis
+   * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+  /* Member select row at the top of Inspector tab */
+  .m-insp-member-select-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .m-insp-member-select-row label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .m-insp-member-select-row select {
+    flex: 1;
+    min-height: 42px;
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    padding: 0 36px 0 12px;
+    font-size: 13px;
+    font-weight: 600;
+    background: var(--panel);
+    color: var(--text);
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    box-sizing: border-box;
+  }
+  .m-insp-member-select-row select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-light);
+  }
+
+  /* Inspector info card */
+  .m-inspector-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .m-inspector-hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--line);
+  }
+  .m-inspector-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
+  .m-inspector-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text);
+    margin: 0 0 2px 0;
+    letter-spacing: -0.02em;
+  }
+  .m-inspector-section-tag {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: var(--mono);
+    margin-top: 2px;
+  }
+  .m-inspector-badge {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+  .m-inspector-badge.ok {
+    background: #dcfce7;
+    color: #166534;
+  }
+  .m-inspector-badge.action {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+
+  /* DCR utilization progress bar */
+  .m-inspector-dcr-bar-wrap {
+    margin-bottom: 14px;
+  }
+  .m-inspector-dcr-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    margin-bottom: 5px;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .m-inspector-dcr-val {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--text);
+    font-family: var(--mono);
+  }
+  .m-inspector-dcr-track {
+    height: 8px;
+    border-radius: 99px;
+    background: var(--panel2);
+    overflow: hidden;
+    border: 1px solid var(--line);
+  }
+  .m-inspector-dcr-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: var(--accent);
+    transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .m-inspector-dcr-fill.warn {
+    background: #f59e0b;
+  }
+  .m-inspector-dcr-fill.fail {
+    background: #dc2626;
+  }
+
+  /* 2-col stat grid */
+  .m-inspector-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 14px;
+    background: var(--panel2);
+    border-radius: 8px;
+    padding: 12px;
+    border: 1px solid var(--line);
+  }
+  .m-stat-box {
+    font-size: 11.5px;
+  }
+  .m-stat-lbl {
+    color: var(--muted);
+    font-weight: 600;
+    margin-bottom: 3px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .m-stat-val {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    font-family: var(--mono);
+  }
+
+  /* Code clause reference tag */
+  .m-inspector-code-ref {
+    background: var(--accent-light);
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    font-size: 12px;
+    color: var(--accent);
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* Relevant Code Path items */
+  .m-code-ref-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 10px;
+    background: var(--panel2);
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    font-size: 11.5px;
+  }
+  .m-code-ref-item b {
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--accent);
+    font-weight: 700;
+    white-space: nowrap;
+    min-width: 82px;
+  }
+  .m-code-ref-item span {
+    color: var(--text);
+    font-size: 11px;
+    line-height: 1.35;
+  }
+
+  /* ----------------------------------------------------
+   * TAB 4: SHEET (Figma 4:5129)
+   * ---------------------------------------------------- */
+  .m-step-selector-row {
+    margin-bottom: 12px;
+  }
+  .m-step-dropdown {
+    width: 100%;
+    min-height: 46px;
+    background: var(--panel);
+    border: 1.5px solid var(--accent);
+    border-radius: 8px;
+    padding: 0 36px 0 14px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230284c7' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    background-size: 16px;
+  }
+
+  .m-sheet-content-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 14px;
+    font-size: 12.5px;
+    line-height: 1.5;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .m-sheet-content-card table {
+    width: 100% !important;
+    border-collapse: collapse;
+    margin: 8px 0;
+    font-size: 11px;
+  }
+  .m-sheet-content-card th {
+    background: var(--panel2);
+    padding: 7px 8px;
+    font-weight: 700;
+    border: 1px solid var(--line);
+    text-align: left;
+  }
+  .m-sheet-content-card td {
+    padding: 7px 8px;
+    border: 1px solid var(--line);
+  }
+  .m-sheet-content-card .svg-container {
+    border: 1px solid var(--line);
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 6px;
+    margin: 8px 0;
+  }
+
+  .m-sheet-actions-bar {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   * BOTTOM NAVIGATION BAR — 5 tabs (Fixed)
+   * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+  .mobile-bottom-nav {
+    display: flex !important;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    /* Taller for better tap targets: standard iOS-style bottom bar */
+    height: 68px;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: var(--panel);
+    border-top: 1px solid var(--line);
+    z-index: 1000;
+    justify-content: space-around;
+    align-items: flex-start;
+    padding-top: 10px;
+    padding-left: 4px;
+    padding-right: 4px;
+    box-sizing: border-box;
+    box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.09);
+  }
+
+  /* Increase bottom padding on app to account for taller nav */
+  .app {
+    padding-bottom: 80px;
+  }
+
+  .mobile-nav-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 3px;
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--muted);
+    /* Slightly smaller label to fit 5 tabs */
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: color 0.15s ease;
+    min-width: 0;
+    /* Active indicator pill */
+    position: relative;
+  }
+  .mobile-nav-btn svg {
+    width: 21px;
+    height: 21px;
+    stroke-width: 1.8;
+    margin-bottom: 1px;
+  }
+  .mobile-nav-btn.active {
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .mobile-nav-btn.active svg {
+    stroke-width: 2.5;
+  }
+  /* Active dot indicator under icon */
+  .mobile-nav-btn.active::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 32px;
+    height: 3px;
+    border-radius: 0 0 3px 3px;
+    background: var(--accent);
+  }
+}

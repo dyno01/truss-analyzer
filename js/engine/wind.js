@@ -84,10 +84,20 @@
     const slope = Number(params.slope) || 10;
     const cpiChoice = Number(params.cpi) !== undefined ? Number(params.cpi) : 0.2;
 
-    const k1 = getK1(params.age || 50, Vb);
+    let k1 = 1.0;
+    if (params.buildingType === 'temporary') {
+      k1 = 0.71;
+    } else if (params.buildingType === 'critical') {
+      k1 = 1.07;
+    } else if (params.buildingType === 'residential' || params.buildingType === 'industrial') {
+      k1 = 1.00;
+    } else {
+      k1 = getK1(params.age || 50, Vb);
+    }
+
     const k2 = getK2(height, terrain);
-    const k3 = 1.0; // Flat topography
-    const k4 = 1.0; // Non-cyclonic industrial
+    const k3 = Number.isFinite(Number(params.k3)) ? Number(params.k3) : 1.0;
+    const k4 = Number.isFinite(Number(params.k4)) ? Number(params.k4) : 1.0;
 
     const Vz = Vb * k1 * k2 * k3 * k4;
     const pz = 0.6 * Vz * Vz; // N/m^2
@@ -110,8 +120,8 @@
       Vb,
       k1: Number(k1.toFixed(3)),
       k2: Number(k2.toFixed(3)),
-      k3,
-      k4,
+      k3: Number(k3.toFixed(2)),
+      k4: Number(k4.toFixed(2)),
       Vz: Number(Vz.toFixed(2)),
       pz: Number(pz.toFixed(1)),         // N/m^2
       pz_kN: Number(pz_kN.toFixed(4)),   // kN/m^2

@@ -3,7 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Structural Design Studio — Assignment 3A (IS 800:2007 / IS 875)</title>
+  <title>Structural Design Studio — Industrial Steel Roof Truss (IS 800:2007 / IS 875)</title>
+
+  <!-- Google Fonts: Inter, IBM Plex Mono & STIX Two Text for engineering mathematics -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&family=STIX+Two+Text:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
 
   <!-- External CDNs: Three.js & KaTeX -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -12,202 +17,459 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 
-  <!-- Modular CSS -->
+  <!-- Modular Stylesheets matching Figma -->
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/layout.css">
   <link rel="stylesheet" href="css/panels.css">
   <link rel="stylesheet" href="css/study.css">
+  <link rel="stylesheet" href="css/mobile.css">
 </head>
 <body>
   <div class="app">
-    <!-- Top Header -->
+    <!-- Top Navigation Header (46px Compact) -->
     <header class="top">
       <div class="brand">
-        <span class="dot"></span>
-        <div>
+        <div class="studio-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 3 22 21 2 21 12 3" fill="white" stroke="white"/>
+          </svg>
+        </div>
+        <div class="brand-info">
           <b>Structural Design Studio</b>
-          <small>Assignment 3A · IS 800:2007 / IS 875 · Limit State Design</small>
+          <small>Industrial Roof Truss &nbsp; / &nbsp; IS 800:2007 · IS 875 &nbsp; / &nbsp; Limit State Design</small>
         </div>
       </div>
+
       <div class="top-actions">
-        <button class="btn" id="toggleLeft">Inputs</button>
-        <button class="btn" id="toggleStudy">Workflow</button>
-        <button class="btn" id="toggleRight">Inspector</button>
-        <button class="btn hideMob" id="fit">Fit</button>
-        <button class="btn hideMob" id="reset">Reset</button>
-        <button class="btn hideMob" id="resetLayout">Reset Layout</button>
-        <span class="status" id="status">IS 800 READY</span>
+        <button class="btn active" id="toggleLeft" title="Toggle Inputs Panel">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/>
+          </svg>
+          <span>Inputs</span>
+        </button>
+        <button class="btn" id="toggleStudy" title="Open Design Workflow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="8" height="8" x="3" y="3" rx="2"/><path d="M7 11v4a2 2 0 0 0 2 2h4"/><rect width="8" height="8" x="13" y="13" rx="2"/>
+          </svg>
+          <span>Workflow</span>
+        </button>
+        <button class="btn active" id="toggleRight" title="Toggle Inspector Panel">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="18" height="18" x="3" y="3" rx="2"/><path d="M15 3v18"/>
+          </svg>
+          <span>Inspector</span>
+        </button>
+        <button class="btn hideMob" id="fit" title="Fit Model into View">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+          </svg>
+          <span>Fit</span>
+        </button>
+        <button class="btn hideMob" id="reset" title="Reset Scene Camera">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>
+          </svg>
+          <span>Reset</span>
+        </button>
+        <button class="btn hideMob" id="resetLayout" title="Reset Splitter Layout">Reset Layout</button>
+        <button class="btn" id="btnThemeToggle" title="Toggle Dark / Light Mode">
+          <svg id="themeIconSun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+          <svg id="themeIconMoon" style="display:none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+          <span id="themeLabel">Dark</span>
+        </button>
+        <span class="status" id="status">CHECK NEEDED</span>
+        <div class="profile-avatar" id="groupAvatar" title="Active Design Preset / Custom">G5</div>
       </div>
     </header>
 
-    <!-- Draggable Layout Dividers -->
+    <!-- Draggable Layout Resizers -->
     <div class="layout-resizer layout-left" id="leftResizer" title="Drag to resize inputs panel"></div>
     <div class="layout-resizer layout-right" id="rightResizer" title="Drag to resize inspector panel"></div>
     <div class="layout-resizer layout-bottom" id="studyResizer" title="Drag to resize solution sheet"></div>
 
-    <!-- Left Input Panel -->
+    <!-- Left Input Panel (288px) -->
     <aside class="left" id="left">
-      <!-- 00. Assignment Summary Snapshot -->
-      <section class="section" id="assignmentData">
-        <h2>Current Project Data</h2>
-        <div class="hint">Live summary of selected problem group and active inputs.</div>
-        <div id="assignmentSnapshot"></div>
-      </section>
+      <!-- Current Project Data Header -->
+      <div class="panel-header">
+        <h2>Current project data</h2>
+        <svg class="panel-header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="21" y1="4" x2="14" y2="4"/><line x1="10" y1="4" x2="3" y2="4"/><line x1="21" y1="12" x2="12" y2="12"/><line x1="8" y1="12" x2="3" y2="12"/><line x1="21" y1="20" x2="16" y2="20"/><line x1="12" y1="20" x2="3" y2="20"/><line x1="14" y1="2" x2="14" y2="6"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="16" y1="18" x2="16" y2="22"/>
+        </svg>
+      </div>
 
-      <!-- 01. Problem Assignment -->
-      <section class="section">
-        <h2>01 · Assignment</h2>
-        <div class="field">
-          <label>Problem group <span class="tag given">GIVEN</span></label>
-          <select id="group"></select>
+      <!-- Live Summary of Selected Group / Custom Design -->
+      <div class="project-summary-box">
+        <p>Real-time structural geometry & design parameters.</p>
+        <div class="summary-badges">
+          <span class="tag given" id="groupTag">PRESET G5</span>
+          <span class="tag inputtag" id="statusModeTag">IS 800:2007</span>
         </div>
-        <div class="row2">
-          <div class="field"><label>Location</label><input id="loc" type="text" disabled></div>
-          <div class="field"><label>Terrain</label><input id="terrain" type="text" disabled></div>
-        </div>
-        <div class="row2">
-          <div class="field"><label>Truss span (m)</label><input id="span" type="number" step="0.5"></div>
-          <div class="field"><label>Building length (m)</label><input id="length" type="number" step="1"></div>
-        </div>
-        <div class="row2">
-          <div class="field"><label>Building height (m)</label><input id="height" type="number" step="0.5"></div>
-          <div class="field"><label>Frame spacing (m)</label><input id="spacing" type="number" step="0.25"></div>
-        </div>
-        <div class="hint">Span is transverse truss geometry. Building length controls repeated frame count.</div>
-      </section>
+      </div>
 
-      <!-- 02. Structural Geometry -->
-      <section class="section">
-        <h2>02 · Structural Geometry</h2>
-        <div class="field">
-          <label>Truss type <span class="tag given">GROUP</span></label>
-          <select id="truss"></select>
-        </div>
-        <div class="row2">
-          <div class="field"><label>Panels</label><input id="panels" type="number" min="4" max="16"></div>
-          <div class="field"><label>Roof slope (°) <span class="tag inputtag">INPUT</span></label><input id="slope" type="number" min="0" max="45" step="0.5"></div>
-        </div>
-        <div class="row2">
-          <div class="field"><label>Overhang (m)</label><input id="overhang" type="number" step="0.1"></div>
-          <div class="field"><label>Number of trusses <span class="tag inputtag">INPUT</span></label><input id="frames" type="number" min="2" max="80"></div>
-        </div>
-        <div class="hint">Purlins run longitudinally between matching roof points on repeated frames.</div>
-      </section>
-
-      <!-- 03. Materials & Sections -->
-      <section class="section">
-        <h2>03 · Materials & Members</h2>
-        <div class="field">
-          <label>Primary truss member (2 ISA) <span class="tag inputtag">INPUT</span></label>
-          <select id="section"></select>
-        </div>
-        <div class="field">
-          <label>Steel grade</label>
-          <div class="seg">
-            <button class="active" data-grade="E250">E250 / Fe410</button>
-            <button data-grade="E350">E350 / Fe490</button>
+      <!-- 01 · Project Setup & Geometry -->
+      <section class="section" id="sectionAssignment">
+        <div class="section-head">
+          <div class="section-head-title">
+            <span class="section-num">01</span>
+            <span class="section-title">Project & Geometry</span>
           </div>
+          <svg class="section-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m18 15-6-6-6 6"/>
+          </svg>
         </div>
-        <div class="row2">
-          <div class="field"><label>Purlin (ISMC)</label><select id="purlin"></select></div>
-          <div class="field"><label>Purlin spacing (m)</label><input id="purlinSpacing" type="number" step="0.1"></div>
-        </div>
-        <div class="field"><label>Column: 2C back-to-back</label><select id="column"></select></div>
-      </section>
-
-      <!-- 04. Connections & Stability -->
-      <section class="section">
-        <h2>04 · Connections & Stability</h2>
-        <div class="field">
-          <label>Truss connection <span class="tag given">GROUP</span></label>
-          <div class="seg">
-            <button id="weld">Welded</button>
-            <button id="bolt">Bolted</button>
-          </div>
-        </div>
-        <div class="row2">
+        <div class="section-body">
           <div class="field">
-            <label>Column K factor</label>
-            <select id="K">
-              <option value="0.65">0.65</option>
-              <option value="0.8">0.80</option>
-              <option value="1.0" selected>1.00</option>
-              <option value="1.2">1.20</option>
-              <option value="2.0">2.00</option>
-            </select>
+            <label>Design preset / template</label>
+            <select id="group"></select>
           </div>
-          <div class="field"><label>Lacing pitch (m)</label><input id="lacing" type="number" step="0.05"></div>
-        </div>
-        <div class="row2">
-          <div class="field"><label>Weld size (mm) <span class="tag inputtag">INPUT</span></label><input id="weldSize" type="number" min="3" step="1" value="6"></div>
-          <div class="field"><label>Weld length / side (mm) <span class="tag inputtag">INPUT</span></label><input id="weldLength" type="number" min="20" step="5" value="65"></div>
-        </div>
-        <div class="hint">IS 800:2007 Section 10 provisions applied for shop fillet welds.</div>
-      </section>
-
-      <!-- 05. IS 875 Loads -->
-      <section class="section">
-        <h2>05 · Loads (IS 875)</h2>
-        <div class="row2">
-          <div class="field">
-            <label>Roof Cladding</label>
-            <select id="roof">
-              <option value="GI">GI Corrugated</option>
-              <option value="AC">AC Asbestos</option>
-            </select>
+          <div class="row2">
+            <div class="field"><label>Project location</label><input id="loc" type="text" placeholder="e.g. Nashik, Custom"></div>
+            <div class="field">
+              <label>Terrain category</label>
+              <select id="terrain">
+                <option value="1">Cat 1 (Open coastal)</option>
+                <option value="2" selected>Cat 2 (Open terrain)</option>
+                <option value="3">Cat 3 (Suburban / Industrial)</option>
+                <option value="4">Cat 4 (Dense urban)</option>
+              </select>
+            </div>
           </div>
           <div class="field">
-            <label>Internal Cpi</label>
-            <select id="cpi">
-              <option value="0.2">+0.2 (Normal)</option>
-              <option value="-0.2">−0.2 (Normal)</option>
-              <option value="0.5">+0.5 (Medium)</option>
-              <option value="-0.5">−0.5 (Medium)</option>
+            <label>Structure / Building Type (IS 875 Tab. 1)</label>
+            <select id="buildingType">
+              <option value="industrial" selected>Industrial Shed (50 yrs, k1=1.00)</option>
+              <option value="residential">Residential / Commercial (50 yrs, k1=1.00)</option>
+              <option value="temporary">Temporary Structure / Farm (25 yrs, k1=0.71)</option>
+              <option value="critical">Important / Hospital / Disaster (100 yrs, k1=1.07)</option>
             </select>
           </div>
+          <div class="row2">
+            <div class="field">
+              <label>Truss span</label>
+              <div class="input-with-unit">
+                <input id="span" type="number" step="0.5">
+                <span class="unit">m</span>
+              </div>
+            </div>
+            <div class="field">
+              <label>Building length</label>
+              <div class="input-with-unit">
+                <input id="length" type="number" step="1">
+                <span class="unit">m</span>
+              </div>
+            </div>
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label>Building height</label>
+              <div class="input-with-unit">
+                <input id="height" type="number" step="0.5">
+                <span class="unit">m</span>
+              </div>
+            </div>
+            <div class="field">
+              <label>Frame spacing</label>
+              <div class="input-with-unit">
+                <input id="spacing" type="number" step="0.25">
+                <span class="unit">m</span>
+              </div>
+            </div>
+          </div>
+          <div class="hint">Span is transverse truss geometry. Building length controls repeated frame count.</div>
         </div>
-        <div class="row2">
-          <div class="field"><label>Basic wind Vb (m/s)</label><input id="Vb" type="number"></div>
-          <div class="field"><label>Cpe <span class="tag inputtag">INPUT</span></label><input id="cpe" type="number" step="0.05"></div>
-        </div>
-        <div class="hint">IS 875 (Part 3) computes Vz = Vb·k1·k2·k3·k4 and design wind pressure pz = 0.6·Vz².</div>
       </section>
 
-      <!-- 06. Longitudinal Stability -->
-      <section class="section">
-        <h2>06 · Longitudinal Stability</h2>
-        <div class="field">
-          <label>Stability System</label>
-          <select id="stabilitySystem">
-            <option value="not_specified" selected>Not specified / assess separately</option>
-            <option value="single_diagonal">Single diagonal</option>
-            <option value="x_bracing">X-bracing</option>
-            <option value="k_bracing">K-bracing</option>
-            <option value="portalised_bay">Portalised / moment bay</option>
-          </select>
+      <!-- 02 · Structural Geometry -->
+      <section class="section" id="sectionGeometry">
+        <div class="section-head">
+          <div class="section-head-title">
+            <span class="section-num">02</span>
+            <span class="section-title">Structural geometry</span>
+          </div>
+          <svg class="section-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m18 15-6-6-6 6"/>
+          </svg>
         </div>
-        <div class="hint">Select bracing to stabilize columns and end bays against longitudinal wind actions.</div>
+        <div class="section-body">
+          <div class="field">
+            <label>Truss type</label>
+            <select id="truss"></select>
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label>Panels</label>
+              <div class="input-with-unit">
+                <input id="panels" type="number" min="4" max="16">
+              </div>
+            </div>
+            <div class="field">
+              <label>Roof slope</label>
+              <div class="input-with-unit">
+                <input id="slope" type="number" min="0" max="45" step="0.5">
+                <span class="unit">°</span>
+              </div>
+            </div>
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label>Overhang</label>
+              <div class="input-with-unit">
+                <input id="overhang" type="number" step="0.1">
+                <span class="unit">m</span>
+              </div>
+            </div>
+            <div class="field">
+              <label>Number of trusses</label>
+              <div class="input-with-unit">
+                <input id="frames" type="number" min="2" max="80">
+              </div>
+            </div>
+          </div>
+          <div class="hint">Purlins run longitudinally between matching roof points on repeated frames.</div>
+        </div>
       </section>
 
-      <!-- 07. Visibility Layers -->
-      <section class="section">
-        <h2>07 · Visibility Layers</h2>
-        <div class="layers">
-          <label class="layer"><input type="checkbox" data-layer="frames" checked> Trusses</label>
-          <label class="layer"><input type="checkbox" data-layer="purlins" checked> Purlins</label>
-          <label class="layer"><input type="checkbox" data-layer="roof" checked> Roof</label>
-          <label class="layer"><input type="checkbox" data-layer="columns" checked> Columns</label>
-          <label class="layer"><input type="checkbox" data-layer="lacing" checked> Lacing</label>
-          <label class="layer"><input type="checkbox" data-layer="bracing" checked> Bracing</label>
-          <label class="layer"><input type="checkbox" data-layer="labels" checked> Labels</label>
-          <label class="layer"><input type="checkbox" data-layer="loads" checked> Loads</label>
-          <label class="layer"><input type="checkbox" data-layer="grid" checked> Grid</label>
+      <!-- 03 · Materials & Members -->
+      <section class="section" id="sectionMembers">
+        <div class="section-head">
+          <div class="section-head-title">
+            <span class="section-num">03</span>
+            <span class="section-title">Materials & members</span>
+          </div>
+          <svg class="section-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m18 15-6-6-6 6"/>
+          </svg>
+        </div>
+        <div class="section-body">
+          <div class="field">
+            <label>Primary truss member (2 ISA)</label>
+            <select id="section"></select>
+          </div>
+          <div class="field">
+            <label>Steel grade</label>
+            <div class="seg">
+              <button class="active" data-grade="E250">E250 / Fe410</button>
+              <button data-grade="E350">E350 / Fe490</button>
+            </div>
+          </div>
+          <div class="row2">
+            <div class="field"><label>Purlin (ISMC)</label><select id="purlin"></select></div>
+            <div class="field">
+              <label>Purlin spacing</label>
+              <div class="input-with-unit">
+                <input id="purlinSpacing" type="number" step="0.1">
+                <span class="unit">m</span>
+              </div>
+            </div>
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label>Deflection limit (Table 6)</label>
+              <select id="deflectionLimit">
+                <option value="150">Span / 150 (Elastic / Open)</option>
+                <option value="180" selected>Span / 180 (Corrugated sheets)</option>
+                <option value="240">Span / 240 (Profiled sheets)</option>
+                <option value="360">Span / 360 (Brittle / Plaster)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Fabrication (Table 5)</label>
+              <select id="fabrication">
+                <option value="shop" selected>Shop (&gamma;mw = 1.25)</option>
+                <option value="field">Field / Site (&gamma;mw = 1.50)</option>
+              </select>
+            </div>
+          </div>
+          <div class="field"><label>Column: 2C back-to-back</label><select id="column"></select></div>
+        </div>
+      </section>
+
+      <!-- 04 · Connections & Stability -->
+      <section class="section" id="sectionConnections">
+        <div class="section-head">
+          <div class="section-head-title">
+            <span class="section-num">04</span>
+            <span class="section-title">Connections & stability</span>
+          </div>
+          <svg class="section-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m18 15-6-6-6 6"/>
+          </svg>
+        </div>
+        <div class="section-body">
+          <div class="field">
+            <label>Truss connection</label>
+            <div class="seg">
+              <button id="weld">Welded</button>
+              <button id="bolt">Bolted</button>
+            </div>
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label>Column K factor</label>
+              <select id="K">
+                <option value="0.65">0.65</option>
+                <option value="0.8">0.80</option>
+                <option value="1.0" selected>1.00</option>
+                <option value="1.2">1.20</option>
+                <option value="2.0">2.00</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Lacing pitch</label>
+              <div class="input-with-unit">
+                <input id="lacing" type="number" step="0.05">
+                <span class="unit">m</span>
+              </div>
+            </div>
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label>Weld size</label>
+              <div class="input-with-unit">
+                <input id="weldSize" type="number" min="3" step="1" value="6">
+                <span class="unit">mm</span>
+              </div>
+            </div>
+            <div class="field">
+              <label>Weld length / side</label>
+              <div class="input-with-unit">
+                <input id="weldLength" type="number" min="20" step="5" value="65">
+                <span class="unit">mm</span>
+              </div>
+            </div>
+          </div>
+          <div class="hint">IS 800:2007 Section 10 provisions applied for shop fillet welds.</div>
+        </div>
+      </section>
+
+      <!-- 05 · Loads (IS 875) -->
+      <section class="section" id="sectionLoads">
+        <div class="section-head">
+          <div class="section-head-title">
+            <span class="section-num">05</span>
+            <span class="section-title">Loads (IS 875)</span>
+          </div>
+          <svg class="section-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m18 15-6-6-6 6"/>
+          </svg>
+        </div>
+        <div class="section-body">
+          <div class="row2">
+            <div class="field">
+              <label>Roof Cladding</label>
+              <select id="roof">
+                <option value="GI">GI Corrugated</option>
+                <option value="AC">AC Asbestos</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Internal Cpi</label>
+              <select id="cpi">
+                <option value="0.2">+0.2 (Normal)</option>
+                <option value="-0.2">−0.2 (Normal)</option>
+                <option value="0.5">+0.5 (Medium)</option>
+                <option value="-0.5">−0.5 (Medium)</option>
+              </select>
+            </div>
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label>Basic wind Vb</label>
+              <div class="input-with-unit">
+                <input id="Vb" type="number">
+                <span class="unit">m/s</span>
+              </div>
+            </div>
+            <div class="field">
+              <label>Cpe</label>
+              <div class="input-with-unit">
+                <input id="cpe" type="number" step="0.05">
+              </div>
+            </div>
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label>Topography k3 (Cl. 6.3)</label>
+              <select id="k3">
+                <option value="1.0" selected>1.00 (Flat slope &le; 3&deg;)</option>
+                <option value="1.05">1.05 (Gentle hill / slope 3&deg;&ndash;17&deg;)</option>
+                <option value="1.15">1.15 (Moderate cliff / ridge)</option>
+                <option value="1.36">1.36 (Steep crest / cliff &gt; 17&deg;)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Cyclonic k4 (Cl. 6.4)</label>
+              <select id="k4">
+                <option value="1.0" selected>1.00 (Inland / Normal)</option>
+                <option value="1.15">1.15 (Coastal cyclonic &le; 60km)</option>
+                <option value="1.30">1.30 (Critical post-disaster)</option>
+              </select>
+            </div>
+          </div>
+          <div class="hint">IS 875 (Part 3) computes Vz = Vb·k1·k2·k3·k4 and design wind pressure pz = 0.6·Vz².</div>
+        </div>
+      </section>
+
+      <!-- 06 · Longitudinal Stability -->
+      <section class="section" id="sectionStability">
+        <div class="section-head">
+          <div class="section-head-title">
+            <span class="section-num">06</span>
+            <span class="section-title">Longitudinal stability</span>
+          </div>
+          <svg class="section-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m18 15-6-6-6 6"/>
+          </svg>
+        </div>
+        <div class="section-body">
+          <div class="field">
+            <label>Stability System</label>
+            <select id="stabilitySystem">
+              <option value="not_specified" selected>Not specified / assess separately</option>
+              <option value="single_diagonal">Single diagonal</option>
+              <option value="x_bracing">X-bracing</option>
+              <option value="k_bracing">K-bracing</option>
+              <option value="portalised_bay">Portalised / moment bay</option>
+            </select>
+          </div>
+          <div class="hint">Select bracing to stabilize columns and end bays against longitudinal wind actions.</div>
+        </div>
+      </section>
+
+      <!-- 07 · Visibility Layers -->
+      <section class="section" id="sectionLayers">
+        <div class="section-head">
+          <div class="section-head-title">
+            <span class="section-num">07</span>
+            <span class="section-title">Visibility layers</span>
+          </div>
+          <svg class="section-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m18 15-6-6-6 6"/>
+          </svg>
+        </div>
+        <div class="section-body">
+          <div class="layers">
+            <label class="layer"><input type="checkbox" data-layer="frames" checked> Trusses</label>
+            <label class="layer"><input type="checkbox" data-layer="purlins" checked> Purlins</label>
+            <label class="layer"><input type="checkbox" data-layer="roof" checked> Roof</label>
+            <label class="layer"><input type="checkbox" data-layer="columns" checked> Columns</label>
+            <label class="layer"><input type="checkbox" data-layer="lacing" checked> Lacing</label>
+            <label class="layer"><input type="checkbox" data-layer="bracing" checked> Bracing</label>
+            <label class="layer"><input type="checkbox" data-layer="labels" checked> Labels</label>
+            <label class="layer"><input type="checkbox" data-layer="loads" checked> Loads</label>
+            <label class="layer"><input type="checkbox" data-layer="grid" checked> Grid</label>
+          </div>
         </div>
       </section>
     </aside>
 
-    <!-- 3D Scene Viewport -->
+    <!-- 3D Scene Viewport (Structural model viewport) -->
     <main class="scene" id="sceneViewport">
+      <!-- Viewport Toolbar (48px) -->
       <div class="toolbar">
         <div class="views">
           <button class="active" data-view="3d">3D</button>
@@ -215,86 +477,259 @@
           <button data-view="front">FRONT</button>
           <button data-view="plan">PLAN</button>
           <button data-view="side">SIDE</button>
-          <button class="view-tool-btn" id="btnFitModel" title="Fit Entire Model into View">⛶ FIT</button>
+          <button class="btn" id="btnFitModel" title="Fit Model into View">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+            </svg>
+            <span>Fit</span>
+          </button>
         </div>
-        <div class="scene-note hideMob">Touch / Click any member, purlin or column to inspect</div>
+        <div class="toolbar-controls">
+          <div class="scene-note hideMob">Click any member, purlin or column to inspect</div>
+          <div class="toolbar-icon-btn" title="Model Viewport Settings">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/>
+            </svg>
+          </div>
+        </div>
       </div>
 
-      <div class="legend">
-        CYAN = Primary Steel Chords · GREY = 2C Laced Columns · BLUE = Purlins<br>
-        RED = Bracing & Load Vectors · Real Direct Stiffness FEA Formulation
+      <!-- Canvas Wrap with Overlays -->
+      <div class="scene-viewport-wrap">
+        <!-- Top-left Model Label Watermark -->
+        <div class="model-meta-overlay">
+          <div class="model-meta-title" id="modelMetaTitle">G5 · Industrial roof truss</div>
+          <div class="model-meta-sub" id="modelMetaSub">Fink &nbsp; / &nbsp; 16 m span &nbsp; / &nbsp; 15 frames</div>
+        </div>
+
+        <!-- Top-right Orientation Cube -->
+        <div class="orientation-cube" id="orientationCube" title="Current View">
+          <span id="cubeViewLabel">FRONT</span>
+        </div>
+
+        <!-- Bottom-left Navigation Tools -->
+        <div class="nav-tools-overlay">
+          <button class="nav-tool-btn active" id="toolSelect" title="Select Element (Pointer)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m4 4 7.07 17 2.51-7.39L21 11.07z"/>
+            </svg>
+          </button>
+          <button class="nav-tool-btn" id="toolPan" title="Pan View (Hand)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.83L7 15"/>
+            </svg>
+          </button>
+          <div class="zoom-pill">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m6 9 6 6 6-6"/>
+            </svg>
+            <span id="zoomLevelText">100%</span>
+          </div>
+        </div>
+
+
+        <!-- Bottom-right Coordinate Axes Gizmo -->
+        <div class="axes-overlay">
+          <svg viewBox="0 0 52 53" fill="none">
+            <line x1="26" y1="26" x2="48" y2="26" stroke="#646d7a" stroke-width="1.5"/>
+            <polygon points="50,26 44,23 44,29" fill="#646d7a"/>
+            <text x="44" y="20" fill="#646d7a" font-size="9" font-family="Inter">X</text>
+            <line x1="26" y1="26" x2="26" y2="6" stroke="#646d7a" stroke-width="1.5"/>
+            <polygon points="26,4 23,10 29,10" fill="#646d7a"/>
+            <text x="31" y="10" fill="#646d7a" font-size="9" font-family="Inter">Z</text>
+            <line x1="26" y1="26" x2="10" y2="42" stroke="#646d7a" stroke-width="1.5"/>
+            <polygon points="8,44 14,42 11,36" fill="#646d7a"/>
+            <text x="4" y="44" fill="#646d7a" font-size="9" font-family="Inter">Y</text>
+          </svg>
+        </div>
       </div>
+
     </main>
 
-    <!-- Right Inspector Panel -->
+    <!-- Right Inspector Panel (336px) -->
     <aside class="right" id="right">
-      <div class="card" id="inspector"></div>
-      <div class="card">
-        <h2>Design Status (IS 800)</h2>
+      <!-- Inspector Header -->
+      <div class="panel-header">
+        <h2>Inspector</h2>
+        <div class="toolbar-icon-btn" id="toggleRightClose" title="Close Inspector Panel">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="18" height="18" x="3" y="3" rx="2"/><path d="M15 3v18"/><path d="m8 9 3 3-3 3"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Element Selection Prompt / Detail Card -->
+      <div class="inspector-section" id="inspector">
+        <div class="selection-prompt-row">
+          <div class="selection-icon-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m4 4 7.07 17 2.51-7.39L21 11.07z"/>
+            </svg>
+          </div>
+          <div class="selection-prompt-info">
+            <b>No element selected</b>
+            <small>Select a member in the model</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Optimum Recommendations (Shown when checks require resizing) -->
+      <div class="inspector-section" id="recommendationsCard" style="display:none;">
+        <div class="inspector-section-head">
+          <h2>Optimum Recommendations</h2>
+        </div>
+        <div id="recommendations"></div>
+        <button class="btn" id="applyRecommendedInputs" style="width:100%;margin-top:8px;background:var(--accent-light);border-color:var(--accent);color:var(--accent);font-weight:600;">APPLY OPTIMAL SIZING</button>
+      </div>
+
+      <!-- Design Status (IS 800) -->
+      <div class="inspector-section">
+        <div class="inspector-section-head">
+          <h2>Design status (IS 800)</h2>
+          <span class="status" id="inspectorStatusBadge">CHECK NEEDED</span>
+        </div>
         <div class="checklist" id="checks"></div>
       </div>
-      <div class="card" id="recommendationsCard" style="display:none;">
-        <h2>Optimum Recommendations</h2>
-        <div id="recommendations"></div>
-        <button class="btn" id="applyRecommendedInputs" style="width:100%;margin-top:10px;background:var(--panel);border-color:var(--accent);color:var(--accent);font-weight:600;">APPLY OPTIMAL SIZING</button>
-      </div>
-      <div class="card">
-        <h2>Governing Analysis</h2>
-        <div id="reason" class="result warn">Select an element in 3D to inspect its governing load combination.</div>
-      </div>
-      <div class="card">
-        <h2>Relevant Code Path</h2>
-        <div class="hint">
-          <b>IS 875 (Part 1)</b> → Dead loads (roof sheet, purlins, truss)<br>
-          <b>IS 875 (Part 2)</b> → Roof imposed load (min 0.40 kN/m²)<br>
-          <b>IS 875 (Part 3)</b> → Wind speed Vz (k1·k2·k3·k4) & pz = 0.6·Vz²<br>
-          <b>IS 800 Cl. 6</b> → Tension capacity (yielding Tdg & rupture Tdn)<br>
-          <b>IS 800 Cl. 7.1.2</b> → Perry-Robertson compressive strength fcd (Class c)<br>
-          <b>IS 800 Cl. 7.6</b> → Built-up 2C columns & lacing shear (Vt = 0.025 P)<br>
-          <b>IS 800 Cl. 8.2 & 9.3.1</b> → Purlin biaxial bending (Mz, My) & deflection<br>
-          <b>IS 800 Section 10</b> → Welded / bolted connections
+
+      <!-- Governing Analysis -->
+      <div class="inspector-section">
+        <div class="inspector-section-head">
+          <h2>Governing analysis</h2>
         </div>
+        <div class="governing-callout" id="reason">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
+          </svg>
+          <p>Select an element in 3D to inspect its governing load combination.</p>
+        </div>
+      </div>
+
+      <!-- Relevant Code Path -->
+      <div class="inspector-section">
+        <div class="inspector-section-head">
+          <h2>Relevant code path</h2>
+          <svg style="width:16px;height:16px;color:var(--muted);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+          </svg>
+        </div>
+        <div class="code-ref-list">
+          <div class="code-ref-item">
+            <b>IS 875 (Part 1)</b>
+            <span>Dead loads (roof sheet, purlins, truss)</span>
+          </div>
+          <div class="code-ref-item">
+            <b>IS 875 (Part 2)</b>
+            <span>Roof imposed load (min 0.40 kN/m²)</span>
+          </div>
+          <div class="code-ref-item">
+            <b>IS 875 (Part 3)</b>
+            <span>Wind speed Vz (k1·k2·k3·k4) & pz = 0.6·Vz²</span>
+          </div>
+          <div class="code-ref-item">
+            <b>IS 800 Cl. 6</b>
+            <span>Tension capacity (yielding Tdg & rupture Tdn)</span>
+          </div>
+          <div class="code-ref-item">
+            <b>IS 800 Cl. 7.1.2</b>
+            <span>Perry–Robertson compressive strength (Class c)</span>
+          </div>
+          <div class="code-ref-item">
+            <b>IS 800 Cl. 7.6</b>
+            <span>Built-up 2C columns & lacing shear (Vt = 0.025 P)</span>
+          </div>
+          <div class="code-ref-item">
+            <b>IS 800 Cl. 8.2 & 9.3.1</b>
+            <span>Purlin biaxial bending (Mz, My) & deflection</span>
+          </div>
+          <div class="code-ref-item">
+            <b>IS 800 Section 10</b>
+            <span>Welded / bolted connections</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Inspector Footer -->
+      <div class="inspector-footer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>
+        </svg>
+        <span>IS 800:2007 · Limit State Design</span>
       </div>
     </aside>
 
-    <!-- Bottom Study Panel (KaTeX Assignment Solution Sheet) -->
+    <!-- Bottom Study Panel (Design data sheet) -->
     <section class="study" id="studyPanel">
+      <!-- Sheet Controls -->
       <div class="studyhead">
-        <div class="studyhead-title-wrap">
-          <b id="studyTitle">Step 1 — Given Data & Code Basis</b>
-          <small id="studySub">GROUP G5 · IS 800 / IS 875 · LIMIT STATE</small>
+        <div class="studyhead-title-row">
+          <div class="studyhead-title-wrap">
+            <b id="studyTitle">Design Data & Material Properties</b>
+            <small id="studySub">PRESET G5 · DESIGN SPECIFICATION & ENGINEERING SHEET</small>
+          </div>
+          <div class="studyhead-actions">
+            <button class="btn" id="btnEngineerReport" title="Generate Comprehensive Structural Engineering Design & BOQ Report">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+              </svg>
+              <span>Engineer Report</span>
+            </button>
+            <button class="btn" id="btnPrintSheet" title="Print / Export Full Calculation Sheet">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect x="6" y="14" width="12" height="8" rx="1"/>
+              </svg>
+              <span>Print Sheet</span>
+            </button>
+          </div>
         </div>
+
         <div class="studyhead-controls">
           <div class="layout-switch-bar">
-            <span class="ctrl-label">LAYOUT:</span>
-            <button class="ctrl-btn active" id="btnLayoutBelow" data-layout="below" title="One Below One (Stacked view)">
-              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h12v4H2zm0 6h12v6H2z"/></svg>
+            <span class="ctrl-label">LAYOUT</span>
+            <button class="ctrl-btn active" id="btnLayoutBelow" data-layout="below" title="Below (Stacked view)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 15h18"/>
+              </svg>
               <span>Below</span>
             </button>
             <button class="ctrl-btn" id="btnLayoutWide" data-layout="wide" title="Wide Below (Full width stacked)">
-              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M1 2h14v4H1zm0 6h14v6H1z"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 12h18"/>
+              </svg>
               <span>Wide Below</span>
             </button>
             <button class="ctrl-btn" id="btnLayoutSide" data-layout="side" title="Side-by-Side (3D on left, Solution on right)">
-              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h5v12H2zm7 0h5v12H9z"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="18" height="18" x="3" y="3" rx="2"/><path d="M12 3v18"/>
+              </svg>
               <span>Side-by-Side</span>
             </button>
             <button class="ctrl-btn" id="btnLayoutFull" data-layout="full" title="Full Sheet (Maximize calculation sheet)">
-              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M1 1v5h2V3h3V1H1zm9 0v2h3v3h2V1h-5zm3 9v3h-3v2h5v-5h-2zM3 10H1v5h5v-2H3v-3z"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+              </svg>
               <span>Full Sheet</span>
             </button>
           </div>
+
           <div class="step-nav-bar">
-            <button class="ctrl-btn nav-btn" id="btnStepPrev" title="Previous Step">← Prev</button>
+            <button class="nav-btn" id="btnStepPrev" title="Previous Step">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>
+              </svg>
+              <span>Prev</span>
+            </button>
             <span class="step-badge" id="stepCounterBadge">Step 1 / 8</span>
-            <button class="ctrl-btn nav-btn" id="btnStepNext" title="Next Step">Next →</button>
-            <button class="ctrl-btn icon-btn" id="btnPrintSheet" title="Print / Export Full Calculation Sheet">
-              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M4 1h8v3H4zm9 4H3a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h1v2h8v-2h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm-2 9H5v-3h6v3zm1-7a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/></svg>
-              <span>Print</span>
+            <button class="nav-btn" id="btnStepNext" title="Next Step">
+              <span>Next</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>
+              </svg>
             </button>
           </div>
         </div>
       </div>
+
+      <!-- Step Workflow Tabs (Figma: Design workflow) -->
       <div class="solution-tabs" id="solutionTabs">
         <button class="solution-tab active" data-solution-step="0"><b>01</b><span>Given Data</span></button>
         <button class="solution-tab" data-solution-step="1"><b>02</b><span>Geometry</span></button>
@@ -305,13 +740,34 @@
         <button class="solution-tab" data-solution-step="6"><b>07</b><span>Columns + Lacing</span></button>
         <button class="solution-tab" data-solution-step="7"><b>08</b><span>Connections</span></button>
       </div>
-      <div class="solution-paper" id="solutionPaper">
-        <div class="solution-kicker">ASSIGNMENT 3A · GROUP G5</div>
-        <div class="solution-title-row">
-          <h2 id="solutionHeading">Step 1 — Given Data & Code Basis</h2>
-          <span class="solution-badge">IS 800 / IS 875</span>
+
+      <!-- Engineering Document Area -->
+      <div class="document-container">
+        <div class="solution-paper" id="solutionPaper">
+          <!-- Metadata Header -->
+          <div class="document-metadata">
+            <span class="document-kicker" id="documentMetaTitle">STRUCTURAL DESIGN STUDIO · PRESET G5 (NASHIK) · IS 800:2007 / IS 875</span>
+            <span class="document-badge" id="documentBadge">DESIGN DATA</span>
+          </div>
+
+          <div class="document-divider"></div>
+
+          <!-- Document Introduction -->
+          <div class="document-intro">
+            <h2 id="solutionHeading">Design Data & Material Properties</h2>
+            <h4 id="solutionSubhead">DESIGN OF INDUSTRIAL ROOF TRUSS (PRESET G5)</h4>
+            <p id="solutionDesc">Comprehensive engineering design analysis and specification for pitched industrial steel roof trusses:</p>
+          </div>
+
+          <!-- Live Solution Content (Tables & Equations) -->
+          <div id="solutionContent"></div>
+
+          <!-- Document Footer -->
+          <div class="document-footer">
+            <span>Design basis: Limit State Design · IS 800:2007</span>
+            <span class="document-footer-counter" id="docStepCounter">01 / 08</span>
+          </div>
         </div>
-        <div id="solutionContent"></div>
       </div>
     </section>
 
@@ -326,7 +782,7 @@
           <button class="btn" id="closeWorkflow">Close</button>
         </div>
         <div class="workflow-steps" id="workflowSteps">
-          <button class="workflow-step active" data-step="0"><b>01</b><span>Problem Statement</span></button>
+          <button class="workflow-step active" data-step="0"><b>01</b><span>Design Basis</span></button>
           <button class="workflow-step" data-step="1"><b>02</b><span>Geometry</span></button>
           <button class="workflow-step" data-step="2"><b>03</b><span>Loads</span></button>
           <button class="workflow-step" data-step="3"><b>04</b><span>Analysis</span></button>
@@ -349,12 +805,587 @@
       </div>
     </div>
 
-    <!-- Mobile Toolbar -->
-    <div class="mobilebar">
-      <button id="mLeft">INPUTS</button>
-      <button id="mRight">INSPECT</button>
-      <button id="mFit">FIT 3D</button>
+    <!-- Mobile App Shell (Visible only on screens <= 860px) -->
+    <div class="mobile-app-shell" id="mobileAppShell">
+      
+      <!-- TAB 1: OVERVIEW (Figma 4:4862) -->
+      <div class="mobile-tab-view active" id="mTab_overview">
+        <div class="mobile-page-header">
+          <h1 class="mobile-page-title">Overview</h1>
+          <p class="mobile-page-subtitle">Your project, in focus</p>
+        </div>
+
+        <!-- Project Given Card -->
+        <div class="m-card overview-given-card">
+          <div class="overview-badge-row">
+            <span class="overview-project-tag" id="mOverviewProjectTag">G4 · HOWE ROOF TRUSS</span>
+            <span class="badge-ok" style="font-size:9px">GAYA · ZONE IV</span>
+          </div>
+          <h2 class="overview-project-title" id="mOverviewProjectTitle">Howe Roof Truss (Gaya)</h2>
+          <div class="overview-project-desc" id="mOverviewProjectDesc">Span: 16 m · Spacing: 4 m · Panels: 6</div>
+          <div class="overview-thumb-wrap" id="mOverviewThumb"></div>
+          <button class="overview-card-cta" id="mBtnReviewInputs">
+            <span>Review project inputs</span>
+            <svg style="width:16px;height:16px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+        </div>
+
+        <!-- 3-Column Key KPIs Row -->
+        <div class="overview-kpis-grid">
+          <div class="overview-kpi-item">
+            <div class="overview-kpi-val" id="mKpiLength">98 m</div>
+            <div class="overview-kpi-lbl" id="mKpiLengthSub">25 bays</div>
+          </div>
+          <div class="overview-kpi-item">
+            <div class="overview-kpi-val" id="mKpiHeight">12 m</div>
+            <div class="overview-kpi-lbl">Eave height</div>
+          </div>
+          <div class="overview-kpi-item">
+            <div class="overview-kpi-val" id="mKpiSpacing">4 m</div>
+            <div class="overview-kpi-lbl">Truss spacing</div>
+          </div>
+        </div>
+
+        <!-- Status Alert Banner -->
+        <div class="overview-status-banner action" id="mOverviewStatusBanner">
+          <div class="overview-status-title">
+            <svg style="width:16px;height:16px;color:#dc2626" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span>CHECK NEEDED: 1 check requires resizing</span>
+          </div>
+          <div>Built-up column lambda (250.0) exceeds 180 allowable limit per IS 800:2007. Purlins and truss members satisfy all checks.</div>
+        </div>
+
+        <!-- Task Cards -->
+        <div class="overview-task-item" id="mTaskExploreModel">
+          <div class="overview-task-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+          </div>
+          <div class="overview-task-info">
+            <div class="overview-task-name">Explore the model</div>
+            <div class="overview-task-sub">Inspect chords, purlins, columns, and lacing in 3D</div>
+          </div>
+          <svg style="width:16px;height:16px;color:var(--muted)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+        </div>
+
+        <div class="overview-task-item" id="mTaskReadSheet">
+          <div class="overview-task-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          </div>
+          <div class="overview-task-info">
+            <div class="overview-task-name">Read the design sheet</div>
+            <div class="overview-task-sub">Step-by-step IS 800 calculations with formula references</div>
+          </div>
+          <svg style="width:16px;height:16px;color:var(--muted)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+        </div>
+
+        <div class="overview-task-item" id="mTaskDesignBasis">
+          <div class="overview-task-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          </div>
+          <div class="overview-task-info">
+            <div class="overview-task-name">Design basis</div>
+            <div class="overview-task-sub">IS 800:2007 (Limit State), IS 875 (Parts 1–3), IS 2062:2011</div>
+          </div>
+          <svg style="width:16px;height:16px;color:var(--muted)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+        </div>
+      </div>
+
+      <!-- TAB 2: INPUTS (Figma 4:4943) -->
+      <div class="mobile-tab-view" id="mTab_inputs">
+        <div class="mobile-page-header">
+          <h1 class="mobile-page-title">Inputs</h1>
+          <p class="mobile-page-subtitle">Edit project inputs</p>
+        </div>
+
+        <!-- Accordion 1: Assignment & Building -->
+        <div class="m-accordion open">
+          <div class="m-accordion-head">
+            <div class="m-accordion-head-left">
+              <span class="m-accordion-num">01</span>
+              <span class="m-accordion-title">Assignment & building</span>
+            </div>
+            <svg class="m-accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+          <div class="m-accordion-body">
+            <div class="m-field">
+              <label>Preset / Group</label>
+              <select id="mInpGroup">
+                <option value="G1">G1 · Fink (Jodhpur)</option>
+                <option value="G2">G2 · Howe (Solapur)</option>
+                <option value="G3">G3 · Pratt (Kollam)</option>
+                <option value="G4" selected>G4 · Howe (Gaya)</option>
+                <option value="G5">G5 · Fink (Nashik)</option>
+                <option value="G6">G6 · Warren (Ranchi)</option>
+                <option value="G7">G7 · Howe (Bhopal)</option>
+                <option value="G8">G8 · Pratt (Madurai)</option>
+                <option value="G9">G9 · Fink (Agra)</option>
+                <option value="G10">G10 · Warren (Hubli)</option>
+              </select>
+            </div>
+            <div class="m-field">
+              <label>Location (Wind Zone)</label>
+              <select id="mInpLoc">
+                <option value="Gaya" selected>Gaya (Zone IV, Vb = 39 m/s)</option>
+                <option value="Nashik">Nashik (Zone III, Vb = 39 m/s)</option>
+                <option value="Jodhpur">Jodhpur (Zone IV, Vb = 47 m/s)</option>
+                <option value="Solapur">Solapur (Zone III, Vb = 39 m/s)</option>
+                <option value="Kollam">Kollam (Zone III, Vb = 39 m/s)</option>
+                <option value="Ranchi">Ranchi (Zone III, Vb = 39 m/s)</option>
+              </select>
+            </div>
+            <div class="m-row2">
+              <div class="m-field">
+                <label>Building length</label>
+                <div class="m-input-unit">
+                  <input id="mInpLength" type="number" value="98">
+                  <span>m</span>
+                </div>
+              </div>
+              <div class="m-field">
+                <label>Eave height</label>
+                <div class="m-input-unit">
+                  <input id="mInpHeight" type="number" value="12">
+                  <span>m</span>
+                </div>
+              </div>
+            </div>
+            <div class="m-field">
+              <label>Truss spacing</label>
+              <div class="m-input-unit">
+                <input id="mInpSpacing" type="number" step="0.25" value="4">
+                <span>m</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Accordion 2: Structural Geometry -->
+        <div class="m-accordion open">
+          <div class="m-accordion-head">
+            <div class="m-accordion-head-left">
+              <span class="m-accordion-num">02</span>
+              <span class="m-accordion-title">Structural geometry</span>
+            </div>
+            <svg class="m-accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+          <div class="m-accordion-body">
+            <div class="m-field">
+              <label>Truss type</label>
+              <select id="mInpTruss">
+                <option value="Howe" selected>Howe roof truss</option>
+                <option value="Pratt">Pratt roof truss</option>
+                <option value="Fink">Fink roof truss</option>
+                <option value="Warren">Warren roof truss</option>
+              </select>
+            </div>
+            <div class="m-row2">
+              <div class="m-field">
+                <label>Span</label>
+                <div class="m-input-unit">
+                  <input id="mInpSpan" type="number" value="16">
+                  <span>m</span>
+                </div>
+              </div>
+              <div class="m-field">
+                <label>Panels</label>
+                <input id="mInpPanels" type="number" value="6">
+              </div>
+            </div>
+            <div class="m-row2">
+              <div class="m-field">
+                <label>Pitch angle</label>
+                <div class="m-input-unit">
+                  <input id="mInpSlopeDeg" type="number" step="0.1" value="26.57">
+                  <span>°</span>
+                </div>
+              </div>
+              <div class="m-field">
+                <label>Overhang</label>
+                <div class="m-input-unit">
+                  <input id="mInpOverhang" type="number" step="0.1" value="0.5">
+                  <span>m</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Accordion 3: Materials & Members -->
+        <div class="m-accordion">
+          <div class="m-accordion-head">
+            <div class="m-accordion-head-left">
+              <span class="m-accordion-num">03</span>
+              <span class="m-accordion-title">Materials & members</span>
+            </div>
+            <svg class="m-accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+          <div class="m-accordion-body">
+            <div class="m-field">
+              <label>Steel grade</label>
+              <select id="mInpGrade">
+                <option value="E250" selected>E250 (Fe 410) — fy = 250 MPa</option>
+                <option value="E350">E350 (Fe 490) — fy = 350 MPa</option>
+              </select>
+            </div>
+            <div class="m-field">
+              <label>Truss chords section</label>
+              <select id="mInpTrussSection">
+                <option value="2x ISA 75x75x6" selected>2x ISA 75x75x6 (Standard)</option>
+                <option value="2x ISA 80x80x6">2x ISA 80x80x6</option>
+                <option value="2x ISA 90x90x6">2x ISA 90x90x6</option>
+                <option value="2x ISA 100x100x8">2x ISA 100x100x8</option>
+              </select>
+            </div>
+            <div class="m-field">
+              <label>Purlin section</label>
+              <select id="mInpPurlinSection">
+                <option value="ISMC 125" selected>ISMC 125</option>
+                <option value="ISMC 150">ISMC 150</option>
+                <option value="ISMC 175">ISMC 175</option>
+              </select>
+            </div>
+            <div class="m-field">
+              <label>Column section</label>
+              <select id="mInpColSection">
+                <option value="2x ISMC 200" selected>2x ISMC 200 (Built-up)</option>
+                <option value="2x ISMC 250">2x ISMC 250 (Heavy)</option>
+                <option value="2x ISMC 300">2x ISMC 300</option>
+              </select>
+            </div>
+            <div class="m-field">
+              <label>Connection type</label>
+              <div class="m-seg-toggle">
+                <button class="active" id="mConnWeld">Welded</button>
+                <button id="mConnBolt">Bolted</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Accordion 4: Wind & Loads (IS 875) -->
+        <div class="m-accordion">
+          <div class="m-accordion-head">
+            <div class="m-accordion-head-left">
+              <span class="m-accordion-num">04</span>
+              <span class="m-accordion-title">Wind & loads (IS 875)</span>
+            </div>
+            <svg class="m-accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+          <div class="m-accordion-body">
+            <div class="m-row2">
+              <div class="m-field">
+                <label>Basic wind Vb</label>
+                <div class="m-input-unit">
+                  <input id="mInpVb" type="number" value="39">
+                  <span>m/s</span>
+                </div>
+              </div>
+              <div class="m-field">
+                <label>Roof cladding</label>
+                <select id="mInpRoof">
+                  <option value="AC" selected>AC Sheet</option>
+                  <option value="GI">GI Sheet</option>
+                </select>
+              </div>
+            </div>
+            <div class="m-row2">
+              <div class="m-field">
+                <label>Internal Cpi</label>
+                <select id="mInpCpi">
+                  <option value="0.2" selected>+0.2 (Normal)</option>
+                  <option value="-0.2">-0.2 (Normal)</option>
+                  <option value="0.5">+0.5 (Medium)</option>
+                </select>
+              </div>
+              <div class="m-field">
+                <label>Topography k3</label>
+                <select id="mInpK3">
+                  <option value="1.0" selected>1.00 (Flat)</option>
+                  <option value="1.05">1.05 (Slope 3-17°)</option>
+                  <option value="1.15">1.15 (Cliff/Ridge)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sticky Actions Bar -->
+        <div class="m-inputs-actions-bar">
+          <button class="m-btn-primary" id="mBtnSaveInputs">
+            <svg style="width:16px;height:16px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>Save project inputs</span>
+          </button>
+          <button class="m-btn-secondary" id="mBtnCancelInputs">Cancel</button>
+        </div>
+      </div>
+
+      <!-- TAB 3: MODEL (Figma 4:5036) -->
+      <div class="mobile-tab-view" id="mTab_model">
+        <div class="mobile-page-header">
+          <h1 class="mobile-page-title">Model</h1>
+          <p class="mobile-page-subtitle">Explore the structure</p>
+        </div>
+
+        <!-- Segmented 3D View Control -->
+        <div class="m-view-segmented">
+          <button class="active" data-view="3d">3D</button>
+          <button data-view="front">Front</button>
+          <button data-view="plan">Plan</button>
+        </div>
+
+        <!-- 3D Model Viewport Container -->
+        <div class="m-viewport-container" id="mViewportWrap">
+          <!-- Scene will mount here dynamically -->
+          <div class="m-viewport-floating-actions">
+            <button class="m-floating-btn" id="mBtnFitModel">
+              <svg style="width:14px;height:14px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+              <span>Fit</span>
+            </button>
+            <button class="m-floating-btn" id="mBtnResetModel">
+              <svg style="width:14px;height:14px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+              <span>Reset</span>
+            </button>
+          </div>
+        </div>
+
+
+        <!-- Easy-tap Member Selection Pills (tapping navigates to Inspector tab) -->
+        <div class="m-member-list-label">Select member to inspect</div>
+        <div class="m-member-pill-scroll">
+          <button class="m-member-pill active" data-member="L0U1" onclick="window.MobileUI&&MobileUI.inspectMember('L0U1')">Top chord (L0U1)</button>
+          <button class="m-member-pill" data-member="L0L1" onclick="window.MobileUI&&MobileUI.inspectMember('L0L1')">Bottom chord (L0L1)</button>
+          <button class="m-member-pill" data-member="U1L1" onclick="window.MobileUI&&MobileUI.inspectMember('U1L1')">Web strut (U1L1)</button>
+          <button class="m-member-pill" data-member="L1U2" onclick="window.MobileUI&&MobileUI.inspectMember('L1U2')">Web diagonal (L1U2)</button>
+          <button class="m-member-pill" data-member="purlin" onclick="window.MobileUI&&MobileUI.inspectMember('purlin')">Roof purlin</button>
+          <button class="m-member-pill" data-member="column" onclick="window.MobileUI&&MobileUI.inspectMember('column')">Built-up column</button>
+        </div>
+
+        <!-- Hint nudge to go to Inspector -->
+        <div style="text-align:center;padding:8px 0 4px 0;">
+          <button class="m-btn-secondary" onclick="window.MobileUI&&MobileUI.setTab('inspector')" style="width:100%;gap:6px">
+            <svg style="width:15px;height:15px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+            <span>Open Member Inspector</span>
+          </button>
+        </div>
+      </div>
+
+
+      <!-- TAB 5: INSPECTOR — dedicated member analysis -->
+      <div class="mobile-tab-view" id="mTab_inspector">
+        <div class="mobile-page-header">
+          <h1 class="mobile-page-title">Inspector</h1>
+          <p class="mobile-page-subtitle">Member analysis &amp; code checks</p>
+        </div>
+
+        <!-- Member selector dropdown -->
+        <div class="m-insp-member-select-row">
+          <label for="mInspMemberDropdown">Member</label>
+          <select id="mInspMemberDropdown">
+            <option value="L0U1">Top Chord — L0U1</option>
+            <option value="L0L1">Bottom Chord — L0L1</option>
+            <option value="U1L1">Vertical Strut — U1L1</option>
+            <option value="L1U2">Web Diagonal — L1U2</option>
+            <option value="purlin">Roof Purlin (ISMC 125)</option>
+            <option value="column">Built-up Column</option>
+          </select>
+        </div>
+
+        <!-- Inspector card -->
+        <div class="m-inspector-card">
+          <div class="m-inspector-header">
+            <div>
+              <h2 class="m-inspector-title" id="mInsp2Title">Top Chord (L0U1)</h2>
+              <div class="m-inspector-section-tag" id="mInsp2Section">2x ISA 75x75x6 · IS 800:2007 Cl. 7.1.2</div>
+            </div>
+            <span class="m-inspector-badge ok" id="mInsp2Badge">PASS</span>
+          </div>
+
+          <!-- DCR utilization bar -->
+          <div class="m-inspector-dcr-bar-wrap">
+            <div class="m-inspector-dcr-label">
+              <span>Demand/Capacity Ratio (DCR)</span>
+              <span class="m-inspector-dcr-val" id="mInsp2Util">75.9%</span>
+            </div>
+            <div class="m-inspector-dcr-track">
+              <div class="m-inspector-dcr-fill" id="mInsp2DcrFill" style="width:75.9%"></div>
+            </div>
+          </div>
+
+          <!-- 4-stat grid -->
+          <div class="m-inspector-stats">
+            <div class="m-stat-box">
+              <div class="m-stat-lbl">Governing Force</div>
+              <div class="m-stat-val" id="mInsp2Force">-61.05 kN</div>
+            </div>
+            <div class="m-stat-box">
+              <div class="m-stat-lbl">Type</div>
+              <div class="m-stat-val" id="mInsp2Type">Compression</div>
+            </div>
+            <div class="m-stat-box">
+              <div class="m-stat-lbl">Section Capacity</div>
+              <div class="m-stat-val" id="mInsp2Cap">80.47 kN</div>
+            </div>
+            <div class="m-stat-box">
+              <div class="m-stat-lbl">Slenderness λ</div>
+              <div class="m-stat-val" id="mInsp2Lambda">99.4</div>
+            </div>
+          </div>
+
+          <!-- Code clause reference -->
+          <div class="m-inspector-code-ref" id="mInsp2CodeRef">
+            <svg style="width:14px;height:14px;flex:none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+            <span>IS 800:2007 — Cl. 7.1.2 Design of Compression Members</span>
+          </div>
+        </div>
+
+        <!-- ═══ SECTION: OPTIMUM RECOMMENDATIONS ═══ -->
+        <div class="m-card" id="mInspRecsCard">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <div style="font-size:11.5px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:6px">
+              <svg style="width:14px;height:14px;color:var(--accent)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              Optimum Recommendations
+            </div>
+            <span class="m-inspector-badge ok" id="mInspRecsStatusBadge">IS 800 PASS</span>
+          </div>
+          <!-- Dynamically filled by renderMobileRecommendations() in mobile.js -->
+          <div id="mInspRecsContent">
+            <div style="font-size:12px;color:var(--muted);padding:8px 0">Loading analysis…</div>
+          </div>
+          <button class="m-btn-primary" id="mBtnApplyRecommended" style="width:100%;margin-top:10px;display:none">
+            <svg style="width:15px;height:15px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>Apply Optimal Sizing</span>
+          </button>
+        </div>
+
+        <!-- ═══ SECTION: DESIGN STATUS CHECKLIST ═══ -->
+        <div class="m-card">
+          <div style="font-size:11.5px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:6px;margin-bottom:10px">
+            <svg style="width:14px;height:14px;color:var(--accent)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            Design Status (IS 800:2007)
+          </div>
+          <!-- Dynamically filled by renderMobileChecklist() -->
+          <div id="mInspChecklist">
+            <div style="font-size:12px;color:var(--muted)">Loading checks…</div>
+          </div>
+        </div>
+
+        <!-- ═══ SECTION: GOVERNING ANALYSIS ═══ -->
+        <div class="m-card">
+          <div style="font-size:11.5px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:6px;margin-bottom:10px">
+            <svg style="width:14px;height:14px;color:var(--accent)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+            Governing Analysis
+          </div>
+          <div id="mInspGoverning" style="font-size:12.5px;color:var(--muted);line-height:1.55;padding:10px 12px;background:var(--panel2);border-radius:8px;border:1px solid var(--line)">
+            Select a member above to see its governing load combination.
+          </div>
+        </div>
+
+        <!-- ═══ SECTION: RELEVANT CODE PATH ═══ -->
+        <div class="m-card">
+          <div style="font-size:11.5px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:6px;margin-bottom:10px">
+            <svg style="width:14px;height:14px;color:var(--accent)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            Relevant Code Path
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div class="m-code-ref-item"><b>IS 875 Pt.1</b><span>Dead loads — roof sheet, purlins, truss self-weight</span></div>
+            <div class="m-code-ref-item"><b>IS 875 Pt.2</b><span>Roof imposed load (min 0.40 kN/m²)</span></div>
+            <div class="m-code-ref-item"><b>IS 875 Pt.3</b><span>Wind speed Vz (k₁·k₂·k₃·k₄) &amp; pz = 0.6·Vz²</span></div>
+            <div class="m-code-ref-item"><b>IS 800 Cl. 6</b><span>Tension capacity (yielding Tdg &amp; rupture Tdn)</span></div>
+            <div class="m-code-ref-item"><b>IS 800 Cl. 7.1.2</b><span>Perry–Robertson compressive strength (Class c)</span></div>
+            <div class="m-code-ref-item"><b>IS 800 Cl. 7.6</b><span>Built-up 2C columns &amp; lacing shear (Vt = 2.5% P)</span></div>
+            <div class="m-code-ref-item"><b>IS 800 Cl. 8.2</b><span>Purlin biaxial bending (Mz, My) &amp; deflection</span></div>
+            <div class="m-code-ref-item"><b>IS 800 Sec. 10</b><span>Welded / bolted connections</span></div>
+          </div>
+        </div>
+
+        <!-- Action row: go to Sheet -->
+        <button class="m-btn-primary" id="mBtnInspToSheet" style="width:100%;margin-top:4px;margin-bottom:8px">
+          <svg style="width:15px;height:15px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <span>View design steps in Sheet</span>
+        </button>
+      </div>
+
+
+
+
+      <div class="mobile-tab-view" id="mTab_sheet">
+        <div class="mobile-page-header">
+          <h1 class="mobile-page-title">Sheet</h1>
+          <p class="mobile-page-subtitle">Design sheet</p>
+        </div>
+
+        <!-- Step Selector Dropdown -->
+        <div class="m-step-selector-row">
+          <select class="m-step-dropdown" id="mStepDropdown">
+            <option value="0">01 / 08 Given Data</option>
+            <option value="1">02 / 08 Geometry</option>
+            <option value="2">03 / 08 Loads</option>
+            <option value="3">04 / 08 Analysis</option>
+            <option value="4">05 / 08 Truss Members</option>
+            <option value="5">06 / 08 Purlins</option>
+            <option value="6">07 / 08 Columns + Lacing</option>
+            <option value="7">08 / 08 Connections</option>
+          </select>
+        </div>
+
+        <!-- Calculation Step Content Container -->
+        <div class="m-sheet-content-card" id="mSheetContent"></div>
+
+        <!-- Sheet Actions Bar -->
+        <div class="m-sheet-actions-bar">
+          <button class="m-btn-primary" id="mBtnSheetNext">Next: Geometry →</button>
+          <button class="m-btn-secondary" id="mBtnSheetPrint">
+            <svg style="width:16px;height:16px;margin-right:4px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg>
+            <span>Print sheet</span>
+          </button>
+        </div>
+      </div>
+
     </div>
+
+    <!-- Persistent Mobile Bottom Navigation Bar (Fixed 5 Tabs) -->
+    <nav class="mobile-bottom-nav" id="mobileBottomNav" role="tablist" aria-label="Main navigation">
+      <!-- Overview -->
+      <button class="mobile-nav-btn active" data-mobile-tab="overview" role="tab" aria-selected="true" aria-label="Overview">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/>
+          <rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>
+        </svg>
+        <span>Overview</span>
+      </button>
+      <!-- Inputs -->
+      <button class="mobile-nav-btn" data-mobile-tab="inputs" role="tab" aria-selected="false" aria-label="Inputs">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+        <span>Inputs</span>
+      </button>
+      <!-- Model (3D) -->
+      <button class="mobile-nav-btn" data-mobile-tab="model" role="tab" aria-selected="false" aria-label="3D Model">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+          <polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>
+        </svg>
+        <span>Model</span>
+      </button>
+      <!-- Inspector -->
+      <button class="mobile-nav-btn" data-mobile-tab="inspector" role="tab" aria-selected="false" aria-label="Inspector">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          <line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>
+        </svg>
+        <span>Inspect</span>
+      </button>
+      <!-- Sheet -->
+      <button class="mobile-nav-btn" data-mobile-tab="sheet" role="tab" aria-selected="false" aria-label="Design Sheet">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+        </svg>
+        <span>Sheet</span>
+      </button>
+    </nav>
   </div>
 
   <!-- Modular Scripts in Dependency Order -->
@@ -368,9 +1399,12 @@
   <script src="js/engine/analysis.js"></script>
   <script src="js/engine/textbook.js"></script>
   <script src="js/engine/scene.js"></script>
+  <script src="js/ui/production_print.js"></script>
   <script src="js/ui/study.js"></script>
+  <script src="js/ui/engineer_report.js"></script>
   <script src="js/ui/inspector.js"></script>
   <script src="js/ui/resizer.js"></script>
+  <script src="js/ui/mobile.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

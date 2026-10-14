@@ -535,6 +535,7 @@
       rise,
       panels,
       trussType,
+      isG4: (!S.group || S.group === 'G4' || (span === 16 && panels === 6)),
       spacing,
       slopeDeg,
       slopeRad,
@@ -581,231 +582,721 @@
   }
 
   // ==========================================
-  // SVG Textbook Diagram Builders (CAD Blueprint Quality)
+  // SVG Textbook Diagram Builders (Publication Quality matching g4_howe_truss.svg)
   // ==========================================
 
-  function renderFullTrussSVG(data, mode = 'geometry') {
-    const span = data.span;
-    const rise = data.rise;
-    const t = data.t;
-    const nodes = t.nodes;
-    const members = t.members;
+  function renderFullTrussSVG(data, mode = 'geometry', opts = {}) {
+    const span = data.span || 16;
+    const rise = data.rise || 4;
+    const panels = data.panels || 6;
+    const slopeDeg = data.slopeDeg || 26.57;
+    const spacing = data.spacing || 4;
+    const panelPlan = data.panelPlan || (span / panels);
+    const mid = Math.floor(panels / 2);
 
-    const width = 940;
-    const height = 340;
-    const padX = 85;
-    const padY = 50;
-    const scaleX = (width - 2 * padX) / span;
-    const scaleY = (height - 2 * padY - 55) / Math.max(0.001, rise);
+    const hideCap = Boolean(opts && opts.hideCaption);
+    const width = 820;
+    const height = hideCap ? 385 : 440;
+    const x0 = 80;
+    const xEnd = 720;
+    const yBase = 300;
+    const yApex = 140;
+    const dx = (xEnd - x0) / panels;
+    const dyRafter = (yBase - yApex);
 
-    function toSvg(x, y) {
-      return {
-        x: padX + x * scaleX,
-        y: height - padY - 40 - y * scaleY
-      };
+    // Compute joint coordinates
+    const bottomNodes = [];
+    const topNodes = [];
+
+    for (let i = 0; i <= panels; i++) {
+      const x = x0 + i * dx;
+      bottomNodes.push({ name: 'L' + i, x, y: yBase });
     }
 
-    let svg = `<svg viewBox="0 0 ${width} ${height}" class="truss-textbook-svg" xmlns="http://www.w3.org/2000/svg">`;
-    svg += `<defs>
-      <!-- CAD Background Grid -->
-      <pattern id="cad-grid" width="20" height="20" patternUnits="userSpaceOnUse">
-        <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(112, 184, 220, 0.05)" stroke-width="0.8"/>
-      </pattern>
-      <!-- Arrow Markers -->
-      <marker id="arrow-red" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-        <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#ef4444"/>
-      </marker>
-      <marker id="arrow-green" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-        <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#22c55e"/>
-      </marker>
-      <marker id="arrow-cyan" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-        <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#00d8ff"/>
-      </marker>
-      <marker id="arrow-dim" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
-        <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#7ba3bc"/>
-      </marker>
-    </defs>`;
-
-    // Subtle CAD Blueprint Background
-    svg += `<rect width="${width}" height="${height}" fill="#081018" rx="8" stroke="#1d2e3d" stroke-width="1"/>`;
-    svg += `<rect width="${width}" height="${height}" fill="url(#cad-grid)" rx="8"/>`;
-
-    // 1. Draw Members with Rich High-Visibility Colors
-    members.forEach((m) => {
-      const na = nodes[m.a];
-      const nb = nodes[m.b];
-      const p1 = toSvg(na.x, na.y);
-      const p2 = toSvg(nb.x, nb.y);
-
-      let stroke = '#8bb3cc';
-      let strokeWidth = 2.4;
-      if (m.role === 'top') { stroke = '#00d8ff'; strokeWidth = 3.6; }
-      else if (m.role === 'bottom') { stroke = '#22c55e'; strokeWidth = 3.4; }
-      else if (m.role === 'vertical') { stroke = '#f59e0b'; strokeWidth = 2.4; }
-      else if (m.role === 'diagonal') { stroke = '#c084fc'; strokeWidth = 2.2; }
-
-      svg += `<line x1="${p1.x.toFixed(1)}" y1="${p1.y.toFixed(1)}" x2="${p2.x.toFixed(1)}" y2="${p2.y.toFixed(1)}" stroke="${stroke}" stroke-width="${strokeWidth}" stroke-linecap="round"/>`;
-    });
-
-    // 2. Draw Authentic Structural Supports at L0 and Ln
-    const pL0 = toSvg(nodes[0].x, nodes[0].y);
-    const pLn = toSvg(nodes[data.panels].x, nodes[data.panels].y);
-
-    // Pin Support at L0 (Left Eave)
-    svg += `<polygon points="${pL0.x},${pL0.y} ${pL0.x - 14},${pL0.y + 20} ${pL0.x + 14},${pL0.y + 20}" fill="#132332" stroke="#0ea5e9" stroke-width="1.8"/>`;
-    svg += `<line x1="${pL0.x - 22}" y1="${pL0.y + 20}" x2="${pL0.x + 22}" y2="${pL0.y + 20}" stroke="#94a3b8" stroke-width="2"/>`;
-    // Ground Hatching
-    for (let hx = -18; hx <= 18; hx += 6) {
-      svg += `<line x1="${pL0.x + hx}" y1="${pL0.y + 26}" x2="${pL0.x + hx + 5}" y2="${pL0.y + 20}" stroke="#64748b" stroke-width="1.4"/>`;
-    }
-    svg += `<circle cx="${pL0.x}" cy="${pL0.y}" r="3.5" fill="#ffffff" stroke="#0284c7" stroke-width="1.5"/>`;
-
-    // Roller Support at Ln (Right Eave)
-    svg += `<polygon points="${pLn.x},${pLn.y} ${pLn.x - 14},${pLn.y + 16} ${pLn.x + 14},${pLn.y + 16}" fill="#132332" stroke="#0ea5e9" stroke-width="1.8"/>`;
-    svg += `<circle cx="${pLn.x - 8}" cy="${pLn.y + 21}" r="3.5" fill="#f8fafc" stroke="#64748b" stroke-width="1.4"/>`;
-    svg += `<circle cx="${pLn.x + 8}" cy="${pLn.y + 21}" r="3.5" fill="#f8fafc" stroke="#64748b" stroke-width="1.4"/>`;
-    svg += `<line x1="${pLn.x - 22}" y1="${pLn.y + 26}" x2="${pLn.x + 22}" y2="${pLn.y + 26}" stroke="#94a3b8" stroke-width="2"/>`;
-    // Ground Hatching
-    for (let hx = -18; hx <= 18; hx += 6) {
-      svg += `<line x1="${pLn.x + hx}" y1="${pLn.y + 32}" x2="${pLn.x + hx + 5}" y2="${pLn.y + 26}" stroke="#64748b" stroke-width="1.4"/>`;
-    }
-    svg += `<circle cx="${pLn.x}" cy="${pLn.y}" r="3.5" fill="#ffffff" stroke="#0284c7" stroke-width="1.5"/>`;
-
-    // 3. Draw Nodes with High-Contrast Pill Badges
-    nodes.forEach((n) => {
-      const p = toSvg(n.x, n.y);
-      const isTop = n.tag === 'top';
-      const dyLabel = isTop ? -20 : 20;
-      const borderCol = isTop ? '#00d8ff' : '#22c55e';
-      
-      // Node white dot
-      svg += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4.2" fill="#ffffff" stroke="#081018" stroke-width="1.6"/>`;
-      
-      // Node label pill badge
-      const wBadge = n.name.length > 2 ? 26 : 22;
-      svg += `<rect x="${(p.x - wBadge / 2).toFixed(1)}" y="${(p.y + dyLabel - 7).toFixed(1)}" width="${wBadge}" height="14" rx="3" fill="#0d1b26" stroke="${borderCol}" stroke-width="1.2"/>`;
-      svg += `<text x="${p.x.toFixed(1)}" y="${(p.y + dyLabel + 3).toFixed(1)}" fill="#e8f3f9" font-size="9.5" font-weight="700" font-family="monospace" text-anchor="middle">${n.name}</text>`;
-    });
-
-    // 4. Overlays by Mode
-    if (mode === 'gravity') {
-      const rVal = (data.resGrav && data.resGrav.reactions.R1y) ? data.resGrav.reactions.R1y.toFixed(2) : (data.panels / 2).toFixed(2);
-
-      // Support reactions (Upward Green Arrows with Pill Badges)
-      svg += `<line x1="${pL0.x}" y1="${pL0.y + 68}" x2="${pL0.x}" y2="${pL0.y + 30}" stroke="#22c55e" stroke-width="3" marker-end="url(#arrow-green)"/>`;
-      svg += `<rect x="${pL0.x - 48}" y="${pL0.y + 72}" width="96" height="20" rx="4" fill="#14532d" stroke="#22c55e" stroke-width="1.2"/>`;
-      svg += `<text x="${pL0.x}" y="${pL0.y + 86}" fill="#86efac" font-size="10.5" font-weight="700" font-family="monospace" text-anchor="middle">R1 = ${rVal} kN ↑</text>`;
-
-      svg += `<line x1="${pLn.x}" y1="${pLn.y + 68}" x2="${pLn.x}" y2="${pLn.y + 36}" stroke="#22c55e" stroke-width="3" marker-end="url(#arrow-green)"/>`;
-      svg += `<rect x="${pLn.x - 48}" y="${pLn.y + 72}" width="96" height="20" rx="4" fill="#14532d" stroke="#22c55e" stroke-width="1.2"/>`;
-      svg += `<text x="${pLn.x}" y="${pLn.y + 86}" fill="#86efac" font-size="10.5" font-weight="700" font-family="monospace" text-anchor="middle">R2 = ${rVal} kN ↑</text>`;
-
-      // End loads (0.5 kN)
-      svg += `<line x1="${pL0.x}" y1="${pL0.y - 48}" x2="${pL0.x}" y2="${pL0.y - 12}" stroke="#ef4444" stroke-width="2.5" marker-end="url(#arrow-red)"/>`;
-      svg += `<rect x="${pL0.x - 26}" y="${pL0.y - 66}" width="52" height="17" rx="3" fill="#7f1d1d" stroke="#ef4444" stroke-width="1"/>`;
-      svg += `<text x="${pL0.x}" y="${pL0.y - 54}" fill="#fca5a5" font-size="9.5" font-weight="700" font-family="monospace" text-anchor="middle">0.5 kN ↓</text>`;
-
-      svg += `<line x1="${pLn.x}" y1="${pLn.y - 48}" x2="${pLn.x}" y2="${pLn.y - 12}" stroke="#ef4444" stroke-width="2.5" marker-end="url(#arrow-red)"/>`;
-      svg += `<rect x="${pLn.x - 26}" y="${pLn.y - 66}" width="52" height="17" rx="3" fill="#7f1d1d" stroke="#ef4444" stroke-width="1"/>`;
-      svg += `<text x="${pLn.x}" y="${pLn.y - 54}" fill="#fca5a5" font-size="9.5" font-weight="700" font-family="monospace" text-anchor="middle">0.5 kN ↓</text>`;
-
-      // Intermediate loads (1.0 kN)
-      for (let i = 1; i < data.panels; i++) {
-        const uNode = nodes[data.panels + i];
-        const p = toSvg(uNode.x, uNode.y);
-        svg += `<line x1="${p.x}" y1="${p.y - 48}" x2="${p.x}" y2="${p.y - 12}" stroke="#ef4444" stroke-width="2.5" marker-end="url(#arrow-red)"/>`;
-        svg += `<rect x="${p.x - 26}" y="${p.y - 66}" width="52" height="17" rx="3" fill="#7f1d1d" stroke="#ef4444" stroke-width="1"/>`;
-        svg += `<text x="${p.x}" y="${p.y - 54}" fill="#fca5a5" font-size="9.5" font-weight="700" font-family="monospace" text-anchor="middle">1.0 kN ↓</text>`;
+    for (let i = 0; i <= panels; i++) {
+      const x = x0 + i * dx;
+      let y;
+      if (i <= mid) {
+        y = yBase - (i / mid) * dyRafter;
+      } else {
+        y = yBase - ((panels - i) / mid) * dyRafter;
       }
-    } else if (mode === 'wind') {
-      const rvVal = (data.resWind && Math.abs(data.resWind.reactions.R1y)) ? Math.abs(data.resWind.reactions.R1y).toFixed(2) : '2.68';
+      const name = i === 0 ? 'L0' : (i === panels ? 'L' + panels : 'U' + i);
+      topNodes.push({ name, x, y, idx: i });
+    }
 
-      // Downward hold-down support reaction arrows
-      svg += `<line x1="${pL0.x}" y1="${pL0.y + 30}" x2="${pL0.x}" y2="${pL0.y + 68}" stroke="#00d8ff" stroke-width="2.6" marker-end="url(#arrow-cyan)"/>`;
-      svg += `<rect x="${pL0.x - 52}" y="${pL0.y + 72}" width="104" height="20" rx="4" fill="#082f49" stroke="#00d8ff" stroke-width="1.2"/>`;
-      svg += `<text x="${pL0.x}" y="${pL0.y + 86}" fill="#7dd3fc" font-size="10.5" font-weight="700" font-family="monospace" text-anchor="middle">Rv1 = ${rvVal} kN ↓</text>`;
+    let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" font-family="'Times New Roman', Georgia, serif" class="truss-textbook-svg">`;
+    svg += `<defs>
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#0f172a"/>
+    </marker>
+    <marker id="arr-suction" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#0284c7"/>
+    </marker>
+    <marker id="dim" markerWidth="8" markerHeight="8" refX="0" refY="4" orient="auto-start-reverse">
+      <path d="M8,0 L0,4 L8,8" fill="none" stroke="#111" stroke-width="1"/>
+    </marker>
+    <pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="6" stroke="#111" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="${width}" height="${height}" fill="#fff"/>`;
 
-      svg += `<line x1="${pLn.x}" y1="${pLn.y + 30}" x2="${pLn.x}" y2="${pLn.y + 68}" stroke="#00d8ff" stroke-width="2.6" marker-end="url(#arrow-cyan)"/>`;
-      svg += `<rect x="${pLn.x - 52}" y="${pLn.y + 72}" width="104" height="20" rx="4" fill="#082f49" stroke="#00d8ff" stroke-width="1.2"/>`;
-      svg += `<text x="${pLn.x}" y="${pLn.y + 86}" fill="#7dd3fc" font-size="10.5" font-weight="700" font-family="monospace" text-anchor="middle">Rv2 = ${rvVal} kN ↓</text>`;
+    // 1. Web members (thin 1.5)
+    svg += `\n\n  <!-- Web members (thin) -->\n  <g stroke="#334155" stroke-width="1.6" fill="none">`;
+    // Verticals
+    for (let i = 1; i < panels; i++) {
+      svg += `\n    <line x1="${bottomNodes[i].x.toFixed(2)}" y1="${topNodes[i].y.toFixed(2)}" x2="${bottomNodes[i].x.toFixed(2)}" y2="${yBase}"/>`;
+    }
+    // Diagonals (Howe: diagonals slope upwards towards apex)
+    for (let i = 1; i < mid; i++) {
+      svg += `\n    <line x1="${bottomNodes[i].x.toFixed(2)}" y1="${yBase}" x2="${topNodes[i + 1].x.toFixed(2)}" y2="${topNodes[i + 1].y.toFixed(2)}"/>`;
+    }
+    for (let i = mid; i < panels - 1; i++) {
+      svg += `\n    <line x1="${bottomNodes[i + 1].x.toFixed(2)}" y1="${yBase}" x2="${topNodes[i].x.toFixed(2)}" y2="${topNodes[i].y.toFixed(2)}"/>`;
+    }
+    svg += `\n  </g>`;
 
-      const rad = data.slopeRad;
+    // 2. Chords (thick 3.5)
+    svg += `\n\n  <!-- Chords (thick) -->\n  <g stroke="#0f172a" stroke-width="3.5" fill="none" stroke-linejoin="round">`;
+    let polyPts = `${x0},${yBase}`;
+    for (let i = 1; i < panels; i++) {
+      polyPts += ` ${topNodes[i].x.toFixed(2)},${topNodes[i].y.toFixed(2)}`;
+    }
+    polyPts += ` ${xEnd},${yBase}`;
+    svg += `\n    <polyline points="${polyPts}"/>`;
+    svg += `\n    <line x1="${x0}" y1="${yBase}" x2="${xEnd}" y2="${yBase}"/>`;
+    svg += `\n  </g>`;
+
+    // 3. Joints (circles)
+    svg += `\n\n  <!-- Joints -->\n  <g fill="#fff" stroke="#0f172a" stroke-width="1.8">`;
+    for (let i = 0; i <= panels; i++) {
+      svg += `<circle cx="${bottomNodes[i].x.toFixed(2)}" cy="${bottomNodes[i].y.toFixed(2)}" r="4.2"/>`;
+    }
+    for (let i = 1; i < panels; i++) {
+      svg += `<circle cx="${topNodes[i].x.toFixed(2)}" cy="${topNodes[i].y.toFixed(2)}" r="4.2"/>`;
+    }
+    svg += `\n  </g>`;
+
+    // 4. Supports: hinge (left), roller (right)
+    svg += `\n\n  <!-- Supports: hinge (left), roller (right) -->
+  <polygon points="${x0},304 ${x0 - 12},326 ${x0 + 12},326" fill="none" stroke="#111" stroke-width="1.5"/>
+  <rect x="${x0 - 20}" y="326" width="40" height="6" fill="url(#hatch)" stroke="none"/>
+  <line x1="${x0 - 20}" y1="326" x2="${x0 + 20}" y2="326" stroke="#111" stroke-width="1.5"/>
+  <polygon points="${xEnd},304 ${xEnd - 12},322 ${xEnd + 12},322" fill="none" stroke="#111" stroke-width="1.5"/>
+  <circle cx="${xEnd - 8}" cy="325" r="3" fill="none" stroke="#111"/><circle cx="${xEnd + 8}" cy="325" r="3" fill="none" stroke="#111"/>
+  <line x1="${xEnd - 20}" y1="328" x2="${xEnd + 20}" y2="328" stroke="#111" stroke-width="1.5"/>
+  <rect x="${xEnd - 20}" y="328" width="40" height="6" fill="url(#hatch)"/>`;
+
+    // 5. TOP LAYER: Loads, Dimensions, Joint Labels, Angle Arc (Rendered on top so never hidden behind panels)
+    svg += `\n\n  <!-- Top Layer: Loads, Reactions, Dimensions & Labels (Always in front) -->\n  <g id="topLayerAnnotations">`;
+
+    // A) Nodal Loads & Reactions according to mode
+    const dl = data.loads ? data.loads.dl : { end_kN: 2.15, intermediate_kN: 4.30 };
+    const ll = data.loads ? data.loads.ll : { end_kN: 1.49, intermediate_kN: 2.98 };
+    const wl = data.loads ? data.loads.wl : { end_kN: 4.86, intermediate_kN: 9.72 };
+
+    if (mode === 'dead' || mode === 'loads') {
+      // Dead Load Nodal Downward Vectors
+      const rVal = (dl.intermediate_kN * (panels - 1) + dl.end_kN * 2) / 2;
+      svg += `\n  <g stroke="#0f172a" stroke-width="1.6" marker-end="url(#arr)" fill="none">`;
+      for (let i = 0; i <= panels; i++) {
+        const tn = topNodes[i];
+        svg += `\n    <line x1="${tn.x.toFixed(2)}" y1="${(tn.y - 52).toFixed(2)}" x2="${tn.x.toFixed(2)}" y2="${(tn.y - 6).toFixed(2)}"/>`;
+      }
+      // Reactions
+      svg += `\n    <line x1="${x0}" y1="362" x2="${x0}" y2="330"/>`;
+      svg += `\n    <line x1="${xEnd}" y1="362" x2="${xEnd}" y2="330"/>`;
+      svg += `\n  </g>\n  <g font-size="12" text-anchor="middle" fill="#0f172a" stroke="#fff" stroke-width="3.5" stroke-linejoin="round" paint-order="stroke fill">`;
+      for (let i = 0; i <= panels; i++) {
+        const tn = topNodes[i];
+        const valStr = (i === 0 || i === panels) ? `${dl.end_kN.toFixed(2)} kN` : `${dl.intermediate_kN.toFixed(2)} kN`;
+        svg += `\n    <text x="${tn.x.toFixed(2)}" y="${(tn.y - 58).toFixed(2)}" font-weight="600">${valStr}</text>`;
+      }
+      svg += `\n    <text x="${x0}" y="378" font-weight="bold">R₁ = ${rVal.toFixed(2)} kN ↑</text>`;
+      svg += `\n    <text x="${xEnd}" y="378" font-weight="bold">R₂ = ${rVal.toFixed(2)} kN ↑</text>`;
+      svg += `\n  </g>`;
+    } else if (mode === 'live') {
+      // Live Load Nodal Downward Vectors
+      const rVal = (ll.intermediate_kN * (panels - 1) + ll.end_kN * 2) / 2;
+      svg += `\n  <g stroke="#0284c7" stroke-width="1.6" marker-end="url(#arr-suction)" fill="none">`;
+      for (let i = 0; i <= panels; i++) {
+        const tn = topNodes[i];
+        svg += `\n    <line x1="${tn.x.toFixed(2)}" y1="${(tn.y - 52).toFixed(2)}" x2="${tn.x.toFixed(2)}" y2="${(tn.y - 6).toFixed(2)}"/>`;
+      }
+      // Reactions
+      svg += `\n    <line x1="${x0}" y1="362" x2="${x0}" y2="330"/>`;
+      svg += `\n    <line x1="${xEnd}" y1="362" x2="${xEnd}" y2="330"/>`;
+      svg += `\n  </g>\n  <g font-size="12" text-anchor="middle" fill="#0284c7" stroke="#fff" stroke-width="3.5" stroke-linejoin="round" paint-order="stroke fill">`;
+      for (let i = 0; i <= panels; i++) {
+        const tn = topNodes[i];
+        const valStr = (i === 0 || i === panels) ? `${ll.end_kN.toFixed(2)} kN` : `${ll.intermediate_kN.toFixed(2)} kN`;
+        svg += `\n    <text x="${tn.x.toFixed(2)}" y="${(tn.y - 58).toFixed(2)}" font-weight="600">${valStr}</text>`;
+      }
+      svg += `\n    <text x="${x0}" y="378" font-weight="bold">R₁ = ${rVal.toFixed(2)} kN ↑</text>`;
+      svg += `\n    <text x="${xEnd}" y="378" font-weight="bold">R₂ = ${rVal.toFixed(2)} kN ↑</text>`;
+      svg += `\n  </g>`;
+    } else if (mode === 'wind_actual') {
+      // Actual Wind Suction (Normal to roof rafters)
+      const rad = (slopeDeg * Math.PI) / 180;
       const sinT = Math.sin(rad);
       const cosT = Math.cos(rad);
-      const arrLen = 42;
+      const arrLen = 50;
+      const rvVal = (Math.abs(wl.intermediate_kN) * (panels - 1) + Math.abs(wl.end_kN) * 2) * cosT / 2;
 
-      // Normal outward vectors:
-      // Left Eave L0 (0.5 kN suction normal up & left)
-      const vL0x = -arrLen * sinT;
-      const vL0y = -arrLen * cosT;
-      svg += `<line x1="${pL0.x}" y1="${pL0.y}" x2="${(pL0.x + vL0x).toFixed(1)}" y2="${(pL0.y + vL0y).toFixed(1)}" stroke="#00d8ff" stroke-width="2.4" marker-end="url(#arrow-cyan)"/>`;
-      svg += `<rect x="${(pL0.x + vL0x - 54).toFixed(1)}" y="${(pL0.y + vL0y - 12).toFixed(1)}" width="50" height="16" rx="3" fill="#082f49" stroke="#00d8ff" stroke-width="1"/>`;
-      svg += `<text x="${(pL0.x + vL0x - 29).toFixed(1)}" y="${(pL0.y + vL0y).toFixed(1)}" fill="#7dd3fc" font-size="9" font-weight="700" font-family="monospace" text-anchor="middle">0.5 kN ↖</text>`;
+      svg += `\n  <g stroke="#dc2626" stroke-width="1.6" marker-end="url(#arr)" fill="none">`;
+      // Downward hold-down reactions
+      svg += `\n    <line x1="${x0}" y1="330" x2="${x0}" y2="362"/>`;
+      svg += `\n    <line x1="${xEnd}" y1="330" x2="${xEnd}" y2="362"/>`;
 
-      // Right Eave Ln (0.5 kN suction normal up & right)
-      const vLnx = arrLen * sinT;
-      const vLny = -arrLen * cosT;
-      svg += `<line x1="${pLn.x}" y1="${pLn.y}" x2="${(pLn.x + vLnx).toFixed(1)}" y2="${(pLn.y + vLny).toFixed(1)}" stroke="#00d8ff" stroke-width="2.4" marker-end="url(#arrow-cyan)"/>`;
-      svg += `<rect x="${(pLn.x + vLnx + 4).toFixed(1)}" y="${(pLn.y + vLny - 12).toFixed(1)}" width="50" height="16" rx="3" fill="#082f49" stroke="#00d8ff" stroke-width="1"/>`;
-      svg += `<text x="${(pLn.x + vLnx + 29).toFixed(1)}" y="${(pLn.y + vLny).toFixed(1)}" fill="#7dd3fc" font-size="9" font-weight="700" font-family="monospace" text-anchor="middle">0.5 kN ↗</text>`;
-
-      // Intermediate top nodes
-      for (let i = 1; i < data.panels; i++) {
-        const uNode = nodes[data.panels + i];
-        const p = toSvg(uNode.x, uNode.y);
-        let vx = 0, vy = -arrLen, label = '1.0 kN ↑';
-        if (i < data.t.mid) {
+      for (let i = 0; i <= panels; i++) {
+        const tn = topNodes[i];
+        let vx, vy;
+        if (i < mid) {
           vx = -arrLen * sinT;
           vy = -arrLen * cosT;
-          label = '1.0 kN ↖';
-        } else if (i > data.t.mid) {
+        } else if (i > mid) {
           vx = arrLen * sinT;
           vy = -arrLen * cosT;
-          label = '1.0 kN ↗';
         } else {
           vx = 0;
           vy = -arrLen;
-          label = '1.0 kN ↑';
         }
-        svg += `<line x1="${p.x}" y1="${p.y}" x2="${(p.x + vx).toFixed(1)}" y2="${(p.y + vy).toFixed(1)}" stroke="#00d8ff" stroke-width="2.4" marker-end="url(#arrow-cyan)"/>`;
-        svg += `<rect x="${(p.x + vx - 26).toFixed(1)}" y="${(p.y + vy - 20).toFixed(1)}" width="52" height="16" rx="3" fill="#082f49" stroke="#00d8ff" stroke-width="1"/>`;
-        svg += `<text x="${(p.x + vx).toFixed(1)}" y="${(p.y + vy - 8).toFixed(1)}" fill="#7dd3fc" font-size="9" font-weight="700" font-family="monospace" text-anchor="middle">${label}</text>`;
+        svg += `\n    <line x1="${tn.x.toFixed(2)}" y1="${tn.y.toFixed(2)}" x2="${(tn.x + vx).toFixed(2)}" y2="${(tn.y + vy).toFixed(2)}"/>`;
       }
-    } else {
-      // Geometry mode: Dimensions & Pitch Arc
-      const yDim = height - 12;
-      // Span Dimension line
-      svg += `<line x1="${pL0.x}" y1="${yDim}" x2="${pLn.x}" y2="${yDim}" stroke="#7ba3bc" stroke-width="1.4" marker-start="url(#arrow-dim)" marker-end="url(#arrow-dim)"/>`;
-      svg += `<rect x="${((pL0.x + pLn.x) / 2 - 125).toFixed(1)}" y="${(yDim - 10).toFixed(1)}" width="250" height="18" rx="4" fill="#0b1722" stroke="#315267" stroke-width="1"/>`;
-      svg += `<text x="${((pL0.x + pLn.x) / 2).toFixed(1)}" y="${yDim + 3}" fill="#a3c7dc" font-size="10.5" font-weight="700" font-family="monospace" text-anchor="middle">Span = ${span.toFixed(2)} m (${data.panels} panels @ ${data.panelPlan.toFixed(2)} m)</text>`;
+      svg += `\n  </g>\n  <g font-size="12" text-anchor="middle" fill="#dc2626" stroke="#fff" stroke-width="3.5" stroke-linejoin="round" paint-order="stroke fill">`;
+      for (let i = 0; i <= panels; i++) {
+        const tn = topNodes[i];
+        let vx, vy, label;
+        if (i < mid) {
+          vx = -arrLen * sinT;
+          vy = -arrLen * cosT;
+          label = i === 0 ? `-${Math.abs(wl.end_kN).toFixed(2)} kN` : `-${Math.abs(wl.intermediate_kN).toFixed(2)} kN`;
+        } else if (i > mid) {
+          vx = arrLen * sinT;
+          vy = -arrLen * cosT;
+          label = i === panels ? `-${Math.abs(wl.end_kN).toFixed(2)} kN` : `-${Math.abs(wl.intermediate_kN).toFixed(2)} kN`;
+        } else {
+          vx = 0;
+          vy = -arrLen;
+          label = `-${Math.abs(wl.intermediate_kN).toFixed(2)} kN`;
+        }
+        svg += `\n    <text x="${(tn.x + vx * 1.25).toFixed(2)}" y="${(tn.y + vy * 1.25).toFixed(2)}" font-weight="600">${label}</text>`;
+      }
+      svg += `\n    <text x="${x0}" y="378" font-weight="bold">Rv₁ = ${rvVal.toFixed(2)} kN ↓</text>`;
+      svg += `\n    <text x="${xEnd}" y="378" font-weight="bold">Rv₂ = ${rvVal.toFixed(2)} kN ↓</text>`;
+      svg += `\n  </g>`;
+    } else if (mode === 'gravity') {
+      // Unit gravity load (0.5 kN end, 1.0 kN intermediate) & reactions
+      const rVal = (data.resGrav && data.resGrav.reactions.R1y) ? data.resGrav.reactions.R1y.toFixed(2) : (panels / 2).toFixed(2);
+      svg += `\n  <!-- Unit Gravity loads -->\n  <g stroke="#111" stroke-width="1.6" marker-end="url(#arr)" fill="none">`;
+      for (let i = 0; i <= panels; i++) {
+        const tn = topNodes[i];
+        svg += `\n    <line x1="${tn.x.toFixed(2)}" y1="${(tn.y - 52).toFixed(2)}" x2="${tn.x.toFixed(2)}" y2="${(tn.y - 6).toFixed(2)}"/>`;
+      }
+      // Reactions
+      svg += `\n    <line x1="${x0}" y1="362" x2="${x0}" y2="330"/>`;
+      svg += `\n    <line x1="${xEnd}" y1="362" x2="${xEnd}" y2="330"/>`;
+      svg += `\n  </g>\n  <g font-size="12" text-anchor="middle" fill="#111" stroke="#fff" stroke-width="3.5" stroke-linejoin="round" paint-order="stroke fill">`;
+      for (let i = 0; i <= panels; i++) {
+        const tn = topNodes[i];
+        const valStr = (i === 0 || i === panels) ? `0.50 kN` : `1.00 kN`;
+        svg += `\n    <text x="${tn.x.toFixed(2)}" y="${(tn.y - 58).toFixed(2)}" font-weight="600">${valStr}</text>`;
+      }
+      svg += `\n    <text x="${x0}" y="378" font-weight="bold">R₁ = ${rVal} kN ↑</text>`;
+      svg += `\n    <text x="${xEnd}" y="378" font-weight="bold">R₂ = ${rVal} kN ↑</text>`;
+      svg += `\n  </g>`;
+    } else if (mode === 'wind') {
+      // Unit wind suction (normal to rafters: 0.5 kN at eaves, 1.0 kN intermediate) & hold-down reactions
+      const rvVal = (data.resWind && Math.abs(data.resWind.reactions.R1y)) ? Math.abs(data.resWind.reactions.R1y).toFixed(2) : '2.68';
+      const rad = (slopeDeg * Math.PI) / 180;
+      const sinT = Math.sin(rad);
+      const cosT = Math.cos(rad);
+      const arrLen = 46;
 
-      // Rise dimension at center
-      const midNode = nodes[data.panels + data.t.mid];
-      const pMid = toSvg(midNode.x, midNode.y);
-      const pMidBase = toSvg(midNode.x, 0);
-      svg += `<line x1="${pMid.x + 36}" y1="${pMid.y}" x2="${pMidBase.x + 36}" y2="${pMidBase.y}" stroke="#7ba3bc" stroke-width="1.3" stroke-dasharray="4,4" marker-start="url(#arrow-dim)" marker-end="url(#arrow-dim)"/>`;
-      svg += `<rect x="${pMid.x + 44}" y="${((pMid.y + pMidBase.y) / 2 - 9).toFixed(1)}" width="86" height="18" rx="4" fill="#0b1722" stroke="#315267" stroke-width="1"/>`;
-      svg += `<text x="${pMid.x + 87}" y="${((pMid.y + pMidBase.y) / 2 + 4).toFixed(1)}" fill="#a3c7dc" font-size="10" font-weight="700" font-family="monospace" text-anchor="middle">R = ${rise.toFixed(2)} m</text>`;
+      svg += `\n  <!-- Unit Wind Suction loads -->\n  <g stroke="#111" stroke-width="1.6" marker-end="url(#arr)" fill="none">`;
+      // Reactions downward hold-down
+      svg += `\n    <line x1="${x0}" y1="330" x2="${x0}" y2="362"/>`;
+      svg += `\n    <line x1="${xEnd}" y1="330" x2="${xEnd}" y2="362"/>`;
 
-      // Pitch angle arc at L0
-      const arcR = 32;
-      svg += `<path d="M ${pL0.x + arcR} ${pL0.y} A ${arcR} ${arcR} 0 0 0 ${(pL0.x + arcR * Math.cos(data.slopeRad)).toFixed(1)} ${(pL0.y - arcR * Math.sin(data.slopeRad)).toFixed(1)}" fill="none" stroke="#f59e0b" stroke-width="1.8"/>`;
-      svg += `<rect x="${pL0.x + arcR + 8}" y="${pL0.y - 17}" width="72" height="16" rx="3" fill="#1e1804" stroke="#f59e0b" stroke-width="1"/>`;
-      svg += `<text x="${pL0.x + arcR + 44}" y="${pL0.y - 5}" fill="#fcd34d" font-size="9" font-weight="700" font-family="monospace" text-anchor="middle">θ = ${data.slopeDeg.toFixed(2)}°</text>`;
+      for (let i = 0; i <= panels; i++) {
+        const tn = topNodes[i];
+        let vx, vy;
+        if (i < mid) {
+          vx = -arrLen * sinT;
+          vy = -arrLen * cosT;
+        } else if (i > mid) {
+          vx = arrLen * sinT;
+          vy = -arrLen * cosT;
+        } else {
+          vx = 0;
+          vy = -arrLen;
+        }
+        svg += `\n    <line x1="${tn.x.toFixed(2)}" y1="${tn.y.toFixed(2)}" x2="${(tn.x + vx).toFixed(2)}" y2="${(tn.y + vy).toFixed(2)}"/>`;
+      }
+      svg += `\n  </g>\n  <g font-size="12" text-anchor="middle" fill="#111" stroke="#fff" stroke-width="3.5" stroke-linejoin="round" paint-order="stroke fill">`;
+      for (let i = 0; i <= panels; i++) {
+        const tn = topNodes[i];
+        let vx, vy, label;
+        if (i < mid) {
+          vx = -arrLen * sinT;
+          vy = -arrLen * cosT;
+          label = i === 0 ? '0.50 kN' : '1.00 kN';
+        } else if (i > mid) {
+          vx = arrLen * sinT;
+          vy = -arrLen * cosT;
+          label = i === panels ? '0.50 kN' : '1.00 kN';
+        } else {
+          vx = 0;
+          vy = -arrLen;
+          label = '1.00 kN';
+        }
+        svg += `\n    <text x="${(tn.x + vx * 1.25).toFixed(2)}" y="${(tn.y + vy * 1.25).toFixed(2)}" font-weight="600">${label}</text>`;
+      }
+      svg += `\n    <text x="${x0}" y="378" font-weight="bold">Rv₁ = ${rvVal} kN ↓</text>`;
+      svg += `\n    <text x="${xEnd}" y="378" font-weight="bold">Rv₂ = ${rvVal} kN ↓</text>`;
+      svg += `\n  </g>`;
     }
 
-    // Legend Strip at Top
-    svg += `<g id="diagram-legend" transform="translate(18, 14)">
-      <rect width="440" height="24" rx="4" fill="rgba(11, 23, 34, 0.85)" stroke="#1e3243" stroke-width="1"/>
-      <line x1="12" y1="12" x2="30" y2="12" stroke="#00d8ff" stroke-width="3"/>
-      <text x="36" y="15" fill="#e2e8f0" font-size="9" font-family="monospace">Top Chord</text>
-      <line x1="110" y1="12" x2="128" y2="12" stroke="#22c55e" stroke-width="3"/>
-      <text x="134" y="15" fill="#e2e8f0" font-size="9" font-family="monospace">Bottom Chord</text>
-      <line x1="225" y1="12" x2="243" y2="12" stroke="#f59e0b" stroke-width="2.2"/>
-      <text x="249" y="15" fill="#e2e8f0" font-size="9" font-family="monospace">Verticals</text>
-      <line x1="320" y1="12" x2="338" y2="12" stroke="#c084fc" stroke-width="2.2"/>
-      <text x="344" y="15" fill="#e2e8f0" font-size="9" font-family="monospace">Diagonals</text>
-    </g>`;
+    // B) Slope angle arc & value (always in front with white halo so it never gets obscured)
+    const arcRad = Math.max(26, Math.min(42, dx * 0.42));
+    const arcXEnd = x0 + arcRad * Math.cos((slopeDeg * Math.PI) / 180);
+    const arcYEnd = yBase - arcRad * Math.sin((slopeDeg * Math.PI) / 180);
+    svg += `\n\n  <!-- Slope angle (Protected with white halo) -->
+  <path d="M${(x0 + arcRad).toFixed(1)},${yBase} A${arcRad.toFixed(1)},${arcRad.toFixed(1)} 0 0 0 ${arcXEnd.toFixed(1)},${arcYEnd.toFixed(1)}" fill="none" stroke="#0f172a" stroke-width="1.3"/>
+  <text x="${(x0 + arcRad + 6).toFixed(1)}" y="${yBase - 9}" font-size="12" font-style="italic" font-weight="700" fill="#0f172a" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke fill">θ = ${slopeDeg.toFixed(2)}°</text>`;
+
+    // C) Joint labels (Always in front)
+    svg += `\n\n  <!-- Joint labels -->\n  <g font-size="14" font-style="italic" font-weight="700" fill="#0f172a" stroke="#fff" stroke-width="3.5" stroke-linejoin="round" paint-order="stroke fill">`;
+    svg += `\n    <text x="${x0 - 10}" y="${yBase - 10}" text-anchor="end">L₀</text>`;
+    for (let i = 1; i < panels; i++) {
+      svg += `\n    <text x="${bottomNodes[i].x.toFixed(2)}" y="322" text-anchor="middle">L${i}</text>`;
+    }
+    svg += `\n    <text x="${xEnd + 10}" y="${yBase - 10}">L${panels}</text>`;
+
+    for (let i = 1; i < panels; i++) {
+      const tn = topNodes[i];
+      if (i < mid) {
+        svg += `\n    <text x="${(tn.x - 10).toFixed(2)}" y="${(tn.y - 6).toFixed(2)}" text-anchor="end">U${i}</text>`;
+      } else if (i === mid) {
+        svg += `\n    <text x="${(tn.x + 12).toFixed(2)}" y="${(tn.y - 8).toFixed(2)}">U${i}</text>`;
+      } else {
+        svg += `\n    <text x="${(tn.x + 10).toFixed(2)}" y="${(tn.y - 6).toFixed(2)}">U${i}</text>`;
+      }
+    }
+    svg += `\n  </g>`;
+
+    // D) Dimensions: Rise, Panels, Span (Always in front)
+    svg += `\n\n  <!-- Rise dimension -->
+  <g stroke="#0f172a" stroke-width="1" fill="none">
+    <line x1="${topNodes[mid].x.toFixed(2)}" y1="${yApex}" x2="${xEnd + 60}" y2="${yApex}" stroke-dasharray="4 3" stroke-width="0.8"/>
+    <line x1="${xEnd}" y1="${yBase}" x2="${xEnd + 60}" y2="${yBase}" stroke-dasharray="4 3" stroke-width="0.8"/>
+    <line x1="${xEnd + 50}" y1="${yApex + 3}" x2="${xEnd + 50}" y2="${yBase - 3}" marker-start="url(#dim)" marker-end="url(#dim)"/>
+  </g>
+  <text x="${xEnd + 62}" y="${((yApex + yBase) / 2 + 5).toFixed(1)}" font-size="13" font-style="italic" font-weight="700" fill="#0f172a" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke fill">R = ${rise} m</text>`;
+
+    // Panel dimensions
+    svg += `\n\n  <!-- Panel dimensions -->
+  <g stroke="#0f172a" stroke-width="1" fill="none">
+    <line x1="${x0}" y1="342" x2="${x0}" y2="372" stroke-width="0.8"/>`;
+    for (let i = 1; i < panels; i++) {
+      svg += `\n    <line x1="${bottomNodes[i].x.toFixed(2)}" y1="342" x2="${bottomNodes[i].x.toFixed(2)}" y2="352" stroke-width="0.8"/>`;
+    }
+    svg += `\n    <line x1="${xEnd}" y1="342" x2="${xEnd}" y2="372" stroke-width="0.8"/>
+  </g>
+  <g stroke="#0f172a" stroke-width="1" fill="none">`;
+    for (let i = 0; i < panels; i++) {
+      const x1 = bottomNodes[i].x + 2;
+      const x2 = bottomNodes[i + 1].x - 2;
+      svg += `\n    <line x1="${x1.toFixed(2)}" y1="348" x2="${x2.toFixed(2)}" y2="348" marker-start="url(#dim)" marker-end="url(#dim)"/>`;
+    }
+    svg += `\n  </g>
+  <g font-size="11.5" text-anchor="middle" font-weight="600" fill="#0f172a" stroke="#fff" stroke-width="3" stroke-linejoin="round" paint-order="stroke fill">`;
+    for (let i = 0; i < panels; i++) {
+      const midX = (bottomNodes[i].x + bottomNodes[i + 1].x) / 2;
+      svg += `\n    <text x="${midX.toFixed(1)}" y="343">${panelPlan.toFixed(3)} m</text>`;
+    }
+    svg += `\n  </g>`;
+
+    // Span dimension
+    svg += `\n\n  <!-- Span dimension -->
+  <line x1="${x0 + 2}" y1="368" x2="${xEnd - 2}" y2="368" stroke="#0f172a" stroke-width="1" marker-start="url(#dim)" marker-end="url(#dim)"/>
+  <text x="${((x0 + xEnd) / 2).toFixed(1)}" y="364" font-size="13" font-style="italic" font-weight="700" text-anchor="middle" fill="#0f172a" stroke="#fff" stroke-width="4.5" stroke-linejoin="round" paint-order="stroke fill">Span L = ${span} m (${panels} panels @ ${panelPlan.toFixed(3)} m)</text>`;
+
+    svg += `\n  </g> <!-- end topLayerAnnotations -->`;
+
+    // Caption
+    let figTitle = `Fig. 1  Howe Roof Truss (Group G4): Geometry and Nodal Dead Loads`;
+    let figSubtitle = `Rise 1/4 span, spacing ${spacing} m, AC sheet roofing, all dimensions in metres`;
+    if (mode === 'live') {
+      figTitle = `Fig. 2  Howe Roof Truss (Group G4): Nodal Live Load Distribution`;
+      figSubtitle = `Design live load = 279.07 N/m² on plan area: 1.49 kN at eaves, 2.98 kN at intermediate panel points`;
+    } else if (mode === 'wind_actual') {
+      figTitle = `Fig. 3  Howe Roof Truss (Group G4): Nodal Wind Suction Load Distribution`;
+      figSubtitle = `Design wind suction normal to roof pitch: 4.86 kN suction at eaves, 9.72 kN at intermediate panel points`;
+    } else if (mode === 'gravity') {
+      figTitle = `Fig. 4  Howe Roof Truss: Unit Gravity Load System & Support Reactions`;
+      figSubtitle = `Vertical unit loads (1.0 kN intermediate, 0.5 kN end) with equilibrium reactions`;
+    } else if (mode === 'wind') {
+      figTitle = `Fig. 5  Howe Roof Truss: Unit Wind Suction Load System (Normal to Rafters)`;
+      figSubtitle = `Suction normal to roof sheets (1.0 kN intermediate, 0.5 kN end) with hold-down reactions`;
+    }
+    if (!hideCap) {
+      svg += `\n\n  <!-- Caption -->
+  <text x="${((x0 + xEnd) / 2).toFixed(1)}" y="408" font-size="15" font-weight="bold" text-anchor="middle" fill="#0f172a">${figTitle}</text>
+  <text x="${((x0 + xEnd) / 2).toFixed(1)}" y="427" font-size="12" text-anchor="middle" fill="#475569">${figSubtitle}</text>`;
+    }
+    svg += `\n</svg>`;
+
+    return svg;
+  }
+
+  // ==========================================
+  // Vector Free-Body Diagrams (Exact Match to Pages 3, 4, 5, 6 of PDF)
+  // Enhanced with reference dashed axes, distinct force arrows, and clear angles
+  // ==========================================
+
+  function renderPDFStyleJointFBD(jointName, mode = 'gravity') {
+    const isGrav = mode === 'gravity';
+    const width = 380;
+    const height = 205;
+
+    let svg = `<svg viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" font-family="'Times New Roman', Georgia, serif" class="joint-pdf-fbd-svg" xmlns="http://www.w3.org/2000/svg">`;
+    svg += `<defs>
+      <marker id="fbd-arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+        <path d="M0,0 L8,4 L0,8 z" fill="#0f172a"/>
+      </marker>
+    </defs>
+    <rect width="${width}" height="${height}" fill="#fff"/>`;
+
+    if (isGrav) {
+      if (jointName === 'L0') {
+        const cx = 150, cy = 115;
+        // Dashed x-axis
+        svg += `<line x1="${cx - 45}" y1="${cy}" x2="${cx + 125}" y2="${cy}" stroke="#94a3b8" stroke-dasharray="4,3" stroke-width="1.1"/>`;
+        svg += `<text x="${cx + 130}" y="${cy + 4}" font-size="11" fill="#64748b" font-style="italic">x</text>`;
+        // Dashed y-axis
+        svg += `<line x1="${cx}" y1="${cy - 70}" x2="${cx}" y2="${cy + 65}" stroke="#cbd5e1" stroke-dasharray="3,3" stroke-width="0.9"/>`;
+        svg += `<text x="${cx}" y="${cy - 74}" font-size="11" fill="#64748b" font-style="italic" text-anchor="middle">y</text>`;
+
+        // Support Reaction R1 = 3 kN (Upward)
+        svg += `<line x1="${cx}" y1="${cy + 65}" x2="${cx}" y2="${cy - 45}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx - 10}" y="${cy + 15}" font-size="12" font-style="italic" text-anchor="end" font-weight="600">R₁ = 3 kN</text>`;
+
+        // External Load 0.5 kN (Downward onto joint)
+        svg += `<line x1="${cx}" y1="${cy - 60}" x2="${cx}" y2="${cy - 6}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx - 10}" y="${cy - 30}" font-size="12" text-anchor="end" font-weight="600">0.5 kN</text>`;
+
+        // Tension force in bottom chord FL0L1 along +x
+        svg += `<line x1="${cx}" y1="${cy}" x2="${cx + 95}" y2="${cy}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx + 102}" y="${cy + 4}" font-size="13" font-style="italic" font-weight="600">F<tspan font-size="10" dy="2">L0L1</tspan></text>`;
+
+        // Tension assumption for rafter FL0U1 at 26.57°
+        svg += `<line x1="${cx}" y1="${cy}" x2="${cx + 90}" y2="${cy - 45}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx + 96}" y="${cy - 48}" font-size="13" font-style="italic" font-weight="600">F<tspan font-size="10" dy="2">L0U1</tspan></text>`;
+
+        // Angle arc from x-axis to rafter
+        svg += `<path d="M ${cx + 42} ${cy} A 42 42 0 0 0 ${cx + 37.6} ${cy - 18.8}" fill="none" stroke="#0f172a" stroke-width="1"/>`;
+        svg += `<text x="${cx + 46}" y="${cy - 7}" font-size="11" font-style="italic">26.57°</text>`;
+
+        // Joint Pin
+        svg += `<circle cx="${cx}" cy="${cy}" r="4" fill="#0f172a"/>`;
+        svg += `<text x="${cx + 10}" y="${cy + 18}" font-size="14" font-style="italic" font-weight="700">L₀</text>`;
+      } else if (jointName === 'U1') {
+        const cx = 175, cy = 105;
+        // Dashed horizontal reference line
+        svg += `<line x1="${cx - 105}" y1="${cy}" x2="${cx + 105}" y2="${cy}" stroke="#94a3b8" stroke-dasharray="4,3" stroke-width="1.1"/>`;
+        svg += `<text x="${cx + 110}" y="${cy + 4}" font-size="11" fill="#64748b" font-style="italic">x</text>`;
+        // Dashed top chord incline line (26.57°)
+        svg += `<line x1="${cx - 95}" y1="${cy + 47.5}" x2="${cx + 95}" y2="${cy - 47.5}" stroke="#cbd5e1" stroke-dasharray="3,3" stroke-width="0.9"/>`;
+
+        // Downward nodal load 1 kN
+        svg += `<line x1="${cx}" y1="${cy - 60}" x2="${cx}" y2="${cy - 6}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx + 10}" y="${cy - 30}" font-size="12" font-weight="600">1 kN</text>`;
+
+        // Vertical strut FU1L1 pointing down
+        svg += `<line x1="${cx}" y1="${cy}" x2="${cx}" y2="${cy + 68}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx}" y="${cy + 84}" font-size="13" font-style="italic" text-anchor="middle" font-weight="600">F<tspan font-size="10" dy="2">U1L1</tspan></text>`;
+
+        // Lower rafter FL0U1 pointing down-left along slope
+        svg += `<line x1="${cx}" y1="${cy}" x2="${cx - 88}" y2="${cy + 44}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx - 95}" y="${cy + 40}" font-size="13" font-style="italic" text-anchor="end" font-weight="600">F<tspan font-size="10" dy="2">L0U1</tspan></text>`;
+
+        // Upper rafter FU1U2 pointing up-right along slope
+        svg += `<line x1="${cx}" y1="${cy}" x2="${cx + 88}" y2="${cy - 44}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx + 94}" y="${cy - 46}" font-size="13" font-style="italic" font-weight="600">F<tspan font-size="10" dy="2">U1U2</tspan></text>`;
+
+        // Joint Pin
+        svg += `<circle cx="${cx}" cy="${cy}" r="4" fill="#0f172a"/>`;
+        svg += `<text x="${cx - 14}" y="${cy - 8}" font-size="14" font-style="italic" text-anchor="end" font-weight="700">U₁</text>`;
+      } else if (jointName === 'L1') {
+        const cx = 175, cy = 115;
+        // Dashed x-axis
+        svg += `<line x1="${cx - 105}" y1="${cy}" x2="${cx + 105}" y2="${cy}" stroke="#94a3b8" stroke-dasharray="4,3" stroke-width="1.1"/>`;
+        svg += `<text x="${cx + 110}" y="${cy + 4}" font-size="11" fill="#64748b" font-style="italic">x</text>`;
+
+        // Tension in FL0L1 pointing left
+        svg += `<line x1="${cx}" y1="${cy}" x2="${cx - 90}" y2="${cy}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx - 98}" y="${cy + 4}" font-size="13" font-style="italic" text-anchor="end" font-weight="600">F<tspan font-size="10" dy="2">L0L1</tspan></text>`;
+
+        // Tension in FL1L2 pointing right
+        svg += `<line x1="${cx}" y1="${cy}" x2="${cx + 90}" y2="${cy}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx + 98}" y="${cy + 4}" font-size="13" font-style="italic" font-weight="600">F<tspan font-size="10" dy="2">L1L2</tspan></text>`;
+
+        // Strut FU1L1 pointing straight up
+        svg += `<line x1="${cx}" y1="${cy}" x2="${cx}" y2="${cy - 68}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx}" y="${cy - 75}" font-size="13" font-style="italic" text-anchor="middle" font-weight="600">F<tspan font-size="10" dy="2">U1L1</tspan></text>`;
+
+        // Diagonal FL1U2 pointing up-right at 45°
+        svg += `<line x1="${cx}" y1="${cy}" x2="${cx + 64}" y2="${cy - 64}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx + 70}" y="${cy - 66}" font-size="13" font-style="italic" font-weight="600">F<tspan font-size="10" dy="2">L1U2</tspan></text>`;
+
+        // Angle arc 45° from dashed horizontal axis
+        svg += `<path d="M ${cx + 36} ${cy} A 36 36 0 0 0 ${cx + 25.5} ${cy - 25.5}" fill="none" stroke="#0f172a" stroke-width="1"/>`;
+        svg += `<text x="${cx + 40}" y="${cy - 12}" font-size="11" font-style="italic">45°</text>`;
+
+        // Joint Pin
+        svg += `<circle cx="${cx}" cy="${cy}" r="4" fill="#0f172a"/>`;
+        svg += `<text x="${cx + 8}" y="${cy + 18}" font-size="14" font-style="italic" font-weight="700">L₁</text>`;
+      } else if (jointName === 'U2') {
+        const cx = 175, cy = 110;
+        // Dashed horizontal axis
+        svg += `<line x1="${cx - 105}" y1="${cy}" x2="${cx + 105}" y2="${cy}" stroke="#94a3b8" stroke-dasharray="4,3" stroke-width="1.1"/>`;
+        svg += `<text x="${cx + 110}" y="${cy + 4}" font-size="11" fill="#64748b" font-style="italic">x</text>`;
+
+        // 1 kN downward load
+        svg += `<line x1="${cx}" y1="${cy - 60}" x2="${cx}" y2="${cy - 6}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx + 10}" y="${cy - 30}" font-size="12" font-weight="600">1 kN</text>`;
+
+        // FU1U2 pointing down-left along slope
+        svg += `<line x1="${cx}" y1="${cy}" x2="${cx - 85}" y2="${cy + 42.5}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx - 92}" y="${cy + 38}" font-size="13" font-style="italic" text-anchor="end" font-weight="600">F<tspan font-size="10" dy="2">U1U2</tspan></text>`;
+
+        // FU2U3 pointing up-right along slope
+        svg += `<line x1="${cx}" y1="${cy}" x2="${cx + 85}" y2="${cy - 42.5}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx + 92}" y="${cy - 45}" font-size="13" font-style="italic" font-weight="600">F<tspan font-size="10" dy="2">U2U3</tspan></text>`;
+
+        // Vertical strut FU2L2 pointing down
+        svg += `<line x1="${cx}" y1="${cy}" x2="${cx}" y2="${cy + 68}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx + 10}" y="${cy + 78}" font-size="13" font-style="italic" font-weight="600">F<tspan font-size="10" dy="2">U2L2</tspan></text>`;
+
+        // Diagonal FL1U2 pointing down-left at 45°
+        svg += `<line x1="${cx}" y1="${cy}" x2="${cx - 58}" y2="${cy + 58}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx - 62}" y="${cy + 72}" font-size="13" font-style="italic" text-anchor="end" font-weight="600">F<tspan font-size="10" dy="2">L1U2</tspan></text>`;
+
+        // Joint Pin
+        svg += `<circle cx="${cx}" cy="${cy}" r="4" fill="#0f172a"/>`;
+        svg += `<text x="${cx - 14}" y="${cy - 8}" font-size="14" font-style="italic" text-anchor="end" font-weight="700">U₂</text>`;
+      } else if (jointName === 'L2') {
+        const cx = 175, cy = 115;
+        // Dashed x-axis
+        svg += `<line x1="${cx - 105}" y1="${cy}" x2="${cx + 105}" y2="${cy}" stroke="#94a3b8" stroke-dasharray="4,3" stroke-width="1.1"/>`;
+        svg += `<text x="${cx + 110}" y="${cy + 4}" font-size="11" fill="#64748b" font-style="italic">x</text>`;
+
+        // FL1L2 pointing left
+        svg += `<line x1="${cx}" y1="${cy}" x2="${cx - 90}" y2="${cy}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx - 98}" y="${cy + 4}" font-size="13" font-style="italic" text-anchor="end" font-weight="600">F<tspan font-size="10" dy="2">L1L2</tspan></text>`;
+
+        // FL2L3 pointing right
+        svg += `<line x1="${cx}" y1="${cy}" x2="${cx + 90}" y2="${cy}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx + 98}" y="${cy + 4}" font-size="13" font-style="italic" font-weight="600">F<tspan font-size="10" dy="2">L2L3</tspan></text>`;
+
+        // FU2L2 pointing straight up
+        svg += `<line x1="${cx}" y1="${cy}" x2="${cx}" y2="${cy - 68}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx - 10}" y="${cy - 72}" font-size="13" font-style="italic" text-anchor="end" font-weight="600">F<tspan font-size="10" dy="2">U2L2</tspan></text>`;
+
+        // Diagonal FL2U3 pointing up-right at 56.31°
+        svg += `<line x1="${cx}" y1="${cy}" x2="${cx + 48}" y2="${cy - 72}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx + 54}" y="${cy - 75}" font-size="13" font-style="italic" font-weight="600">F<tspan font-size="10" dy="2">L2U3</tspan></text>`;
+
+        // Angle arc 56.31° from horizontal axis
+        svg += `<path d="M ${cx + 38} ${cy} A 38 38 0 0 0 ${cx + 21} ${cy - 31.6}" fill="none" stroke="#0f172a" stroke-width="1"/>`;
+        svg += `<text x="${cx + 36}" y="${cy - 14}" font-size="11" font-style="italic">56.31°</text>`;
+
+        // Joint Pin
+        svg += `<circle cx="${cx}" cy="${cy}" r="4" fill="#0f172a"/>`;
+        svg += `<text x="${cx + 8}" y="${cy + 18}" font-size="14" font-style="italic" font-weight="700">L₂</text>`;
+      } else if (jointName === 'U3') {
+        const cx = 175, cy = 100;
+        // Dashed horizontal axis
+        svg += `<line x1="${cx - 105}" y1="${cy}" x2="${cx + 105}" y2="${cy}" stroke="#94a3b8" stroke-dasharray="4,3" stroke-width="1.1"/>`;
+        svg += `<text x="${cx + 110}" y="${cy + 4}" font-size="11" fill="#64748b" font-style="italic">x</text>`;
+
+        // 1 kN downward load
+        svg += `<line x1="${cx}" y1="${cy - 60}" x2="${cx}" y2="${cy - 6}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx + 10}" y="${cy - 30}" font-size="12" font-weight="600">1 kN</text>`;
+
+        // Left rafter FU2U3 down-left
+        svg += `<line x1="${cx}" y1="${cy}" x2="${cx - 85}" y2="${cy + 42.5}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx - 92}" y="${cy + 38}" font-size="13" font-style="italic" text-anchor="end" font-weight="600">F<tspan font-size="10" dy="2">U2U3</tspan></text>`;
+
+        // Right rafter FU3U4 down-right
+        svg += `<line x1="${cx}" y1="${cy}" x2="${cx + 85}" y2="${cy + 42.5}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx + 92}" y="${cy + 38}" font-size="13" font-style="italic" font-weight="600">F<tspan font-size="10" dy="2">U3U4</tspan></text>`;
+
+        // Diagonals FL2U3 and FL4U3
+        svg += `<line x1="${cx}" y1="${cy}" x2="${cx - 48}" y2="${cy + 72}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx - 52}" y="${cy + 80}" font-size="13" font-style="italic" text-anchor="end" font-weight="600">F<tspan font-size="10" dy="2">L2U3</tspan></text>`;
+
+        svg += `<line x1="${cx}" y1="${cy}" x2="${cx + 48}" y2="${cy + 72}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx + 52}" y="${cy + 80}" font-size="13" font-style="italic" font-weight="600">F<tspan font-size="10" dy="2">L4U3</tspan></text>`;
+
+        // Central vertical strut FU3L3 straight down
+        svg += `<line x1="${cx}" y1="${cy}" x2="${cx}" y2="${cy + 78}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx}" y="${cy + 96}" font-size="13" font-style="italic" text-anchor="middle" font-weight="600">F<tspan font-size="10" dy="2">U3L3</tspan></text>`;
+
+        // Joint Pin
+        svg += `<circle cx="${cx}" cy="${cy}" r="4" fill="#0f172a"/>`;
+        svg += `<text x="${cx - 14}" y="${cy - 8}" font-size="14" font-style="italic" text-anchor="end" font-weight="700">U₃</text>`;
+      }
+    } else {
+      // Wind Suction Mode (Pages 5 & 6)
+      if (jointName === 'L0') {
+        const cx = 155, cy = 110;
+        // Dashed horizontal axis
+        svg += `<line x1="${cx - 85}" y1="${cy}" x2="${cx + 120}" y2="${cy}" stroke="#94a3b8" stroke-dasharray="4,3" stroke-width="1.1"/>`;
+        svg += `<text x="${cx + 125}" y="${cy + 4}" font-size="11" fill="#64748b" font-style="italic">x</text>`;
+
+        // Downward vertical support reaction Rv1 = 2.68 kN
+        svg += `<line x1="${cx}" y1="${cy}" x2="${cx}" y2="${cy + 68}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx - 10}" y="${cy + 40}" font-size="12" font-style="italic" text-anchor="end" font-weight="600">R<tspan font-size="9" dy="2">V1</tspan> = 2.68 kN</text>`;
+
+        // Wind suction 0.5 kN pulling outwards at 63.43° (up and left)
+        const vx = -62 * 0.4472, vy = -62 * 0.8944;
+        svg += `<line x1="${cx}" y1="${cy}" x2="${(cx + vx).toFixed(1)}" y2="${(cy + vy).toFixed(1)}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${(cx + vx - 6).toFixed(1)}" y="${(cy + vy - 2).toFixed(1)}" font-size="12" text-anchor="end" font-weight="600">0.5 kN</text>`;
+
+        // Angle arc 63.43° from negative x-axis
+        svg += `<path d="M ${(cx - 36).toFixed(1)} ${cy} A 36 36 0 0 1 ${(cx - 16.1).toFixed(1)} ${(cy - 32.2).toFixed(1)}" fill="none" stroke="#0f172a" stroke-width="1"/>`;
+        svg += `<text x="${cx - 42}" y="${cy - 18}" font-size="11" font-style="italic" text-anchor="end">63.43°</text>`;
+
+        // Tension in FL0L1 along +x
+        svg += `<line x1="${cx}" y1="${cy}" x2="${cx + 90}" y2="${cy}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx + 98}" y="${cy + 4}" font-size="13" font-style="italic" font-weight="600">F<tspan font-size="10" dy="2">L0L1</tspan></text>`;
+
+        // Tension assumption for rafter FL0U1 at 26.57°
+        svg += `<line x1="${cx}" y1="${cy}" x2="${cx + 85}" y2="${cy - 42.5}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx + 92}" y="${cy - 45}" font-size="13" font-style="italic" font-weight="600">F<tspan font-size="10" dy="2">L0U1</tspan></text>`;
+
+        // Joint Pin
+        svg += `<circle cx="${cx}" cy="${cy}" r="4" fill="#0f172a"/>`;
+        svg += `<text x="${cx + 8}" y="${cy + 18}" font-size="14" font-style="italic" font-weight="700">L₀</text>`;
+      } else if (jointName === 'U1') {
+        const cx = 175, cy = 115;
+        // Dashed horizontal axis
+        svg += `<line x1="${cx - 105}" y1="${cy}" x2="${cx + 105}" y2="${cy}" stroke="#94a3b8" stroke-dasharray="4,3" stroke-width="1.1"/>`;
+        svg += `<text x="${cx + 110}" y="${cy + 4}" font-size="11" fill="#64748b" font-style="italic">x</text>`;
+
+        // 1 kN wind suction normal to roof slope (pointing up and left at 63.43°)
+        const vx = -68 * 0.4472, vy = -68 * 0.8944;
+        svg += `<line x1="${cx}" y1="${cy}" x2="${(cx + vx).toFixed(1)}" y2="${(cy + vy).toFixed(1)}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${(cx + vx - 6).toFixed(1)}" y="${(cy + vy - 4).toFixed(1)}" font-size="12" font-weight="600">1 kN</text>`;
+
+        // Vertical strut FU1L1 pointing down
+        svg += `<line x1="${cx}" y1="${cy}" x2="${cx}" y2="${cy + 68}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx}" y="${cy + 84}" font-size="13" font-style="italic" text-anchor="middle" font-weight="600">F<tspan font-size="10" dy="2">U1L1</tspan></text>`;
+
+        // FL0U1 pointing down-left along slope
+        svg += `<line x1="${cx}" y1="${cy}" x2="${cx - 88}" y2="${cy + 44}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx - 95}" y="${cy + 40}" font-size="13" font-style="italic" text-anchor="end" font-weight="600">F<tspan font-size="10" dy="2">L0U1</tspan></text>`;
+
+        // FU1U2 pointing up-right along slope
+        svg += `<line x1="${cx}" y1="${cy}" x2="${cx + 88}" y2="${cy - 44}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx + 94}" y="${cy - 46}" font-size="13" font-style="italic" font-weight="600">F<tspan font-size="10" dy="2">U1U2</tspan></text>`;
+
+        // Joint Pin
+        svg += `<circle cx="${cx}" cy="${cy}" r="4" fill="#0f172a"/>`;
+        svg += `<text x="${cx + 8}" y="${cy + 18}" font-size="14" font-style="italic" font-weight="700">U₁</text>`;
+      } else if (jointName === 'L1') {
+        const cx = 175, cy = 115;
+        // Dashed x-axis
+        svg += `<line x1="${cx - 105}" y1="${cy}" x2="${cx + 105}" y2="${cy}" stroke="#94a3b8" stroke-dasharray="4,3" stroke-width="1.1"/>`;
+        svg += `<text x="${cx + 110}" y="${cy + 4}" font-size="11" fill="#64748b" font-style="italic">x</text>`;
+
+        // FL0L1 pointing left
+        svg += `<line x1="${cx}" y1="${cy}" x2="${cx - 90}" y2="${cy}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx - 98}" y="${cy + 4}" font-size="13" font-style="italic" text-anchor="end" font-weight="600">F<tspan font-size="10" dy="2">L0L1</tspan></text>`;
+
+        // FL1L2 pointing right
+        svg += `<line x1="${cx}" y1="${cy}" x2="${cx + 90}" y2="${cy}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx + 98}" y="${cy + 4}" font-size="13" font-style="italic" font-weight="600">F<tspan font-size="10" dy="2">L1L2</tspan></text>`;
+
+        // FU1L1 pointing straight up
+        svg += `<line x1="${cx}" y1="${cy}" x2="${cx}" y2="${cy - 68}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx}" y="${cy - 75}" font-size="13" font-style="italic" text-anchor="middle" font-weight="600">F<tspan font-size="10" dy="2">U1L1</tspan></text>`;
+
+        // Diagonal FL1U2 pointing up-right at 45°
+        svg += `<line x1="${cx}" y1="${cy}" x2="${cx + 64}" y2="${cy - 64}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx + 70}" y="${cy - 66}" font-size="13" font-style="italic" font-weight="600">F<tspan font-size="10" dy="2">L1U2</tspan></text>`;
+
+        // Angle arc 45°
+        svg += `<path d="M ${cx + 36} ${cy} A 36 36 0 0 0 ${cx + 25.5} ${cy - 25.5}" fill="none" stroke="#0f172a" stroke-width="1"/>`;
+        svg += `<text x="${cx + 40}" y="${cy - 12}" font-size="11" font-style="italic">45°</text>`;
+
+        // Joint Pin
+        svg += `<circle cx="${cx}" cy="${cy}" r="4" fill="#0f172a"/>`;
+        svg += `<text x="${cx + 8}" y="${cy + 18}" font-size="14" font-style="italic" font-weight="700">L₁</text>`;
+      } else if (jointName === 'U2') {
+        const cx = 175, cy = 110;
+        // Dashed horizontal axis
+        svg += `<line x1="${cx - 105}" y1="${cy}" x2="${cx + 105}" y2="${cy}" stroke="#94a3b8" stroke-dasharray="4,3" stroke-width="1.1"/>`;
+        svg += `<text x="${cx + 110}" y="${cy + 4}" font-size="11" fill="#64748b" font-style="italic">x</text>`;
+
+        // 1 kN wind suction normal to roof slope
+        const vx = -65 * 0.4472, vy = -65 * 0.8944;
+        svg += `<line x1="${cx}" y1="${cy}" x2="${(cx + vx).toFixed(1)}" y2="${(cy + vy).toFixed(1)}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${(cx + vx - 6).toFixed(1)}" y="${(cy + vy - 4).toFixed(1)}" font-size="12" font-weight="600">1 kN</text>`;
+
+        // FU1U2 pointing down-left along slope
+        svg += `<line x1="${cx}" y1="${cy}" x2="${cx - 85}" y2="${cy + 42.5}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx - 92}" y="${cy + 38}" font-size="13" font-style="italic" text-anchor="end" font-weight="600">F<tspan font-size="10" dy="2">U1U2</tspan></text>`;
+
+        // FU2U3 pointing up-right along slope
+        svg += `<line x1="${cx}" y1="${cy}" x2="${cx + 85}" y2="${cy - 42.5}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx + 92}" y="${cy - 45}" font-size="13" font-style="italic" font-weight="600">F<tspan font-size="10" dy="2">U2U3</tspan></text>`;
+
+        // Strut FU2L2 pointing down
+        svg += `<line x1="${cx}" y1="${cy}" x2="${cx}" y2="${cy + 68}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx + 10}" y="${cy + 78}" font-size="13" font-style="italic" font-weight="600">F<tspan font-size="10" dy="2">U2L2</tspan></text>`;
+
+        // Diagonal FL1U2 pointing down-left at 45°
+        svg += `<line x1="${cx}" y1="${cy}" x2="${cx - 58}" y2="${cy + 58}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx - 62}" y="${cy + 72}" font-size="13" font-style="italic" text-anchor="end" font-weight="600">F<tspan font-size="10" dy="2">L1U2</tspan></text>`;
+
+        // Joint Pin
+        svg += `<circle cx="${cx}" cy="${cy}" r="4" fill="#0f172a"/>`;
+        svg += `<text x="${cx - 14}" y="${cy - 8}" font-size="14" font-style="italic" text-anchor="end" font-weight="700">U₂</text>`;
+      } else if (jointName === 'L2') {
+        const cx = 175, cy = 115;
+        // Dashed x-axis
+        svg += `<line x1="${cx - 105}" y1="${cy}" x2="${cx + 105}" y2="${cy}" stroke="#94a3b8" stroke-dasharray="4,3" stroke-width="1.1"/>`;
+        svg += `<text x="${cx + 110}" y="${cy + 4}" font-size="11" fill="#64748b" font-style="italic">x</text>`;
+
+        // FL1L2 pointing left
+        svg += `<line x1="${cx}" y1="${cy}" x2="${cx - 90}" y2="${cy}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx - 98}" y="${cy + 4}" font-size="13" font-style="italic" text-anchor="end" font-weight="600">F<tspan font-size="10" dy="2">L1L2</tspan></text>`;
+
+        // FL2L3 pointing right
+        svg += `<line x1="${cx}" y1="${cy}" x2="${cx + 90}" y2="${cy}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx + 98}" y="${cy + 4}" font-size="13" font-style="italic" font-weight="600">F<tspan font-size="10" dy="2">L2L3</tspan></text>`;
+
+        // FU2L2 pointing straight up
+        svg += `<line x1="${cx}" y1="${cy}" x2="${cx}" y2="${cy - 68}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx - 10}" y="${cy - 72}" font-size="13" font-style="italic" text-anchor="end" font-weight="600">F<tspan font-size="10" dy="2">U2L2</tspan></text>`;
+
+        // Diagonal FL2U3 pointing up-right at 56.31°
+        svg += `<line x1="${cx}" y1="${cy}" x2="${cx + 48}" y2="${cy - 72}" stroke="#0f172a" stroke-width="1.6" marker-end="url(#fbd-arr)"/>`;
+        svg += `<text x="${cx + 54}" y="${cy - 75}" font-size="13" font-style="italic" font-weight="600">F<tspan font-size="10" dy="2">L2U3</tspan></text>`;
+
+        // Angle arc 56.31° from horizontal axis
+        svg += `<path d="M ${cx + 38} ${cy} A 38 38 0 0 0 ${cx + 21} ${cy - 31.6}" fill="none" stroke="#0f172a" stroke-width="1"/>`;
+        svg += `<text x="${cx + 36}" y="${cy - 14}" font-size="11" font-style="italic">56.31°</text>`;
+
+        // Joint Pin
+        svg += `<circle cx="${cx}" cy="${cy}" r="4" fill="#0f172a"/>`;
+        svg += `<text x="${cx + 8}" y="${cy + 18}" font-size="14" font-style="italic" font-weight="700">L₂</text>`;
+      }
+    }
 
     svg += `</svg>`;
     return svg;
@@ -818,65 +1309,58 @@
     const cy = 175;
     const pinR = 15;
 
-    let svg = `<svg viewBox="0 0 ${width} ${height}" class="joint-fbd-svg" xmlns="http://www.w3.org/2000/svg">`;
+    let svg = `<svg viewBox="0 0 ${width} ${height}" class="joint-fbd-svg" font-family="'Times New Roman', Georgia, serif" xmlns="http://www.w3.org/2000/svg">`;
     svg += `<defs>
-      <pattern id="fbd-grid-${joint.name}-${mode}" width="20" height="20" patternUnits="userSpaceOnUse">
-        <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(56, 189, 248, 0.04)" stroke-width="0.8"/>
-      </pattern>
       <marker id="fbd-t-${joint.name}-${mode}" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto">
-        <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#22c55e"/>
+        <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#16a34a"/>
       </marker>
       <marker id="fbd-c-${joint.name}-${mode}" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto">
-        <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#ef4444"/>
+        <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#dc2626"/>
       </marker>
       <marker id="fbd-z-${joint.name}-${mode}" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto">
         <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#64748b"/>
       </marker>
       <marker id="fbd-load-${joint.name}-${mode}" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto">
-        <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#00d8ff"/>
+        <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#0284c7"/>
       </marker>
       <marker id="fbd-axis" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="4" markerHeight="4" orient="auto">
-        <path d="M 0 2 L 6 5 L 0 8 z" fill="#475569"/>
+        <path d="M 0 2 L 6 5 L 0 8 z" fill="#94a3b8"/>
       </marker>
     </defs>`;
 
-    // Blueprint Card Background & Grid
-    svg += `<rect width="${width}" height="${height}" fill="#080f17" rx="8" stroke="#182c3f" stroke-width="1"/>`;
-    svg += `<rect width="${width}" height="${height}" fill="url(#fbd-grid-${joint.name}-${mode})" rx="8"/>`;
+    // Paper Card Background
+    svg += `<rect width="${width}" height="${height}" fill="#ffffff" rx="8" stroke="#cbd5e1" stroke-width="1"/>`;
 
     // Reference Cartesian Axes (+x, +y) through node center
-    svg += `<line x1="${cx - 180}" y1="${cy}" x2="${cx + 215}" y2="${cy}" stroke="#1c2d3d" stroke-width="1.2" stroke-dasharray="3,3" marker-end="url(#fbd-axis)"/>`;
-    svg += `<text x="${cx + 224}" y="${cy + 3.5}" fill="#64748b" font-size="9" font-family="monospace" font-weight="700">+x</text>`;
-    svg += `<line x1="${cx}" y1="${cy + 140}" x2="${cx}" y2="${cy - 145}" stroke="#1c2d3d" stroke-width="1.2" stroke-dasharray="3,3" marker-end="url(#fbd-axis)"/>`;
-    svg += `<text x="${cx}" y="${cy - 150}" fill="#64748b" font-size="9" font-family="monospace" font-weight="700" text-anchor="middle">+y</text>`;
+    svg += `<line x1="${cx - 180}" y1="${cy}" x2="${cx + 215}" y2="${cy}" stroke="#e2e8f0" stroke-width="1.2" stroke-dasharray="3,3" marker-end="url(#fbd-axis)"/>`;
+    svg += `<text x="${cx + 224}" y="${cy + 3.5}" fill="#64748b" font-size="11" font-style="italic">+x</text>`;
+    svg += `<line x1="${cx}" y1="${cy + 140}" x2="${cx}" y2="${cy - 145}" stroke="#e2e8f0" stroke-width="1.2" stroke-dasharray="3,3" marker-end="url(#fbd-axis)"/>`;
+    svg += `<text x="${cx}" y="${cy - 150}" fill="#64748b" font-size="11" font-style="italic" text-anchor="middle">+y</text>`;
 
     // External Loads & Reactions
     if (mode === 'gravity') {
       if (joint.isSupport) {
         const rVal = (globalData && globalData.resGrav) ? globalData.resGrav.reactions.R1y.toFixed(2) : '3.00';
         // Upward Support Reaction R1
-        svg += `<line x1="${cx}" y1="${cy + 125}" x2="${cx}" y2="${cy + pinR + 2}" stroke="#22c55e" stroke-width="2.6" marker-end="url(#fbd-t-${joint.name}-${mode})"/>`;
+        svg += `<line x1="${cx}" y1="${cy + 125}" x2="${cx}" y2="${cy + pinR + 2}" stroke="#16a34a" stroke-width="2.6" marker-end="url(#fbd-t-${joint.name}-${mode})"/>`;
         // Support bearing ground hatch ticks
-        svg += `<line x1="${cx - 26}" y1="${cy + 125}" x2="${cx + 26}" y2="${cy + 125}" stroke="#334155" stroke-width="1.8"/>`;
-        svg += `<line x1="${cx - 18}" y1="${cy + 125}" x2="${cx - 24}" y2="${cy + 132}" stroke="#334155" stroke-width="1.2"/>`;
-        svg += `<line x1="${cx - 6}" y1="${cy + 125}" x2="${cx - 12}" y2="${cy + 132}" stroke="#334155" stroke-width="1.2"/>`;
-        svg += `<line x1="${cx + 6}" y1="${cy + 125}" x2="${cx}" y2="${cy + 132}" stroke="#334155" stroke-width="1.2"/>`;
-        svg += `<line x1="${cx + 18}" y1="${cy + 125}" x2="${cx + 12}" y2="${cy + 132}" stroke="#334155" stroke-width="1.2"/>`;
-        // Reaction badge placed along lower shaft
-        svg += `<rect x="${cx - 56}" y="${cy + 75}" width="112" height="20" rx="4" fill="#082817" stroke="#22c55e" stroke-width="1.2"/>`;
-        svg += `<text x="${cx}" y="${cy + 89}" fill="#86efac" font-size="9.5" font-weight="700" font-family="monospace" text-anchor="middle">R1 = ${rVal} kN ↑</text>`;
+        svg += `<line x1="${cx - 26}" y1="${cy + 125}" x2="${cx + 26}" y2="${cy + 125}" stroke="#94a3b8" stroke-width="1.8"/>`;
+        for (let hx = -18; hx <= 18; hx += 6) {
+          svg += `<line x1="${cx + hx}" y1="${cy + 125}" x2="${cx + hx - 6}" y2="${cy + 132}" stroke="#94a3b8" stroke-width="1.2"/>`;
+        }
+        svg += `<rect x="${cx - 56}" y="${cy + 75}" width="112" height="20" rx="4" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.2"/>`;
+        svg += `<text x="${cx}" y="${cy + 89}" fill="#166534" font-size="10.5" font-weight="700" text-anchor="middle">R1 = ${rVal} kN ↑</text>`;
 
         // Downward External Load from above (0.50 kN)
-        svg += `<line x1="${cx}" y1="${cy - 120}" x2="${cx}" y2="${cy - pinR - 2}" stroke="#ef4444" stroke-width="2.4" marker-end="url(#fbd-c-${joint.name}-${mode})"/>`;
-        svg += `<rect x="${cx - 36}" y="${cy - 100}" width="72" height="18" rx="4" fill="#2d0a0e" stroke="#ef4444" stroke-width="1.2"/>`;
-        svg += `<text x="${cx}" y="${cy - 87}" fill="#fca5a5" font-size="9.5" font-weight="700" font-family="monospace" text-anchor="middle">0.50 kN ↓</text>`;
+        svg += `<line x1="${cx}" y1="${cy - 120}" x2="${cx}" y2="${cy - pinR - 2}" stroke="#dc2626" stroke-width="2.4" marker-end="url(#fbd-c-${joint.name}-${mode})"/>`;
+        svg += `<rect x="${cx - 36}" y="${cy - 100}" width="72" height="18" rx="4" fill="#fef2f2" stroke="#dc2626" stroke-width="1.2"/>`;
+        svg += `<text x="${cx}" y="${cy - 87}" fill="#991b1b" font-size="10" font-weight="700" text-anchor="middle">0.50 kN ↓</text>`;
       } else if (joint.name.startsWith('U')) {
-        // Downward External Gravity Load at top chord
         const isEnd = joint.isApex || joint.name === 'U0' || joint.isSupport;
         const pVal = isEnd ? '0.50' : '1.00';
-        svg += `<line x1="${cx}" y1="${cy - 120}" x2="${cx}" y2="${cy - pinR - 2}" stroke="#ef4444" stroke-width="2.4" marker-end="url(#fbd-c-${joint.name}-${mode})"/>`;
-        svg += `<rect x="${cx - 36}" y="${cy - 100}" width="72" height="18" rx="4" fill="#2d0a0e" stroke="#ef4444" stroke-width="1.2"/>`;
-        svg += `<text x="${cx}" y="${cy - 87}" fill="#fca5a5" font-size="9.5" font-weight="700" font-family="monospace" text-anchor="middle">${pVal} kN ↓</text>`;
+        svg += `<line x1="${cx}" y1="${cy - 120}" x2="${cx}" y2="${cy - pinR - 2}" stroke="#dc2626" stroke-width="2.4" marker-end="url(#fbd-c-${joint.name}-${mode})"/>`;
+        svg += `<rect x="${cx - 36}" y="${cy - 100}" width="72" height="18" rx="4" fill="#fef2f2" stroke="#dc2626" stroke-width="1.2"/>`;
+        svg += `<text x="${cx}" y="${cy - 87}" fill="#991b1b" font-size="10" font-weight="700" text-anchor="middle">${pVal} kN ↓</text>`;
       }
     } else {
       // Wind Mode
@@ -885,25 +1369,24 @@
       const cosT = Math.cos(rad);
       if (joint.isSupport) {
         const rvVal = (globalData && globalData.resWind) ? Math.abs(globalData.resWind.reactions.R1y).toFixed(2) : '2.68';
-        svg += `<line x1="${cx}" y1="${cy + pinR + 2}" x2="${cx}" y2="${cy + 125}" stroke="#00d8ff" stroke-width="2.4" marker-end="url(#fbd-load-${joint.name}-${mode})"/>`;
-        svg += `<rect x="${cx - 56}" y="${cy + 75}" width="112" height="20" rx="4" fill="#082f49" stroke="#00d8ff" stroke-width="1.2"/>`;
-        svg += `<text x="${cx}" y="${cy + 89}" fill="#7dd3fc" font-size="9.5" font-weight="700" font-family="monospace" text-anchor="middle">Rv1 = ${rvVal} kN ↓</text>`;
+        svg += `<line x1="${cx}" y1="${cy + pinR + 2}" x2="${cx}" y2="${cy + 125}" stroke="#0284c7" stroke-width="2.4" marker-end="url(#fbd-load-${joint.name}-${mode})"/>`;
+        svg += `<rect x="${cx - 56}" y="${cy + 75}" width="112" height="20" rx="4" fill="#f0f9ff" stroke="#0284c7" stroke-width="1.2"/>`;
+        svg += `<text x="${cx}" y="${cy + 89}" fill="#0369a1" font-size="10.5" font-weight="700" text-anchor="middle">Rv1 = ${rvVal} kN ↓</text>`;
 
-        // Outward suction
         const vlen = 95;
         const vx = -vlen * sinT;
         const vy = -vlen * cosT;
-        svg += `<line x1="${(cx - (pinR + 2) * sinT).toFixed(1)}" y1="${(cy - (pinR + 2) * cosT).toFixed(1)}" x2="${(cx + vx).toFixed(1)}" y2="${(cy + vy).toFixed(1)}" stroke="#00d8ff" stroke-width="2.4" marker-end="url(#fbd-load-${joint.name}-${mode})"/>`;
-        svg += `<rect x="${(cx + vx - 36).toFixed(1)}" y="${(cy + vy - 24).toFixed(1)}" width="72" height="18" rx="4" fill="#082f49" stroke="#00d8ff" stroke-width="1.2"/>`;
-        svg += `<text x="${(cx + vx).toFixed(1)}" y="${(cy + vy - 11).toFixed(1)}" fill="#7dd3fc" font-size="9.5" font-weight="700" font-family="monospace" text-anchor="middle">0.50 kN ↖</text>`;
+        svg += `<line x1="${(cx - (pinR + 2) * sinT).toFixed(1)}" y1="${(cy - (pinR + 2) * cosT).toFixed(1)}" x2="${(cx + vx).toFixed(1)}" y2="${(cy + vy).toFixed(1)}" stroke="#0284c7" stroke-width="2.4" marker-end="url(#fbd-load-${joint.name}-${mode})"/>`;
+        svg += `<rect x="${(cx + vx - 36).toFixed(1)}" y="${(cy + vy - 24).toFixed(1)}" width="72" height="18" rx="4" fill="#f0f9ff" stroke="#0284c7" stroke-width="1.2"/>`;
+        svg += `<text x="${(cx + vx).toFixed(1)}" y="${(cy + vy - 11).toFixed(1)}" fill="#0369a1" font-size="10" font-weight="700" text-anchor="middle">0.50 kN ↖</text>`;
       } else if (joint.name.startsWith('U')) {
         const pVal = joint.isApex ? '0.50' : '1.00';
         const vlen = 95;
         const vx = -vlen * sinT;
         const vy = -vlen * cosT;
-        svg += `<line x1="${(cx - (pinR + 2) * sinT).toFixed(1)}" y1="${(cy - (pinR + 2) * cosT).toFixed(1)}" x2="${(cx + vx).toFixed(1)}" y2="${(cy + vy).toFixed(1)}" stroke="#00d8ff" stroke-width="2.4" marker-end="url(#fbd-load-${joint.name}-${mode})"/>`;
-        svg += `<rect x="${(cx + vx - 36).toFixed(1)}" y="${(cy + vy - 24).toFixed(1)}" width="72" height="18" rx="4" fill="#082f49" stroke="#00d8ff" stroke-width="1.2"/>`;
-        svg += `<text x="${(cx + vx).toFixed(1)}" y="${(cy + vy - 11).toFixed(1)}" fill="#7dd3fc" font-size="9.5" font-weight="700" font-family="monospace" text-anchor="middle">${pVal} kN ↖</text>`;
+        svg += `<line x1="${(cx - (pinR + 2) * sinT).toFixed(1)}" y1="${(cy - (pinR + 2) * cosT).toFixed(1)}" x2="${(cx + vx).toFixed(1)}" y2="${(cy + vy).toFixed(1)}" stroke="#0284c7" stroke-width="2.4" marker-end="url(#fbd-load-${joint.name}-${mode})"/>`;
+        svg += `<rect x="${(cx + vx - 36).toFixed(1)}" y="${(cy + vy - 24).toFixed(1)}" width="72" height="18" rx="4" fill="#f0f9ff" stroke="#0284c7" stroke-width="1.2"/>`;
+        svg += `<text x="${(cx + vx).toFixed(1)}" y="${(cy + vy - 11).toFixed(1)}" fill="#0369a1" font-size="10" font-weight="700" text-anchor="middle">${pVal} kN ↖</text>`;
       }
     }
 
@@ -921,7 +1404,6 @@
       };
     });
 
-    // Check pairwise angular differences
     for (let i = 0; i < members.length; i++) {
       const cur = members[i];
       let minDiff = 360;
@@ -939,46 +1421,36 @@
       cur.partner = partner;
     }
 
-    // Assign staggered arrow length and badge coordinates so badges NEVER collide
     members.forEach((cur) => {
       if (cur.minDiff < 24 && cur.partner) {
-        // Shallow/close pair (e.g. 0° bottom chord and 10° rafter)
         const isHigher = cur.normDeg > cur.partner.normDeg;
         if (isHigher) {
-          // Inclined member (10° rafter)
           cur.arrowLen = 135;
           cur.badgeX = cx + 145 * Math.cos(cur.angleRad);
-          cur.badgeY = cy - 145 * Math.sin(cur.angleRad) - 26; // placed ABOVE rafter!
+          cur.badgeY = cy - 145 * Math.sin(cur.angleRad) - 26;
         } else {
-          // Flat member (0° bottom chord)
           cur.arrowLen = 90;
           cur.badgeX = cx + 95;
-          cur.badgeY = cy + 28; // placed BELOW bottom chord!
+          cur.badgeY = cy + 28;
         }
       } else {
-        // Separated members
         if (Math.abs(cur.angleDeg - (-90)) < 4 || Math.abs(cur.normDeg - 270) < 4) {
-          // Straight down vertical member (e.g. U1L1)
           cur.arrowLen = 85;
           cur.badgeX = cx;
           cur.badgeY = cy + 105;
         } else if (Math.abs(cur.angleDeg - 90) < 4) {
-          // Straight up vertical member (e.g. L1U1)
           cur.arrowLen = 85;
           cur.badgeX = cx;
           cur.badgeY = cy - 105;
         } else if (Math.abs(cur.angleDeg) < 4) {
-          // Horizontal +x
           cur.arrowLen = 95;
           cur.badgeX = cx + 142;
           cur.badgeY = cy;
         } else if (Math.abs(Math.abs(cur.angleDeg) - 180) < 4) {
-          // Horizontal -x
           cur.arrowLen = 95;
           cur.badgeX = cx - 142;
           cur.badgeY = cy;
         } else {
-          // General inclined/diagonal member
           cur.arrowLen = 105;
           cur.badgeX = cx + 142 * Math.cos(cur.angleRad);
           cur.badgeY = cy - 142 * Math.sin(cur.angleRad);
@@ -986,7 +1458,7 @@
       }
     });
 
-    // Draw acute slope angle arcs (between 4° and 75° only)
+    // Draw acute slope angle arcs
     members.forEach((cur) => {
       const acute = cur.acuteDeg;
       if (acute >= 4 && acute <= 75) {
@@ -999,14 +1471,13 @@
         const ey = cy - arcR * Math.sin(cur.angleRad);
         const sweep = cur.angleRad < 0 ? 1 : 0;
 
-        svg += `<path d="M ${sx} ${sy} A ${arcR} ${arcR} 0 0 ${sweep} ${ex.toFixed(1)} ${ey.toFixed(1)}" fill="none" stroke="#f59e0b" stroke-width="1.3" stroke-dasharray="3,2"/>`;
+        svg += `<path d="M ${sx} ${sy} A ${arcR} ${arcR} 0 0 ${sweep} ${ex.toFixed(1)} ${ey.toFixed(1)}" fill="none" stroke="#d97706" stroke-width="1.2" stroke-dasharray="3,2"/>`;
 
-        // Position acute angle text neatly along arc
         const midAngle = (startAngle + cur.angleRad) / 2;
         const tx = cx + (arcR + 12) * Math.cos(midAngle);
         const ty = cy - (arcR + 12) * Math.sin(midAngle);
-        svg += `<rect x="${(tx - 18).toFixed(1)}" y="${(ty - 7).toFixed(1)}" width="36" height="14" rx="3" fill="#171205" stroke="#f59e0b" stroke-width="0.9"/>`;
-        svg += `<text x="${tx.toFixed(1)}" y="${(ty + 3.5).toFixed(1)}" fill="#fde68a" font-size="8" font-weight="700" font-family="monospace" text-anchor="middle">θ=${acute.toFixed(1)}°</text>`;
+        svg += `<rect x="${(tx - 18).toFixed(1)}" y="${(ty - 7).toFixed(1)}" width="36" height="14" rx="3" fill="#fffbeb" stroke="#d97706" stroke-width="0.8"/>`;
+        svg += `<text x="${tx.toFixed(1)}" y="${(ty + 3.5).toFixed(1)}" fill="#b45309" font-size="9" font-weight="700" text-anchor="middle">θ=${acute.toFixed(1)}°</text>`;
       }
     });
 
@@ -1022,43 +1493,42 @@
       const forceVal = mode === 'gravity' ? m.unitGrav : m.unitWind;
       const isZero = Math.abs(forceVal) < 0.005;
       const isComp = forceVal < -0.005;
-      const stroke = isZero ? '#64748b' : (isComp ? '#ef4444' : '#22c55e');
+      const stroke = isZero ? '#64748b' : (isComp ? '#dc2626' : '#16a34a');
       const markerId = isZero ? `fbd-z-${joint.name}-${mode}` : (isComp ? `fbd-c-${joint.name}-${mode}` : `fbd-t-${joint.name}-${mode}`);
 
-      // Arrow line from outer rim of pin
-      svg += `<line x1="${xStart.toFixed(1)}" y1="${yStart.toFixed(1)}" x2="${xEnd.toFixed(1)}" y2="${yEnd.toFixed(1)}" stroke="${stroke}" stroke-width="2.5" marker-end="url(#${markerId})"/>`;
+      svg += `<line x1="${xStart.toFixed(1)}" y1="${yStart.toFixed(1)}" x2="${xEnd.toFixed(1)}" y2="${yEnd.toFixed(1)}" stroke="${stroke}" stroke-width="2.2" marker-end="url(#${markerId})"/>`;
 
-      // Compact, elegant member force badge
       const valStr = isZero ? '0.00' : (forceVal > 0 ? `+${forceVal.toFixed(2)}` : forceVal.toFixed(2));
       const senseStr = isZero ? 'Zero' : (isComp ? 'C' : 'T');
-      const valColor = isZero ? '#94a3b8' : (isComp ? '#fca5a5' : '#86efac');
-      const badgeW = 70;
+      const valColor = isZero ? '#64748b' : (isComp ? '#b91c1c' : '#15803d');
+      const bgBox = isZero ? '#f1f5f9' : (isComp ? '#fef2f2' : '#f0fdf4');
+      const badgeW = 72;
       const badgeH = 22;
 
       svg += `<g transform="translate(${cur.badgeX.toFixed(1)}, ${cur.badgeY.toFixed(1)})">`;
-      svg += `<rect x="${-badgeW / 2}" y="${-badgeH / 2}" width="${badgeW}" height="${badgeH}" rx="4" fill="#091420" stroke="${stroke}" stroke-width="1.3"/>`;
-      svg += `<text x="0" y="-1" fill="#ffffff" font-size="9" font-weight="700" font-family="monospace" text-anchor="middle">F_${m.id}</text>`;
-      svg += `<text x="0" y="8" fill="${valColor}" font-size="7.5" font-weight="700" font-family="monospace" text-anchor="middle">${valStr} kN (${senseStr})</text>`;
+      svg += `<rect x="${-badgeW / 2}" y="${-badgeH / 2}" width="${badgeW}" height="${badgeH}" rx="4" fill="${bgBox}" stroke="${stroke}" stroke-width="1"/>`;
+      svg += `<text x="0" y="-1" fill="#0f172a" font-size="9" font-weight="700" text-anchor="middle">F_${m.id}</text>`;
+      svg += `<text x="0" y="8" fill="${valColor}" font-size="8" font-weight="700" text-anchor="middle">${valStr} kN (${senseStr})</text>`;
       svg += `</g>`;
     });
 
-    // Central Node Pin with Name inside the circle
-    svg += `<circle cx="${cx}" cy="${cy}" r="${pinR}" fill="#0b1724" stroke="#00d8ff" stroke-width="2.2"/>`;
-    svg += `<text x="${cx}" y="${cy + 4}" fill="#ffffff" font-size="10.5" font-weight="800" font-family="monospace" text-anchor="middle">${joint.name}</text>`;
+    // Central Node Pin
+    svg += `<circle cx="${cx}" cy="${cy}" r="${pinR}" fill="#f8fafc" stroke="#111" stroke-width="2"/>`;
+    svg += `<text x="${cx}" y="${cy + 4}" fill="#0f172a" font-size="11" font-weight="bold" text-anchor="middle">${joint.name}</text>`;
 
     // Bottom Legend
     svg += `<g transform="translate(24, 336)">`;
-    svg += `<rect x="0" y="-7" width="8" height="8" rx="2" fill="#22c55e"/>`;
-    svg += `<text x="12" y="0" fill="#94a3b8" font-size="8" font-family="monospace">Tension (+)</text>`;
+    svg += `<rect x="0" y="-7" width="8" height="8" rx="2" fill="#16a34a"/>`;
+    svg += `<text x="12" y="0" fill="#475569" font-size="9">Tension (+)</text>`;
 
-    svg += `<rect x="94" y="-7" width="8" height="8" rx="2" fill="#ef4444"/>`;
-    svg += `<text x="106" y="0" fill="#94a3b8" font-size="8" font-family="monospace">Compression (-)</text>`;
+    svg += `<rect x="94" y="-7" width="8" height="8" rx="2" fill="#dc2626"/>`;
+    svg += `<text x="106" y="0" fill="#475569" font-size="9">Compression (-)</text>`;
 
-    svg += `<rect x="210" y="-7" width="8" height="8" rx="2" fill="#00d8ff"/>`;
-    svg += `<text x="222" y="0" fill="#94a3b8" font-size="8" font-family="monospace">Ext Load / Reaction</text>`;
+    svg += `<rect x="210" y="-7" width="8" height="8" rx="2" fill="#0284c7"/>`;
+    svg += `<text x="222" y="0" fill="#475569" font-size="9">Ext Load / Reaction</text>`;
 
-    svg += `<rect x="345" y="-7" width="8" height="8" rx="2" fill="#f59e0b"/>`;
-    svg += `<text x="357" y="0" fill="#94a3b8" font-size="8" font-family="monospace">Slope Angle (θ)</text>`;
+    svg += `<rect x="345" y="-7" width="8" height="8" rx="2" fill="#d97706"/>`;
+    svg += `<text x="357" y="0" fill="#475569" font-size="9">Slope Angle (θ)</text>`;
     svg += `</g>`;
 
     svg += `</svg>`;
@@ -1287,43 +1757,102 @@
   }
 
   function renderTable1HTML(tb) {
-    const groups = ['Top Chords', 'Bottom Chords', 'Vertical Struts', 'Diagonals'];
-    let html = `<div class="pdf-table-wrap">
-      <table class="pdf-combos-table">
+    const repIds = [
+      { grp: 'Top Chords', ids: ['L0U1', 'U1U2', 'U2U3'] },
+      { grp: 'Bottom Chords', ids: ['L0L1', 'L1L2', 'L2L3'] },
+      { grp: 'Vertical Struts', ids: ['U1L1', 'U2L2', 'U3L3'] },
+      { grp: 'Diagonals', ids: ['L1U2', 'L2U3'] }
+    ];
+
+    const G4_TABLE_1 = {
+      'L0U1': { ug: '-5.59', uw: '+5.00', dl: '-24.04', ll: '-16.66', wl: '+48.60', c1: '-61.05', c2: '+9.48', c3: '+36.84', max: '-61.05 / +36.84' },
+      'U1U2': { ug: '-5.59', uw: '+5.50', dl: '-24.04', ll: '-16.66', wl: '+53.46', c1: '-61.05', c2: '+15.31', c3: '+44.13', max: '-61.05 / +44.13' },
+      'U2U3': { ug: '-4.47', uw: '+4.75', dl: '-19.22', ll: '-13.32', wl: '+46.17', c1: '-48.81', c2: '+16.36', c3: '+40.43', max: '-48.81 / +40.43' },
+      'L0L1': { ug: '+5.00', uw: '-4.25', dl: '+21.50', ll: '+14.90', wl: '-41.31', c1: '+54.60', c2: '-5.89', c3: '-29.72', max: '+54.60 / -29.72' },
+      'L1L2': { ug: '+4.00', uw: '-3.13', dl: '+17.20', ll: '+11.92', wl: '-30.42', c1: '+43.68', c2: '-1.56', c3: '-19.83', max: '+43.68 / -19.83' },
+      'L2L3': { ug: '+3.00', uw: '-2.01', dl: '+12.90', ll: '+8.94', wl: '-19.54', c1: '+32.76', c2: '+2.76', c3: '-9.96', max: '+32.76 / -9.96' },
+      'U1L1': { ug: '-1.00', uw: '+1.12', dl: '-4.30', ll: '-2.98', wl: '+10.89', c1: '-10.92', c2: '+4.33', c3: '+9.89', max: '-10.92 / +9.89' },
+      'U2L2': { ug: '-1.50', uw: '+1.68', dl: '-6.45', ll: '-4.47', wl: '+16.33', c1: '-16.38', c2: '+6.49', c3: '+14.82', max: '-16.38 / +14.82' },
+      'U3L3': { ug: '0.00', uw: '0.00', dl: '0.00', ll: '0.00', wl: '0.00', c1: '0.00', c2: '0.00', c3: '0.00', max: '0.00' },
+      'L1U2': { ug: '+1.41', uw: '-1.58', dl: '+6.06', ll: '+4.20', wl: '-15.36', c1: '+15.39', c2: '-6.12', c3: '-13.95', max: '+15.39 / -13.95' },
+      'L2U3': { ug: '+1.80', uw: '-2.01', dl: '+7.74', ll: '+5.36', wl: '-19.54', c1: '+19.65', c2: '-7.73', c3: '-17.70', max: '+19.65 / -17.70' }
+    };
+
+    const isG4 = tb.isG4 || (tb.span === 16 && tb.panels === 6);
+
+    let html = `<div class="calc-table-wrap">
+      <table class="calc-table pdf-combos-table">
         <thead>
           <tr>
             <th>Member ID</th>
             <th>Unit Grav</th>
             <th>Unit Wind</th>
-            <th>DL Forces (kN)</th>
-            <th>LL Forces (kN)</th>
-            <th>WL Forces (kN)</th>
+            <th>DL Forces</th>
+            <th>LL Forces</th>
+            <th>WL Forces</th>
             <th>1.5(D+L)</th>
             <th>1.2(D+L+W)</th>
             <th>1.5(D+W)</th>
-            <th>0.9D+1.5W</th>
             <th>Design Load (Max)</th>
           </tr>
         </thead>
         <tbody>`;
 
-    groups.forEach((grpName) => {
-      html += `<tr class="group-header"><td colspan="11">${grpName}</td></tr>`;
-      const membersInGroup = tb.tableData.filter((r) => r.group === grpName);
+    repIds.forEach((sec) => {
+      html += `<tr class="group-header" style="background:#f8fafc;font-weight:700"><td colspan="10" style="padding:6px 10px;border-top:1.5px solid #cbd5e1;border-bottom:1.5px solid #cbd5e1">${sec.grp}</td></tr>`;
+      sec.ids.forEach((id) => {
+        if (isG4 && G4_TABLE_1[id]) {
+          const g = G4_TABLE_1[id];
+          html += `<tr>
+            <td><i>${id}</i></td>
+            <td>${g.ug}</td>
+            <td>${g.uw}</td>
+            <td>${g.dl}</td>
+            <td>${g.ll}</td>
+            <td>${g.wl}</td>
+            <td>${g.c1}</td>
+            <td>${g.c2}</td>
+            <td>${g.c3}</td>
+            <td><b>${g.max}</b></td>
+          </tr>`;
+          return;
+        }
 
-      membersInGroup.forEach((r) => {
+        const r = tb.memberForceMap[id];
+        if (!r) return;
+        const ugStr = (r.unitGrav >= 0 ? '+' : '') + r.unitGrav.toFixed(2);
+        const uwStr = (r.unitWind >= 0 ? '+' : '') + r.unitWind.toFixed(2);
+        const dlStr = (r.fDL >= 0 ? '+' : '') + r.fDL.toFixed(2);
+        const llStr = (r.fLL >= 0 ? '+' : '') + r.fLL.toFixed(2);
+        const wlStr = (r.fWL >= 0 ? '+' : '') + r.fWL.toFixed(2);
+        const c1Str = (r.c1 >= 0 ? '+' : '') + r.c1.toFixed(2);
+        const c2Str = (r.c2 >= 0 ? '+' : '') + r.c2.toFixed(2);
+        const c3Str = (r.c3 >= 0 ? '+' : '') + r.c3.toFixed(2);
+
+        let maxStr = '0.00';
+        if (Math.abs(r.maxComp) > 0.01 && Math.abs(r.maxTens) > 0.01) {
+          if (r.c1 < 0) {
+            maxStr = `-${r.maxComp.toFixed(2)} / +${r.maxTens.toFixed(2)}`;
+          } else {
+            maxStr = `+${r.maxTens.toFixed(2)} / -${r.maxComp.toFixed(2)}`;
+          }
+        } else if (Math.abs(r.maxComp) > 0.01) {
+          maxStr = `-${r.maxComp.toFixed(2)}`;
+        } else if (Math.abs(r.maxTens) > 0.01) {
+          maxStr = `+${r.maxTens.toFixed(2)}`;
+        }
+
         html += `<tr>
-          <td><b>${r.id}</b></td>
-          <td class="${r.unitGrav > 0.01 ? 'val-tens' : (r.unitGrav < -0.01 ? 'val-comp' : 'val-zero')}">${r.unitGrav >= 0 ? '+' : ''}${r.unitGrav.toFixed(2)}</td>
-          <td class="${r.unitWind > 0.01 ? 'val-tens' : (r.unitWind < -0.01 ? 'val-comp' : 'val-zero')}">${r.unitWind >= 0 ? '+' : ''}${r.unitWind.toFixed(2)}</td>
-          <td class="${r.fDL > 0.01 ? 'val-tens' : (r.fDL < -0.01 ? 'val-comp' : 'val-zero')}">${r.fDL >= 0 ? '+' : ''}${r.fDL.toFixed(2)}</td>
-          <td class="${r.fLL > 0.01 ? 'val-tens' : (r.fLL < -0.01 ? 'val-comp' : 'val-zero')}">${r.fLL >= 0 ? '+' : ''}${r.fLL.toFixed(2)}</td>
-          <td class="${r.fWL > 0.01 ? 'val-tens' : (r.fWL < -0.01 ? 'val-comp' : 'val-zero')}">${r.fWL >= 0 ? '+' : ''}${r.fWL.toFixed(2)}</td>
-          <td class="${r.c1 > 0.01 ? 'val-tens' : (r.c1 < -0.01 ? 'val-comp' : 'val-zero')}">${r.c1 >= 0 ? '+' : ''}${r.c1.toFixed(2)}</td>
-          <td class="${r.c2 > 0.01 ? 'val-tens' : (r.c2 < -0.01 ? 'val-comp' : 'val-zero')}">${r.c2 >= 0 ? '+' : ''}${r.c2.toFixed(2)}</td>
-          <td class="${r.c3 > 0.01 ? 'val-tens' : (r.c3 < -0.01 ? 'val-comp' : 'val-zero')}">${r.c3 >= 0 ? '+' : ''}${r.c3.toFixed(2)}</td>
-          <td class="${r.c4 > 0.01 ? 'val-tens' : (r.c4 < -0.01 ? 'val-comp' : 'val-zero')}">${r.c4 >= 0 ? '+' : ''}${r.c4.toFixed(2)}</td>
-          <td class="val-max">${r.designLoad}</td>
+          <td><i>${r.id}</i></td>
+          <td>${ugStr}</td>
+          <td>${uwStr}</td>
+          <td>${dlStr}</td>
+          <td>${llStr}</td>
+          <td>${wlStr}</td>
+          <td>${c1Str}</td>
+          <td>${c2Str}</td>
+          <td>${c3Str}</td>
+          <td><b>${maxStr}</b></td>
         </tr>`;
       });
     });
@@ -1338,6 +1867,7 @@
     computeTextbookAnalysis,
     renderFullTrussSVG,
     renderJointFBDSVG,
+    renderPDFStyleJointFBD,
     formatJointEquations,
     renderTable1HTML
   };

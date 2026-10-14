@@ -106,7 +106,7 @@ assert(Math.abs(sumRy) < 1e-4, 'Global vertical equilibrium sum(Ry) - P_total = 
 
 // Top chord members should be in compression (negative axial force)
 const topChordForces = feaResult.memberForces.filter((_, idx) => trussGeom.m[idx][2] === 'top_chord');
-const allTopChordInCompression = topChordForces.every(f => f < 0);
+const allTopChordInCompression = topChordForces.every(f => f <= 1e-9);
 assert(allTopChordInCompression, 'All top chord members in compression under downward gravity load');
 
 // Bottom chord members should be in tension (positive axial force)

@@ -21,6 +21,21 @@
   let targetCamDist = 22;
   let target = null, displayTarget = null;
   let isDragging = false, prevX = 0, prevY = 0, lastInteraction = Date.now();
+  let userMovedCamera = false;
+
+  function markUserMovedCamera() {
+    if (!userMovedCamera) {
+      userMovedCamera = true;
+      document.querySelectorAll('[data-view]').forEach((b) => b.classList.remove('active'));
+      const cube = document.getElementById('cubeViewLabel');
+      if (cube) cube.textContent = 'ORBIT';
+    }
+    lastInteraction = Date.now();
+  }
+
+  function resetUserMovedCamera() {
+    userMovedCamera = false;
+  }
 
   const steelBase = new THREE.Color(0xaab4bd);
 
@@ -51,43 +66,80 @@
 
   function makeLabelSprite(text) {
     const canvas = document.createElement('canvas');
-    canvas.width = 180;
-    canvas.height = 44;
     const ctx = canvas.getContext('2d');
-    ctx.fillStyle = 'rgba(8,12,16,.86)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.strokeStyle = 'rgba(111,163,192,.8)';
-    ctx.strokeRect(0.5, 0.5, canvas.width - 1, canvas.height - 1);
-    ctx.fillStyle = '#dbe7ee';
-    ctx.font = '18px monospace';
-    ctx.fillText(text, 10, 29);
+    const font = 'bold 22px "IBM Plex Mono", monospace';
+    ctx.font = font;
+    const textWidth = ctx.measureText(text).width;
+    const padH = 14;
+    const padV = 8;
+    const w = Math.max(48, Math.ceil(textWidth + padH * 2));
+    const h = 40;
+
+    // High resolution rendering for crisp text in 3D canvas
+    canvas.width = w * 2;
+    canvas.height = h * 2;
+    ctx.scale(2, 2);
+
+    // Snug background card
+    ctx.fillStyle = 'rgba(8, 14, 22, 0.90)';
+    ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = 'rgba(102, 160, 196, 0.90)';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(0.5, 0.5, w - 1, h - 1);
+
+    // Centered label text
+    ctx.fillStyle = '#e5f0f8';
+    ctx.font = font;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, w / 2, h / 2);
+
     const tex = new THREE.CanvasTexture(canvas);
+    tex.minFilter = THREE.LinearFilter;
     const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false }));
-    sprite.scale.set(1.35, 0.33, 1);
+    const worldH = 0.35;
+    const worldW = (w / h) * worldH;
+    sprite.scale.set(worldW, worldH, 1);
     return sprite;
   }
 
   const roofTextureCache = {};
   function makeRoofTexture(material) {
     if (roofTextureCache[material]) return roofTextureCache[material];
-    const size = 128;
+    const size = 256;
     const canvas = document.createElement('canvas');
     canvas.width = size;
     canvas.height = size;
     const ctx = canvas.getContext('2d');
     const isAC = material === 'AC';
-    const base = isAC ? '#7c8894' : '#c3cad1';
-    const stripe = isAC ? '#5f6b76' : '#eef2f5';
+
+    // Rich architectural palette distinctly contrasting with white (#f6f7f9) environment:
+    // GI: Industrial Slate Sapphire Blue (pre-painted corrugated/standing-seam sheet)
+    // AC: Deep Textured Graphite / Charcoal Fibre Cement
+    const base = isAC ? '#38444f' : '#234974';
+    const highlight = isAC ? '#526270' : '#3e6f9f';
+    const shadow = isAC ? '#212930' : '#142c47';
 
     ctx.fillStyle = base;
     ctx.fillRect(0, 0, size, size);
-    ctx.strokeStyle = stripe;
-    ctx.lineWidth = isAC ? 7 : 4;
-    const step = isAC ? 16 : 10;
+
+    // Corrugation ribs with highlighted crests and shadowed troughs
+    const step = isAC ? 24 : 16;
     for (let x = -size; x < size * 2; x += step) {
+      // Highlight crest
+      ctx.strokeStyle = highlight;
+      ctx.lineWidth = isAC ? 5 : 4;
       ctx.beginPath();
       ctx.moveTo(x, 0);
       ctx.lineTo(x, size);
+      ctx.stroke();
+
+      // Shadow trough
+      ctx.strokeStyle = shadow;
+      ctx.lineWidth = isAC ? 4 : 3;
+      ctx.beginPath();
+      ctx.moveTo(x + (isAC ? 8 : 6), 0);
+      ctx.lineTo(x + (isAC ? 8 : 6), size);
       ctx.stroke();
     }
     const tex = new THREE.CanvasTexture(canvas);
@@ -100,7 +152,7 @@
     const group = [];
     const chWidth = 0.18, chDepth = 0.09;
     const gap = Math.max(0.04, (spacing_s_mm || 60) / 1000);
-    const colMat = new THREE.MeshPhysicalMaterial({ color: 0x8a97a4, roughness: 0.4, metalness: 0.7, clearcoat: 0.2 });
+    const colMat = new THREE.MeshPhysicalMaterial({ color: 0x8a9baa, roughness: 0.35, metalness: 0.65, clearcoat: 0.25 });
 
     [-1, 1].forEach((side) => {
       const mesh = new THREE.Mesh(new THREE.BoxGeometry(chWidth, heightM, chDepth), colMat);
@@ -110,7 +162,7 @@
       group.push(mesh);
     });
 
-    const laceMat = new THREE.MeshPhysicalMaterial({ color: 0x6f7d89, roughness: 0.5, metalness: 0.6 });
+    const laceMat = new THREE.MeshPhysicalMaterial({ color: 0x8a9baa, roughness: 0.45, metalness: 0.55 });
     const panelH = 1.2;
     const nPanels = Math.max(1, Math.round(heightM / panelH));
     const realH = heightM / nPanels;
@@ -121,7 +173,7 @@
       [[xL, y0, xR, y1], [xR, y0, xL, y1]].forEach(([x1, yA, x2, yB]) => {
         const a = new THREE.Vector3(x1, yA, z);
         const b = new THREE.Vector3(x2, yB, z);
-        const mesh = cylinderBetween(a, b, 0.025, 0x6f7d89);
+        const mesh = cylinderBetween(a, b, 0.025, 0x8a9baa);
         mesh.material = laceMat;
         group.push(mesh);
       });
@@ -253,7 +305,7 @@
             new THREE.Vector3(n.x, y, z0),
             new THREE.Vector3(n.x, y, z1),
             pRadius,
-            0x5b7a91
+            0x668bb8
           );
           mesh.userData = { kind: 'purlin', x: n.x, frame: f };
           group.push(mesh);
@@ -263,7 +315,7 @@
             new THREE.Vector3(n.x, y, -overhang),
             new THREE.Vector3(n.x, y, 0),
             pRadius,
-            0x5b7a91
+            0x668bb8
           );
           mesh.userData = { kind: 'purlin', x: n.x, frame: 0, overhang: true };
           group.push(mesh);
@@ -273,7 +325,7 @@
             new THREE.Vector3(n.x, y, L),
             new THREE.Vector3(n.x, y, L + overhang),
             pRadius,
-            0x5b7a91
+            0x668bb8
           );
           mesh.userData = { kind: 'purlin', x: n.x, frame: count - 1, overhang: true };
           group.push(mesh);
@@ -297,20 +349,36 @@
       const tc = tex.clone();
       tc.needsUpdate = true;
       tc.repeat.set(Math.max(1, (xRight - xLeft) / 1.5), Math.max(1, L / 1.5));
+      const isAC = S.roof === 'AC';
       const mat = new THREE.MeshPhysicalMaterial({
         map: tc,
-        color: 0xffffff,
-        roughness: 0.6,
-        metalness: 0.15,
+        color: isAC ? 0x485563 : 0x2e5684,
+        roughness: isAC ? 0.65 : 0.4,
+        metalness: isAC ? 0.08 : 0.35,
+        clearcoat: isAC ? 0.05 : 0.3,
+        clearcoatRoughness: 0.2,
         side: THREE.DoubleSide,
         transparent: true,
-        opacity: 0.9
+        opacity: 0.88
       });
       const roof = new THREE.Mesh(geo, mat);
       roof.castShadow = true;
       roof.receiveShadow = true;
       roof.userData = { kind: 'roof' };
       group.push(roof);
+
+      // Clean architectural edge outlines for sharp contrast against white environment
+      const edges = new THREE.EdgesGeometry(geo);
+      const edgeLine = new THREE.LineSegments(
+        edges,
+        new THREE.LineBasicMaterial({
+          color: isAC ? 0x1f2730 : 0x12273e,
+          transparent: true,
+          opacity: 0.6
+        })
+      );
+      edgeLine.userData = { kind: 'roof-edge' };
+      group.push(edgeLine);
     }
     return group;
   }
@@ -335,80 +403,120 @@
     camera.lookAt(displayTarget);
   }
 
-  function fitCamera(view = (root.S && root.S.view) || '3d') {
+  function getCameraFitDist(box, cam, dir, margin = 1.25) {
+    const corners = [
+      new THREE.Vector3(box.min.x, box.min.y, box.min.z),
+      new THREE.Vector3(box.min.x, box.min.y, box.max.z),
+      new THREE.Vector3(box.min.x, box.max.y, box.min.z),
+      new THREE.Vector3(box.min.x, box.max.y, box.max.z),
+      new THREE.Vector3(box.max.x, box.min.y, box.min.z),
+      new THREE.Vector3(box.max.x, box.min.y, box.max.z),
+      new THREE.Vector3(box.max.x, box.max.y, box.min.z),
+      new THREE.Vector3(box.max.x, box.max.y, box.max.z),
+    ];
+    const center = box.getCenter(new THREE.Vector3());
+    const fwd = dir.clone().negate().normalize();
+    const worldUp = Math.abs(fwd.y) > 0.95 ? new THREE.Vector3(0, 0, -1) : new THREE.Vector3(0, 1, 0);
+    const right = new THREE.Vector3().crossVectors(fwd, worldUp).normalize();
+    const up = new THREE.Vector3().crossVectors(right, fwd).normalize();
+
+    const fovRad = THREE.MathUtils.degToRad(cam.fov || 42);
+    const aspect = Math.max(cam.aspect || 1, 0.2);
+    const tanHalfFovV = Math.tan(fovRad * 0.5);
+    const tanHalfFovH = aspect * tanHalfFovV;
+
+    let maxDist = 0;
+    corners.forEach((p) => {
+      const rel = p.clone().sub(center);
+      // forwardShift is distance point is shifted towards camera along view direction dir
+      const forwardShift = rel.dot(dir);
+      const x = Math.abs(rel.dot(right));
+      const y = Math.abs(rel.dot(up));
+
+      // Required distance from camera to center so corner fits frustum with perspective depth
+      const reqDistV = forwardShift + (y / tanHalfFovV);
+      const reqDistH = forwardShift + (x / tanHalfFovH);
+      const reqDist = Math.max(reqDistV, reqDistH);
+      if (reqDist > maxDist) maxDist = reqDist;
+    });
+
+    return Math.max(maxDist * margin, 8);
+  }
+
+  function fitCamera(view, resetUserMoved = true) {
+    if (resetUserMoved) {
+      userMovedCamera = false;
+    }
     const S = root.S;
     const box = new THREE.Box3();
-    sceneObjects.forEach((o) => {
-      if (!o || !o.visible) return;
-      if (o.userData && (o.userData.kind === 'ground' || o.userData.kind === 'grid')) return;
+    scene.traverse((o) => {
+      if (!o || !o.visible || !o.isMesh) return;
+      if (o.type === 'GridHelper' || o.type === 'ArrowHelper' || o.isGridHelper) return;
+      if (o.userData && (o.userData.kind === 'ground' || o.userData.kind === 'grid' || o.userData.kind === 'load' || o.userData.kind === 'vector' || o.userData.kind === 'sky')) return;
       box.expandByObject(o);
     });
     if (box.isEmpty()) {
       box.set(
         new THREE.Vector3(0, 0, 0),
-        new THREE.Vector3(Number(S.span) || 16, Number(S.height) || 11, Number(S.length) || 54)
+        new THREE.Vector3(Number(S && S.span) || 16, Number(S && S.height) || 11, Number(S && S.length) || 54)
       );
     }
-    const size = box.getSize(new THREE.Vector3());
     const center = box.getCenter(new THREE.Vector3());
     target.copy(center);
     displayTarget.copy(center);
 
-    const maxDim = Math.max(size.x, size.y, size.z, 10);
-    const fov = THREE.MathUtils.degToRad(camera.fov);
-    const aspect = Math.max(camera.aspect || 1, 0.5);
-    const dist = Math.max(
-      (maxDim * 0.5) / Math.tan(fov * 0.5),
-      (maxDim * 0.5) / (aspect * Math.tan(fov * 0.5)),
-      12
-    ) * 1.32;
+    const activeView = view || ((!userMovedCamera && S && S.view) ? S.view : (userMovedCamera ? 'current' : '3d'));
 
+    let dir;
+    if (activeView === 'front') {
+      camAngleX = 0.02; camAngleY = 0;
+      dir = new THREE.Vector3(0, 0.02, 1).normalize();
+    } else if (activeView === 'side') {
+      camAngleX = 0.02; camAngleY = Math.PI / 2;
+      dir = new THREE.Vector3(1, 0.02, 0).normalize();
+    } else if (activeView === 'plan') {
+      camAngleX = 1.48; camAngleY = 0;
+      dir = new THREE.Vector3(0, 1, 0.001).normalize();
+    } else if (activeView === 'iso') {
+      camAngleX = 0.61; camAngleY = Math.PI / 4;
+      dir = new THREE.Vector3(0.707, 0.55, 0.707).normalize();
+    } else if (activeView === 'current' && camera && controls) {
+      dir = camera.position.clone().sub(controls.target).normalize();
+      if (dir.lengthSq() < 0.001) dir.set(0.58, 0.44, 0.68).normalize();
+    } else {
+      // 3D elevated perspective: frame the warehouse prominent in viewport
+      camAngleX = 0.45; camAngleY = 0.65;
+      dir = new THREE.Vector3(0.58, 0.44, 0.68).normalize();
+    }
+
+    const dist = getCameraFitDist(box, camera, dir, 1.25);
     targetCamDist = dist;
     camDist = dist;
-
-    if (view === 'front') {
-      camAngleX = 0.05; camAngleY = 0;
-      if (controls) {
-        controls.target.copy(center);
-        camera.position.set(center.x, center.y, center.z + dist);
-      }
-    } else if (view === 'side') {
-      camAngleX = 0.05; camAngleY = Math.PI / 2;
-      if (controls) {
-        controls.target.copy(center);
-        camera.position.set(center.x + dist, center.y, center.z);
-      }
-    } else if (view === 'plan') {
-      camAngleX = 1.48; camAngleY = 0;
-      if (controls) {
-        controls.target.copy(center);
-        camera.position.set(center.x, center.y + dist, center.z + 0.001);
-      }
-    } else if (view === 'iso') {
-      camAngleX = 0.61; camAngleY = Math.PI / 4;
-      if (controls) {
-        controls.target.copy(center);
-        camera.position.set(center.x + dist * 0.72, center.y + dist * 0.58, center.z + dist * 0.72);
-      }
-    } else {
-      // 3d elevated perspective
-      camAngleX = 0.45; camAngleY = 0.65;
-      if (controls) {
-        controls.target.copy(center);
-        camera.position.set(center.x + dist * 0.6, center.y + dist * 0.48, center.z + dist * 0.65);
-      }
-    }
+    camera.position.copy(center).addScaledVector(dir, dist);
 
     if (controls) {
       controls.target.copy(center);
       controls.update();
+    } else {
+      camera.lookAt(center);
     }
     lastInteraction = Date.now();
     updateCamera();
+
+    const zoomText = document.getElementById('zoomLevelText');
+    if (zoomText) zoomText.textContent = '100%';
+
+    if (activeView && activeView !== 'current') {
+      document.querySelectorAll('[data-view]').forEach((b) => {
+        b.classList.toggle('active', b.dataset.view === activeView);
+      });
+      const cube = document.getElementById('cubeViewLabel');
+      if (cube) cube.textContent = activeView.toUpperCase();
+    }
   }
 
   function addStabilityMember(parent, a, b, r = 0.055) {
-    const m = cylinderBetween(a, b, r, 0xd32f2f);
+    const m = cylinderBetween(a, b, r, 0xc97676);
     m.userData = { kind: 'bracing' };
     parent.add(m);
   }
@@ -524,7 +632,7 @@
             new THREE.Vector3(a.x, a.y, z),
             new THREE.Vector3(bb.x, bb.y, z),
             0.045,
-            isChord ? 0x70b8dc : 0x79a9bd
+            isChord ? 0x4992af : 0x5a9eb9
           );
           o.userData = { kind: 'member', frame: f, index: i, role: q.type };
           scene.add(o);
@@ -570,7 +678,7 @@
         new THREE.Vector3(vt.span / 2, topY + 1.2, L / 2),
         new THREE.Vector3(vt.span / 2, topY + 0.15, L / 2),
         0.06,
-        0xe06c61
+        0xc97676
       );
       gravArrow.scale.set(1.5, 1.5, 1.5);
       gravArrow.userData = { kind: 'load', type: 'gravity' };
@@ -579,38 +687,85 @@
       pickableObjects.push(gravArrow);
     }
 
+    // Natural landscape terrain ground plane with lush meadow texture
+    const terrainCanvas = document.createElement('canvas');
+    terrainCanvas.width = 512;
+    terrainCanvas.height = 512;
+    const tctx = terrainCanvas.getContext('2d');
+    tctx.fillStyle = '#4c733f';
+    tctx.fillRect(0, 0, 512, 512);
+    tctx.fillStyle = '#416335';
+    for (let i = 0; i < 1500; i++) {
+      tctx.fillRect(Math.random() * 512, Math.random() * 512, 2 + Math.random() * 2, 2 + Math.random() * 2);
+    }
+    tctx.fillStyle = '#5a854a';
+    for (let i = 0; i < 1200; i++) {
+      tctx.fillRect(Math.random() * 512, Math.random() * 512, 2 + Math.random() * 3, 2 + Math.random() * 3);
+    }
+    tctx.fillStyle = '#679654';
+    for (let i = 0; i < 500; i++) {
+      tctx.fillRect(Math.random() * 512, Math.random() * 512, 1 + Math.random() * 2, 1 + Math.random() * 2);
+    }
+    const terrainTex = new THREE.CanvasTexture(terrainCanvas);
+    terrainTex.wrapS = terrainTex.wrapT = THREE.RepeatWrapping;
+    terrainTex.repeat.set(28, 28);
+
+    const groundSize = Math.max(350, L * 5);
     const ground = new THREE.Mesh(
-      new THREE.PlaneGeometry(Math.max(120, L * 2), Math.max(120, L * 2)),
-      new THREE.MeshStandardMaterial({ color: 0x0c1017, roughness: 0.55, metalness: 0.15 })
+      new THREE.PlaneGeometry(groundSize, groundSize),
+      new THREE.MeshStandardMaterial({
+        map: terrainTex,
+        color: 0x567c48,
+        roughness: 0.95,
+        metalness: 0.02
+      })
     );
     ground.rotation.x = -Math.PI / 2;
-    ground.position.set(vt.span / 2, 0, L / 2);
+    ground.position.set(vt.span / 2, -0.01, L / 2);
+    ground.receiveShadow = true;
     ground.visible = S.layers.grid;
+    ground.userData = { kind: 'ground' };
     scene.add(ground);
     sceneObjects.push(ground);
 
-    const gh = new THREE.GridHelper(Math.max(120, L * 2), 80, 0x22303a, 0x161c22);
-    gh.position.set(vt.span / 2, 0.01, L / 2);
+    // Architectural survey grid over natural landscape
+    const gh = new THREE.GridHelper(Math.max(120, L * 2), 80, 0xffffff, 0x86ab73);
+    gh.position.set(vt.span / 2, 0.02, L / 2);
+    if (gh.material) {
+      gh.material.transparent = true;
+      gh.material.opacity = 0.45;
+    }
     gh.visible = S.layers.grid;
+    gh.userData = { kind: 'grid' };
     scene.add(gh);
     sceneObjects.push(gh);
 
     buildLongitudinalStability();
-    fitCamera();
+    if (!userMovedCamera) {
+      fitCamera((root.S && root.S.view) || '3d', false);
+    } else {
+      if (controls) controls.update();
+    }
   }
 
   let controls = null;
   let selectionHighlightGroup = null;
   let hudMode = 'orbit'; // 'orbit' or 'pan'
-  let autoRotateEnabled = true;
+  let autoRotateEnabled = false;
 
   function resizeRenderer() {
-    const wrap = document.querySelector('.scene');
+    const wrap = document.querySelector('.scene-viewport-wrap') || document.querySelector('.scene');
     if (!wrap || !renderer || !camera) return;
     const r = wrap.getBoundingClientRect();
-    renderer.setSize(Math.max(1, r.width), Math.max(1, r.height));
-    camera.aspect = Math.max(1, r.width) / Math.max(1, r.height);
+    const w = Math.max(1, r.width);
+    const h = Math.max(1, r.height);
+    renderer.setSize(w, h);
+    camera.aspect = w / h;
     camera.updateProjectionMatrix();
+
+    if (!userMovedCamera) {
+      fitCamera((root.S && root.S.view) || '3d', false);
+    }
   }
 
   function updateSelectionHighlight() {
@@ -726,6 +881,7 @@
   }
 
   function panCamera(dx, dy) {
+    markUserMovedCamera();
     const scale = (controls ? camera.position.distanceTo(controls.target) : camDist) * 0.0016;
     const forward = new THREE.Vector3();
     camera.getWorldDirection(forward);
@@ -747,6 +903,7 @@
   }
 
   function orbitCamera(dPitch, dYaw) {
+    markUserMovedCamera();
     lastInteraction = Date.now();
     if (controls) {
       const eye = new THREE.Vector3().subVectors(camera.position, controls.target);
@@ -768,6 +925,7 @@
   }
 
   function zoomCamera(factor) {
+    markUserMovedCamera();
     lastInteraction = Date.now();
     if (controls) {
       if (factor < 1) controls.dollyIn(1 / factor);
@@ -822,13 +980,13 @@
     const now = Date.now();
 
     if (controls) {
-      // Gentle auto-rotation only when idle in 3D / ISO views
+      // Gentle auto-rotation only when idle and camera has not been customized by user
       const isIdle = !isDragging && (now - lastInteraction > 4500);
-      controls.autoRotate = autoRotateEnabled && isIdle && (root.S.view === '3d' || root.S.view === 'iso');
+      controls.autoRotate = autoRotateEnabled && isIdle && !userMovedCamera && (root.S && (root.S.view === '3d' || root.S.view === 'iso'));
       controls.autoRotateSpeed = 0.75;
       controls.update();
     } else {
-      if (autoRotateEnabled && root.S.view === '3d' && !isDragging && now - lastInteraction > 4500) {
+      if (autoRotateEnabled && !userMovedCamera && root.S && root.S.view === '3d' && !isDragging && now - lastInteraction > 4500) {
         camAngleY += 0.002;
       }
       camDist += (targetCamDist - camDist) * 0.06;
@@ -847,17 +1005,58 @@
     renderer.render(scene, camera);
   }
 
+  function createNaturalSkyTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1024;
+    canvas.height = 1024;
+    const ctx = canvas.getContext('2d');
+
+    // Natural sky gradient (zenith blue down to soft horizon haze)
+    const grad = ctx.createLinearGradient(0, 0, 0, 1024);
+    grad.addColorStop(0.0, '#367ec9');
+    grad.addColorStop(0.28, '#589de2');
+    grad.addColorStop(0.60, '#92c5f1');
+    grad.addColorStop(0.85, '#cce4f7');
+    grad.addColorStop(0.96, '#e8f2fa');
+    grad.addColorStop(1.0, '#f2f7fc');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 1024, 1024);
+
+    // Subtle distant cirrus clouds
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+    const clouds = [
+      { x: 200, y: 560, rx: 280, ry: 18, rot: 0.02 },
+      { x: 750, y: 620, rx: 320, ry: 22, rot: -0.01 },
+      { x: 420, y: 700, rx: 240, ry: 14, rot: 0.03 },
+      { x: 120, y: 760, rx: 360, ry: 20, rot: -0.02 },
+      { x: 880, y: 800, rx: 260, ry: 16, rot: 0.01 }
+    ];
+    clouds.forEach(c => {
+      ctx.beginPath();
+      ctx.ellipse(c.x, c.y, c.rx, c.ry, c.rot, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    const tex = new THREE.CanvasTexture(canvas);
+    return tex;
+  }
+
   function initScene() {
-    const wrap = document.querySelector('.scene');
+    const wrap = document.querySelector('.scene-viewport-wrap') || document.querySelector('.scene');
     if (!wrap) return;
 
     scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x10141a, 0.010);
+    scene.background = createNaturalSkyTexture();
+    scene.fog = new THREE.FogExp2(0xd6e5f2, 0.0035);
     camera = new THREE.PerspectiveCamera(42, 1, 0.1, 2000);
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.domElement.style.touchAction = 'none';
-    wrap.appendChild(renderer.domElement);
+    if (wrap.firstChild) {
+      wrap.insertBefore(renderer.domElement, wrap.firstChild);
+    } else {
+      wrap.appendChild(renderer.domElement);
+    }
 
     sceneGroup = new THREE.Group();
     scene.add(sceneGroup);
@@ -866,11 +1065,22 @@
     target = new THREE.Vector3(6, 4, 0);
     displayTarget = new THREE.Vector3(6, 4, 0);
 
-    scene.add(new THREE.AmbientLight(0xffffff, 1.15));
-    const key = new THREE.DirectionalLight(0xfff4e0, 1.15); key.position.set(24, 34, 26); scene.add(key);
-    const fill = new THREE.DirectionalLight(0x6fa3c0, 0.45); fill.position.set(-22, 14, -18); scene.add(fill);
-    const rim = new THREE.DirectionalLight(0xe8a33d, 0.35); rim.position.set(-6, 8, -30); scene.add(rim);
-    scene.add(new THREE.HemisphereLight(0x2a3540, 0x0a0e12, 0.4));
+    // Natural Outdoor Architectural Lighting
+    scene.add(new THREE.AmbientLight(0xffffff, 0.85));
+    const sunKey = new THREE.DirectionalLight(0xfffaea, 1.35); // Warm direct sunlight
+    sunKey.position.set(32, 42, 34);
+    scene.add(sunKey);
+
+    const skyFill = new THREE.DirectionalLight(0x9cc8f0, 0.65); // Atmospheric sky blue fill
+    skyFill.position.set(-28, 20, -22);
+    scene.add(skyFill);
+
+    const groundRim = new THREE.DirectionalLight(0xb8db8e, 0.35); // Natural landscape ground bounce
+    groundRim.position.set(-8, 10, -35);
+    scene.add(groundRim);
+
+    // Natural hemisphere light: celestial blue sky above, warm green meadow ground below
+    scene.add(new THREE.HemisphereLight(0x82b9ea, 0x476939, 0.75));
 
     // Initialize OrbitControls for pure native 1-finger orbit, 2-finger pinch & pan
     if (typeof THREE.OrbitControls !== 'undefined') {
@@ -882,7 +1092,7 @@
       controls.panSpeed = 0.95;
       controls.screenSpacePanning = true;
       controls.minDistance = 2.5;
-      controls.maxDistance = 250;
+      controls.maxDistance = 350;
       controls.maxPolarAngle = Math.PI * 0.49;
       controls.touches = {
         ONE: THREE.TOUCH.ROTATE,
@@ -895,6 +1105,18 @@
       controls.addEventListener('end', () => {
         isDragging = false;
         lastInteraction = Date.now();
+      });
+      controls.addEventListener('change', () => {
+        if (isDragging) {
+          markUserMovedCamera();
+        }
+        const zoomText = document.getElementById('zoomLevelText');
+        if (zoomText && camera && controls) {
+          const defaultDist = targetCamDist || 50;
+          const curDist = camera.position.distanceTo(controls.target);
+          const pct = Math.max(10, Math.min(500, Math.round((defaultDist / curDist) * 100)));
+          zoomText.textContent = pct + '%';
+        }
       });
     }
 
@@ -911,6 +1133,15 @@
       prevY = e.clientY;
     });
 
+    window.addEventListener('pointermove', (e) => {
+      if (isDragging) {
+        const dist = Math.hypot(e.clientX - tapStartX, e.clientY - tapStartY);
+        if (dist >= 6) {
+          markUserMovedCamera();
+        }
+      }
+    });
+
     window.addEventListener('pointerup', (e) => {
       isDragging = false;
       lastInteraction = Date.now();
@@ -922,8 +1153,23 @@
       }
     });
 
+    renderer.domElement.addEventListener('wheel', () => {
+      markUserMovedCamera();
+    }, { passive: true });
+
+    renderer.domElement.addEventListener('touchmove', (e) => {
+      if (e.touches && e.touches.length > 1) {
+        markUserMovedCamera();
+      }
+    }, { passive: true });
+
     const fitBtn = document.getElementById('btnFitModel');
-    if (fitBtn) fitBtn.onclick = () => fitCamera();
+    if (fitBtn) {
+      fitBtn.onclick = () => {
+        resetUserMovedCamera();
+        fitCamera();
+      };
+    }
 
     // Keyboard Shortcuts (Arrow keys for orbit, Shift+Arrows for pan, +/- for zoom, F for fit)
     window.addEventListener('keydown', (e) => {
@@ -945,13 +1191,51 @@
       } else if (e.key === '-' || e.key === '_') {
         zoomCamera(1.1);
       } else if (e.key.toLowerCase() === 'f') {
+        resetUserMovedCamera();
         fitCamera();
       }
     });
 
     window.addEventListener('resize', resizeRenderer);
+    if (typeof ResizeObserver !== 'undefined') {
+      const ro = new ResizeObserver(() => {
+        resizeRenderer();
+      });
+      ro.observe(wrap);
+    }
+
     resizeRenderer();
     animateLoop();
+  }
+
+  function setHudMode(mode) {
+    hudMode = mode;
+    if (controls) {
+      if (mode === 'pan') {
+        controls.mouseButtons = {
+          LEFT: THREE.MOUSE.PAN,
+          MIDDLE: THREE.MOUSE.DOLLY,
+          RIGHT: THREE.MOUSE.ROTATE
+        };
+      } else {
+        controls.mouseButtons = {
+          LEFT: THREE.MOUSE.ROTATE,
+          MIDDLE: THREE.MOUSE.DOLLY,
+          RIGHT: THREE.MOUSE.PAN
+        };
+      }
+    }
+  }
+
+  function setTheme(isDark) {
+    if (!scene) return;
+    if (isDark) {
+      scene.background = new THREE.Color(0x0e1420);
+      if (scene.fog) scene.fog.color.setHex(0x0e1420);
+    } else {
+      scene.background = createNaturalSkyTexture();
+      if (scene.fog) scene.fog.color.setHex(0xd6e5f2);
+    }
   }
 
   const SceneModule = {
@@ -964,18 +1248,27 @@
     orbitCamera,
     panCamera,
     zoomCamera,
-    resizeRenderer
+    resizeRenderer,
+    setHudMode,
+    setTheme,
+    isUserCameraMoved: () => userMovedCamera,
+    resetUserCameraMoved: resetUserMovedCamera
   };
 
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = SceneModule;
   } else {
     root.SceneModule = SceneModule;
+    root.Scene = SceneModule;
     root.build = buildScene;
     root.fit = fitCamera;
     root.focusSelection = focusSelection;
     root.updateSelectionHighlight = updateSelectionHighlight;
     root.resize = resizeRenderer;
     root.buildLongitudinalStability = buildLongitudinalStability;
+    root.setHudMode = setHudMode;
+    root.setTheme = setTheme;
+    root.isUserCameraMoved = () => userMovedCamera;
+    root.resetUserCameraMoved = resetUserMovedCamera;
   }
 })(typeof window !== 'undefined' ? window : global);

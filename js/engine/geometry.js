@@ -36,15 +36,15 @@
       m.push([T(i), T(i + 1), 'top_chord']);
     }
 
-    if (type === 'Pratt') {
-      // Pratt: Verticals in compression, diagonals tension (sloping up towards apex)
+    if (type === 'Howe') {
+      // Howe: Diagonals slope upwards towards apex (in compression under gravity)
       for (let i = 0; i <= n; i++) m.push([i, T(i), 'vertical']);
       for (let i = 0; i < n; i++) {
         if (i < n / 2) m.push([i, T(i + 1), 'diagonal']);
         else m.push([i + 1, T(i), 'diagonal']);
       }
-    } else if (type === 'Howe') {
-      // Howe: Diagonals in compression (sloping down towards center), verticals tension
+    } else if (type === 'Pratt') {
+      // Pratt: Diagonals slope downwards towards apex (in tension under gravity)
       for (let i = 0; i <= n; i++) m.push([i, T(i), 'vertical']);
       for (let i = 0; i < n; i++) {
         if (i < n / 2) m.push([i + 1, T(i), 'diagonal']);

@@ -77,7 +77,7 @@
    * IS 800:2007 Cl. 7 - Design Compression Resistance for Angle Strut
    * 2 angles back to back (or single angle with effective length)
    */
-  function calcCompressionCapacity(Ag, r, L_mm, K = 1.0, fy = 250, E = 200000) {
+  function calcCompressionCapacity(Ag, r, L_mm, K = 0.85, fy = 250, E = 200000) {
     const KL = K * L_mm;
     const lambda = KL / Math.max(0.1, r);
     const fcdData = calcFcd(fy, E, lambda, 'c', 1.10);
@@ -96,7 +96,7 @@
    * IS 800:2007 Cl. 8.2 & 9.3.1 - Purlin Design under Biaxial Bending
    * Placed on sloping rafter (angle theta)
    */
-  function checkPurlin(channelKey, spanM, spacingM, slopeDeg, dl_kN_m2, ll_kN_m2, wind_kN_m2, grade = 'E250') {
+  function checkPurlin(channelKey, spanM, spacingM, slopeDeg, dl_kN_m2, ll_kN_m2, wind_kN_m2, grade = 'E250', options = {}) {
     const ch = (Standards.CHANNELS && Standards.CHANNELS[channelKey]) || (Standards.CHANNELS && Standards.CHANNELS['ISMC 125']);
     const stGrade = (Standards.STEEL_GRADES && Standards.STEEL_GRADES[grade]) || { fy: 250, fu: 410, E: 200000 };
     const fy = stGrade.fy;
@@ -146,7 +146,8 @@
     const Lp_mm = Lp * 1000;
     const wz_N_mm = wz_abs; // 1 kN/m = 1 N/mm
     const delta = (5 * wz_N_mm * Math.pow(Lp_mm, 4)) / (384 * E * ch.Iz); // mm
-    const delta_limit = Lp_mm / 180; // IS 800 Table 6 for corrugated sheet roofing
+    const defDiv = (options && options.deflectionLimit) || (typeof deflectionLimit !== 'undefined' ? deflectionLimit : 180);
+    const delta_limit = Lp_mm / (Number(defDiv) || 180); // IS 800 Table 6
     const deflectionRatio = delta / delta_limit;
 
     const governingUtil = Math.max(interactionRatio, shearRatio, deflectionRatio);
@@ -260,7 +261,7 @@
   /**
    * IS 800:2007 Section 10 - Connection Design
    */
-  function checkConnection(force_kN, connectionType = 'Welded', weldSize_mm = 6, weldLengthPerSide_mm = 65, boltDia_mm = 16, grade = 'E250') {
+  function checkConnection(force_kN, connectionType = 'Welded', weldSize_mm = 6, weldLengthPerSide_mm = 65, boltDia_mm = 16, grade = 'E250', fabrication = 'shop') {
     const P = Math.abs(force_kN);
     const stGrade = (Standards.STEEL_GRADES && Standards.STEEL_GRADES[grade]) || { fu: 410, fy: 250 };
     const fu = stGrade.fu;
@@ -271,14 +272,15 @@
       const totalWeldLength = 2 * wl; // top and bottom welds
 
       // Design shear strength of fillet weld fwd = fu / (sqrt(3) * gamma_mw)
-      // gamma_mw = 1.25 for shop weld
-      const fwd = fu / (Math.sqrt(3) * 1.25); // N/mm^2 (e.g. 189.37 N/mm^2 for fu=410)
+      // gamma_mw = 1.25 for shop weld, 1.50 for site/field weld (IS 800 Table 5)
+      const gamma_mw = (fabrication === 'field' || fabrication === 'site') ? 1.50 : 1.25;
+      const fwd = fu / (Math.sqrt(3) * gamma_mw); // N/mm^2
 
       // Effective throat thickness tt = 0.7 * sw
       const tt = 0.7 * sw; // mm
 
       // Shear capacity per unit length qw = fwd * tt
-      const qw = fwd * tt; // N/mm (e.g. 795.36 N/mm for sw=6mm)
+      const qw = fwd * tt; // N/mm
 
       // Total available capacity
       const weldCapacity_kN = (totalWeldLength * qw) / 1000; // kN

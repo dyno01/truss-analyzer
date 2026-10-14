@@ -8,6 +8,7 @@
   'use strict';
 
   const GROUPS = {
+    Custom: { loc: 'Custom Project', truss: 'Fink', span: 16, height: 11, length: 54, roof: 'GI', conn: 'Welded', age: 50, terrain: 2, cpi: 0.2, Vb: 39 },
     G1:  { loc: 'Dhule',     truss: 'Howe',  span: 18, height: 15, length: 70, roof: 'GI', conn: 'Welded', age: 30, terrain: 2, cpi: 0.2, Vb: 39 },
     G2:  { loc: 'Bhopal',    truss: 'Howe',  span: 16, height: 13, length: 80, roof: 'AC', conn: 'Bolted', age: 60, terrain: 3, cpi: 0.2, Vb: 39 },
     G3:  { loc: 'Raipur',    truss: 'Pratt', span: 16, height: 11, length: 54, roof: 'GI', conn: 'Welded', age: 50, terrain: 2, cpi: 0.2, Vb: 39 },
