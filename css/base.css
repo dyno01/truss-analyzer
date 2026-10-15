@@ -506,6 +506,24 @@ input[type="number"] {
   to { opacity: 1; transform: translateY(0); }
 }
 
+.custom-select-optgroup-label {
+  padding: 7px 10px 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--accent);
+  background: var(--panel2);
+  border-radius: 4px;
+  margin-top: 6px;
+  margin-bottom: 2px;
+  pointer-events: none;
+  user-select: none;
+}
+.custom-select-optgroup-label:first-child {
+  margin-top: 0;
+}
+
 .custom-select-option {
   padding: 7px 10px;
   font-size: 12px;
@@ -519,6 +537,11 @@ input[type="number"] {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.custom-select-option.in-group {
+  padding-left: 16px;
+  font-size: 11.5px;
 }
 
 .custom-select-option:hover {

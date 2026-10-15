@@ -60,7 +60,7 @@ The analysis and design engines strictly implement standard Indian engineering p
   * Clause 7.6: Built-up Laced Columns ($2 \times \text{ISMC}$, spacing for $I_y \ge I_z$, transverse shear $V_t = 0.025 P$, lacing flat slenderness $\lambda \le 145$).
   * Section 8 & Clause 9.3.1: Purlin Design under biaxial bending ($M_z, M_y$) on sloping rafters and deflection check ($L/180$).
   * Section 10: Welded fillet connections ($f_{wd} = f_u / (\sqrt{3} \gamma_{mw})$) and bolted connections.
-* **IS 875 (Part 1): 1987** — *Dead Loads for Buildings and Structures* (Roof sheeting, self-weight of members, purlins, and bracing).
+* **IS 875 (Part 1): 2026** — *Dead Loads for Buildings and Structures* (Roof sheeting, self-weight of members, purlins, and bracing).
 * **IS 875 (Part 2): 1987** — *Imposed / Live Loads* (Pitched roofs with slope $\theta > 10^\circ$: $LL = 0.75 - 0.02(\theta - 10^\circ) \text{ kN/m}^2$, with minimum $0.40 \text{ kN/m}^2$).
 * **IS 875 (Part 3): 2015** — *Wind Loads on Buildings and Structures*
   * Design wind speed: $V_z = V_b \cdot k_1 \cdot k_2 \cdot k_3 \cdot k_4$

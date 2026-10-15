@@ -85,7 +85,9 @@
     const cpiChoice = Number(params.cpi) !== undefined ? Number(params.cpi) : 0.2;
 
     let k1 = 1.0;
-    if (params.buildingType === 'temporary') {
+    if (params.k1 !== undefined && params.k1 !== null && params.k1 !== '' && !isNaN(Number(params.k1))) {
+      k1 = Number(params.k1);
+    } else if (params.buildingType === 'temporary') {
       k1 = 0.71;
     } else if (params.buildingType === 'critical') {
       k1 = 1.07;
@@ -95,13 +97,27 @@
       k1 = getK1(params.age || 50, Vb);
     }
 
-    const k2 = getK2(height, terrain);
+    let k2 = (params.k2 !== undefined && params.k2 !== null && params.k2 !== '' && !isNaN(Number(params.k2)))
+      ? Number(params.k2)
+      : getK2(height, terrain);
     const k3 = Number.isFinite(Number(params.k3)) ? Number(params.k3) : 1.0;
     const k4 = Number.isFinite(Number(params.k4)) ? Number(params.k4) : 1.0;
 
+    // IS 875 (Part 3): 2015 Cl. 7.2 & 7.3:
+    // kd: Wind directionality factor (Cl. 7.2.1)
+    // ka: Area averaging factor (Cl. 7.2.2)
+    // kc: Combination factor (Cl. 7.3.3.13)
+    const kd = (params.kd !== undefined && params.kd !== null && params.kd !== '' && !isNaN(Number(params.kd))) ? Number(params.kd) : 0.90;
+    const ka = (params.ka !== undefined && params.ka !== null && params.ka !== '' && !isNaN(Number(params.ka))) ? Number(params.ka) : 1.00;
+    const kc = (params.kc !== undefined && params.kc !== null && params.kc !== '' && !isNaN(Number(params.kc))) ? Number(params.kc) : 0.90;
+
     const Vz = Vb * k1 * k2 * k3 * k4;
-    const pz = 0.6 * Vz * Vz; // N/m^2
+    const pz = 0.6 * Vz * Vz; // Basic wind pressure in N/m^2
     const pz_kN = pz / 1000;  // kN/m^2
+
+    // Design wind pressure Pd = kd * ka * kc * pz (Cl. 7.2)
+    const pd = kd * ka * kc * pz; // N/m^2
+    const pd_kN = pd / 1000;      // kN/m^2
 
     const stdCpe = getStandardCpe(slope);
     const cpe = Number.isFinite(Number(params.cpe)) ? Number(params.cpe) : stdCpe.windward;
@@ -112,9 +128,9 @@
     const netCp_suction = cpe - Math.abs(cpiChoice);
     const netCp_pressure = cpe + Math.abs(cpiChoice);
 
-    // Maximum suction pressure normal to roof
-    const p_net_suction = pz_kN * netCp_suction;   // typically negative (uplift)
-    const p_net_pressure = pz_kN * netCp_pressure;
+    // Maximum suction pressure normal to roof based on design pressure pd
+    const p_net_suction = pd_kN * netCp_suction;   // typically negative (uplift)
+    const p_net_pressure = pd_kN * netCp_pressure;
 
     return {
       Vb,
@@ -122,9 +138,14 @@
       k2: Number(k2.toFixed(3)),
       k3: Number(k3.toFixed(2)),
       k4: Number(k4.toFixed(2)),
+      kd: Number(kd.toFixed(2)),
+      ka: Number(ka.toFixed(2)),
+      kc: Number(kc.toFixed(2)),
       Vz: Number(Vz.toFixed(2)),
       pz: Number(pz.toFixed(1)),         // N/m^2
       pz_kN: Number(pz_kN.toFixed(4)),   // kN/m^2
+      pd: Number(pd.toFixed(1)),         // N/m^2
+      pd_kN: Number(pd_kN.toFixed(4)),   // kN/m^2
       cpe: Number(cpe.toFixed(2)),
       cpi: Number(cpiChoice.toFixed(2)),
       netCp_suction: Number(netCp_suction.toFixed(3)),

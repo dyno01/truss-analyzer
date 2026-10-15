@@ -30,7 +30,20 @@
     if (el('slope')) el('slope').value = S.slope;
     if (el('overhang')) el('overhang').value = S.overhang;
 
-    if (el('section')) el('section').value = S.section;
+    if (el('rafterSection')) el('rafterSection').value = S.rafterSection || S.section || 'ISA 75×75×6';
+    if (el('tieSection')) el('tieSection').value = S.tieSection || S.section || 'ISA 60×60×6';
+    if (el('strutSection')) el('strutSection').value = S.strutSection || S.section || 'ISA 70×70×6';
+    if (el('diagonalSection')) el('diagonalSection').value = S.diagonalSection || S.section || 'ISA 50×50×6';
+    if (el('section')) el('section').value = S.rafterSection || S.section || 'ISA 75×75×6';
+
+    if (el('mInpRafterSection')) el('mInpRafterSection').value = S.rafterSection || S.section || 'ISA 75×75×6';
+    if (el('mInpTieSection')) el('mInpTieSection').value = S.tieSection || S.section || 'ISA 60×60×6';
+    if (el('mInpStrutSection')) el('mInpStrutSection').value = S.strutSection || S.section || 'ISA 70×70×6';
+    if (el('mInpDiagonalSection')) el('mInpDiagonalSection').value = S.diagonalSection || S.section || 'ISA 50×50×6';
+    if (el('mInpPurlinSection')) el('mInpPurlinSection').value = S.purlin;
+    if (el('mInpColSection')) el('mInpColSection').value = S.column;
+    if (el('mInpTrussSection')) el('mInpTrussSection').value = S.rafterSection || S.section || 'ISA 75×75×6';
+
     if (el('purlin')) el('purlin').value = S.purlin;
     if (el('purlinSpacing')) el('purlinSpacing').value = S.purlinSpacing;
     if (el('column')) el('column').value = S.column;
@@ -51,11 +64,48 @@
     if (el('Vb')) el('Vb').value = S.Vb;
     if (el('cpe')) el('cpe').value = S.cpe;
 
+    // Dead load components breakdown
+    const wSheet = (S.wSheeting !== undefined && S.wSheeting !== null && S.wSheeting !== '') ? Number(S.wSheeting) : (S.roof === 'AC' ? 170 : 130);
+    const wPurl = (S.wPurlins !== undefined && S.wPurlins !== null && S.wPurlins !== '') ? Number(S.wPurlins) : 100;
+    const wBrace = (S.wBracing !== undefined && S.wBracing !== null && S.wBracing !== '') ? Number(S.wBracing) : 12;
+    const wTrussAuto = ((Number(S.span) || 16) / 3 + 5) * 10;
+    const wTruss = (S.wSelf !== null && S.wSelf !== undefined && S.wSelf !== '' && !isNaN(Number(S.wSelf))) ? Number(S.wSelf) : wTrussAuto;
+
+    if (el('wSheeting')) el('wSheeting').value = wSheet;
+    if (el('wPurlins')) el('wPurlins').value = wPurl;
+    if (el('wBracing')) el('wBracing').value = wBrace;
+    if (el('wSelf')) {
+      el('wSelf').value = (S.wSelf !== null && S.wSelf !== undefined && S.wSelf !== '') ? S.wSelf : '';
+      el('wSelf').placeholder = `Auto (${wTrussAuto.toFixed(1)})`;
+    }
+
+    const dlSumBadge = el('dlSumBadge');
+    if (dlSumBadge) {
+      const sumDL = wSheet + wPurl + wBrace + wTruss;
+      dlSumBadge.textContent = `wDL = ${sumDL.toFixed(1)} N/m²`;
+    }
+
     if (el('buildingType')) el('buildingType').value = S.buildingType || 'industrial';
     if (el('deflectionLimit')) el('deflectionLimit').value = String(S.deflectionLimit || 180);
     if (el('fabrication')) el('fabrication').value = S.fabrication || 'shop';
-    if (el('k3')) el('k3').value = String(S.k3 !== undefined ? S.k3 : 1.0);
-    if (el('k4')) el('k4').value = String(S.k4 !== undefined ? S.k4 : 1.0);
+    if (el('k1')) el('k1').value = String(S.k1 !== undefined ? S.k1 : 1.0);
+    if (el('k2')) el('k2').value = String(S.k2 !== undefined ? S.k2 : 1.05);
+
+    if (el('k3')) {
+      const val = Number(S.k3 !== undefined ? S.k3 : 1.0);
+      const match = Array.from(el('k3').options).find(o => Math.abs(parseFloat(o.value) - val) < 0.001);
+      if (match) el('k3').value = match.value;
+      else el('k3').value = '1.0';
+    }
+    if (el('k4')) {
+      const val = Number(S.k4 !== undefined ? S.k4 : 1.0);
+      const match = Array.from(el('k4').options).find(o => Math.abs(parseFloat(o.value) - val) < 0.001);
+      if (match) el('k4').value = match.value;
+      else el('k4').value = '1.0';
+    }
+    if (el('kd')) el('kd').value = String(S.kd !== undefined ? S.kd : 0.90);
+    if (el('ka')) el('ka').value = String(S.ka !== undefined ? S.ka : 1.00);
+    if (el('kc')) el('kc').value = String(S.kc !== undefined ? S.kc : 0.90);
 
     // Synchronize visual badges & overlays
     const grpAvatar = el('groupAvatar');
@@ -108,7 +158,8 @@
       statusBadge.className = 'status ' + (passes ? 'ok' : '');
     }
 
-    if (root.syncCustomSelects) root.syncCustomSelects();
+    if (typeof window !== 'undefined' && window.syncCustomSelects) window.syncCustomSelects();
+    else if (root.syncCustomSelects) root.syncCustomSelects();
     if (root.updateUnitPositions) root.updateUnitPositions();
   }
 
@@ -174,32 +225,145 @@
     }
 
     // Populate angle sections
-    if (el('section') && root.Standards && root.Standards.ANGLES) {
-      el('section').innerHTML = '';
-      Object.keys(root.Standards.ANGLES).forEach((x) => {
-        const opt = document.createElement('option');
-        opt.textContent = x;
-        el('section').appendChild(opt);
+    const angleElemIds = ['section', 'rafterSection', 'tieSection', 'strutSection', 'diagonalSection'];
+    if (root.Standards && root.Standards.ANGLES) {
+      const angleKeys = Object.keys(root.Standards.ANGLES);
+      angleElemIds.forEach((id) => {
+        const selectElem = el(id);
+        if (selectElem) {
+          selectElem.innerHTML = '';
+          angleKeys.forEach((x) => {
+            const opt = document.createElement('option');
+            opt.value = x;
+            opt.textContent = x;
+            selectElem.appendChild(opt);
+          });
+        }
       });
     }
 
-    // Populate channel sections for column and purlin
-    if (root.Standards && root.Standards.CHANNELS) {
-      if (el('column')) {
-        el('column').innerHTML = '';
-        Object.keys(root.Standards.CHANNELS).forEach((x) => {
-          const opt = document.createElement('option');
-          opt.textContent = x;
-          el('column').appendChild(opt);
-        });
-      }
+    // Populate comprehensive sections for column and purlin from Steel Tables
+    if (root.Standards) {
       if (el('purlin')) {
         el('purlin').innerHTML = '';
-        Object.keys(root.Standards.CHANNELS).forEach((x) => {
+
+        // Group 1: ISMC Channels
+        const grpISMC = document.createElement('optgroup');
+        grpISMC.label = 'Medium Channels (ISMC) — Standard Purlin';
+        Object.keys(root.Standards.CHANNELS || {}).filter(k => k.startsWith('ISMC')).forEach(k => {
           const opt = document.createElement('option');
-          opt.textContent = x;
-          el('purlin').appendChild(opt);
+          opt.value = k;
+          opt.textContent = `${k} (${root.Standards.CHANNELS[k].wt} kg/m)`;
+          grpISMC.appendChild(opt);
         });
+        el('purlin').appendChild(grpISMC);
+
+        // Group 2: ISLC Channels
+        const grpISLC = document.createElement('optgroup');
+        grpISLC.label = 'Light Channels (ISLC) — Economical Purlin';
+        Object.keys(root.Standards.CHANNELS || {}).filter(k => k.startsWith('ISLC')).forEach(k => {
+          const opt = document.createElement('option');
+          opt.value = k;
+          opt.textContent = `${k} (${root.Standards.CHANNELS[k].wt} kg/m)`;
+          grpISLC.appendChild(opt);
+        });
+        el('purlin').appendChild(grpISLC);
+
+        // Group 3: ISJC Channels
+        const grpISJC = document.createElement('optgroup');
+        grpISJC.label = 'Junior Channels (ISJC) — Lightweight Purlin';
+        Object.keys(root.Standards.CHANNELS || {}).filter(k => k.startsWith('ISJC')).forEach(k => {
+          const opt = document.createElement('option');
+          opt.value = k;
+          opt.textContent = `${k} (${root.Standards.CHANNELS[k].wt} kg/m)`;
+          grpISJC.appendChild(opt);
+        });
+        el('purlin').appendChild(grpISJC);
+
+        // Group 4: Angle Sections (ISA)
+        if (root.Standards.ANGLES) {
+          const grpISA = document.createElement('optgroup');
+          grpISA.label = 'Equal Angles (ISA) — Angle Purlin';
+          Object.keys(root.Standards.ANGLES).forEach(k => {
+            const opt = document.createElement('option');
+            opt.value = k;
+            opt.textContent = `${k} (${root.Standards.ANGLES[k].wt} kg/m)`;
+            grpISA.appendChild(opt);
+          });
+          el('purlin').appendChild(grpISA);
+        }
+      }
+
+      if (el('column')) {
+        el('column').innerHTML = '';
+
+        // Group 1: Built-up 2× ISMC
+        const grpColISMC = document.createElement('optgroup');
+        grpColISMC.label = 'Built-up 2× ISMC (Medium Channels)';
+        Object.keys(root.Standards.CHANNELS || {}).filter(k => k.startsWith('ISMC')).forEach(k => {
+          const opt = document.createElement('option');
+          opt.value = k;
+          opt.textContent = `2 × ${k} (${(root.Standards.CHANNELS[k].wt * 2).toFixed(1)} kg/m)`;
+          grpColISMC.appendChild(opt);
+        });
+        el('column').appendChild(grpColISMC);
+
+        // Group 2: Built-up 2× ISLC
+        const grpColISLC = document.createElement('optgroup');
+        grpColISLC.label = 'Built-up 2× ISLC (Light Channels)';
+        Object.keys(root.Standards.CHANNELS || {}).filter(k => k.startsWith('ISLC')).forEach(k => {
+          const opt = document.createElement('option');
+          opt.value = k;
+          opt.textContent = `2 × ${k} (${(root.Standards.CHANNELS[k].wt * 2).toFixed(1)} kg/m)`;
+          grpColISLC.appendChild(opt);
+        });
+        el('column').appendChild(grpColISLC);
+
+        // Group 3: Built-up 2× ISJC
+        const grpColISJC = document.createElement('optgroup');
+        grpColISJC.label = 'Built-up 2× ISJC (Junior Channels)';
+        Object.keys(root.Standards.CHANNELS || {}).filter(k => k.startsWith('ISJC')).forEach(k => {
+          const opt = document.createElement('option');
+          opt.value = k;
+          opt.textContent = `2 × ${k} (${(root.Standards.CHANNELS[k].wt * 2).toFixed(1)} kg/m)`;
+          grpColISJC.appendChild(opt);
+        });
+        el('column').appendChild(grpColISJC);
+
+        // Group 4: Rolled Heavy Columns & Beams (ISHB)
+        if (root.Standards.BEAMS) {
+          const grpISHB = document.createElement('optgroup');
+          grpISHB.label = 'Heavy Columns & Beams (ISHB)';
+          Object.keys(root.Standards.BEAMS).filter(k => k.startsWith('ISHB')).forEach(k => {
+            const opt = document.createElement('option');
+            opt.value = k;
+            opt.textContent = `${k} (${root.Standards.BEAMS[k].wt} kg/m)`;
+            grpISHB.appendChild(opt);
+          });
+          el('column').appendChild(grpISHB);
+
+          // Group 5: Wide Flange Beams & Columns (ISWB)
+          const grpISWB = document.createElement('optgroup');
+          grpISWB.label = 'Wide Flange Beams & Columns (ISWB)';
+          Object.keys(root.Standards.BEAMS).filter(k => k.startsWith('ISWB')).forEach(k => {
+            const opt = document.createElement('option');
+            opt.value = k;
+            opt.textContent = `${k} (${root.Standards.BEAMS[k].wt} kg/m)`;
+            grpISWB.appendChild(opt);
+          });
+          el('column').appendChild(grpISWB);
+
+          // Group 6: Medium Beams (ISMB)
+          const grpISMB = document.createElement('optgroup');
+          grpISMB.label = 'Medium Weight Beams (ISMB)';
+          Object.keys(root.Standards.BEAMS).filter(k => k.startsWith('ISMB')).forEach(k => {
+            const opt = document.createElement('option');
+            opt.value = k;
+            opt.textContent = `${k} (${root.Standards.BEAMS[k].wt} kg/m)`;
+            grpISMB.appendChild(opt);
+          });
+          el('column').appendChild(grpISMB);
+        }
       }
     }
 
@@ -215,6 +379,8 @@
             span: g.span,
             length: g.length,
             height: g.height,
+            spacing: g.spacing !== undefined ? g.spacing : S.spacing,
+            panels: g.panels !== undefined ? g.panels : S.panels,
             roof: g.roof,
             connection: g.conn,
             cpi: g.cpi,
@@ -253,7 +419,9 @@
       ['panels', 'panels'], ['slope', 'slope'], ['overhang', 'overhang'],
       ['frames', 'frameCountManual'], ['purlinSpacing', 'purlinSpacing'],
       ['lacing', 'lacing'], ['weldSize', 'weldSize'], ['weldLength', 'weldLength'],
-      ['cpi', 'cpi'], ['Vb', 'Vb'], ['cpe', 'cpe']
+      ['cpi', 'cpi'], ['Vb', 'Vb'], ['cpe', 'cpe'],
+      ['wSheeting', 'wSheeting'], ['wPurlins', 'wPurlins'], ['wBracing', 'wBracing'],
+      ['k1', 'k1'], ['k2', 'k2'], ['kd', 'kd'], ['ka', 'ka'], ['kc', 'kc']
     ];
 
     numBindings.forEach(([elemId, key]) => {
@@ -264,6 +432,35 @@
         markCustom();
         refresh();
       });
+    });
+
+    const inpSelf = el('wSelf');
+    if (inpSelf) {
+      inpSelf.addEventListener('change', (e) => {
+        const val = e.target.value.trim();
+        S.wSelf = val === '' ? null : Number(val);
+        markCustom();
+        refresh();
+      });
+    }
+
+    // Real-time dynamic updates for Dead Load breakdown card badge
+    function updateLiveDeadLoadSum() {
+      const ws = el('wSheeting') ? Number(el('wSheeting').value) || 0 : (S.roof === 'AC' ? 170 : 130);
+      const wp = el('wPurlins') ? Number(el('wPurlins').value) || 0 : 100;
+      const wb = el('wBracing') ? Number(el('wBracing').value) || 0 : 12;
+      const wSelfInp = el('wSelf');
+      const wSelfVal = (wSelfInp && wSelfInp.value.trim() !== '') ? Number(wSelfInp.value) : (((Number(S.span) || 16) / 3 + 5) * 10);
+      const total = ws + wp + wb + wSelfVal;
+      const badge = el('dlSumBadge');
+      if (badge) badge.textContent = `wDL = ${total.toFixed(1)} N/m²`;
+    }
+
+    ['wSheeting', 'wPurlins', 'wBracing', 'wSelf'].forEach((id) => {
+      const inp = el(id);
+      if (inp) {
+        inp.addEventListener('input', updateLiveDeadLoadSum);
+      }
     });
 
     // Measure canvas for dynamically positioning inline units snug to the typed value
@@ -379,13 +576,15 @@
       const menu = customSelect.querySelector('.custom-select-menu');
       if (!labelSpan || !menu) return;
 
-      const currentOptValues = Array.from(select.options).map(o => o.value + '::' + o.textContent).join('|');
+      const hasOptgroups = select.querySelector('optgroup') !== null;
+      const currentOptValues = (hasOptgroups ? 'OG:' : '') + Array.from(select.options).map(o => o.value + '::' + o.textContent).join('|');
       if (customSelect.dataset.cachedOpts !== currentOptValues) {
         customSelect.dataset.cachedOpts = currentOptValues;
         menu.innerHTML = '';
-        Array.from(select.options).forEach((opt) => {
+
+        const createOptionDiv = (opt, inGroup) => {
           const optDiv = document.createElement('div');
-          optDiv.className = 'custom-select-option' + (opt.selected ? ' selected' : '');
+          optDiv.className = 'custom-select-option' + (inGroup ? ' in-group' : '') + (opt.selected ? ' selected' : '');
           optDiv.dataset.value = opt.value;
           optDiv.textContent = opt.textContent;
           optDiv.addEventListener('click', (e) => {
@@ -397,21 +596,53 @@
             if (customSelect.closest('.field')) customSelect.closest('.field').style.zIndex = '';
             syncCustomSelect(select);
           });
-          menu.appendChild(optDiv);
-        });
+          return optDiv;
+        };
+
+        if (hasOptgroups) {
+          Array.from(select.children).forEach((child) => {
+            if (child.tagName === 'OPTGROUP') {
+              const grpHeader = document.createElement('div');
+              grpHeader.className = 'custom-select-optgroup-label';
+              grpHeader.textContent = child.label;
+              menu.appendChild(grpHeader);
+              Array.from(child.children).forEach((opt) => {
+                menu.appendChild(createOptionDiv(opt, true));
+              });
+            } else if (child.tagName === 'OPTION') {
+              menu.appendChild(createOptionDiv(child, false));
+            }
+          });
+        } else {
+          Array.from(select.options).forEach((opt) => {
+            menu.appendChild(createOptionDiv(opt, false));
+          });
+        }
       }
 
-      const selOpt = select.selectedOptions && select.selectedOptions[0];
-      labelSpan.textContent = selOpt ? selOpt.textContent : (select.value || 'Select...');
+      let selOpt = select.selectedOptions && select.selectedOptions[0];
+      if (!selOpt && select.options.length > 0) {
+        const numVal = parseFloat(select.value);
+        if (!isNaN(numVal)) {
+          selOpt = Array.from(select.options).find(o => Math.abs(parseFloat(o.value) - numVal) < 0.001);
+          if (selOpt) select.value = selOpt.value;
+        }
+        if (!selOpt) {
+          selOpt = select.options[0];
+          select.selectedIndex = 0;
+        }
+      }
+      labelSpan.textContent = selOpt ? selOpt.textContent : (select.value || (select.options[0] ? select.options[0].textContent : ''));
       menu.querySelectorAll('.custom-select-option').forEach((div) => {
         const isMatch = div.dataset.value === String(select.value) ||
-          (!isNaN(parseFloat(div.dataset.value)) && !isNaN(parseFloat(select.value)) && parseFloat(div.dataset.value) === parseFloat(select.value));
+          (!isNaN(parseFloat(div.dataset.value)) && !isNaN(parseFloat(select.value)) && Math.abs(parseFloat(div.dataset.value) - parseFloat(select.value)) < 0.001);
         div.classList.toggle('selected', isMatch);
       });
     }
 
     function setupCustomSelects() {
       document.querySelectorAll('select').forEach((select) => {
+        if (select.style.display === 'none' || select.hasAttribute('hidden') || select.type === 'hidden') return;
         if (select.classList.contains('has-custom-select')) {
           syncCustomSelect(select);
           return;
@@ -553,7 +784,10 @@
 
     // Select inputs
     const selectBindings = [
-      ['truss', 'truss'], ['section', 'section'], ['purlin', 'purlin'],
+      ['truss', 'truss'], ['section', 'section'],
+      ['rafterSection', 'rafterSection'], ['tieSection', 'tieSection'],
+      ['strutSection', 'strutSection'], ['diagonalSection', 'diagonalSection'],
+      ['purlin', 'purlin'],
       ['column', 'column'], ['roof', 'roof'], ['K', 'K'],
       ['buildingType', 'buildingType'], ['deflectionLimit', 'deflectionLimit'],
       ['fabrication', 'fabrication'], ['k3', 'k3'], ['k4', 'k4']
@@ -566,6 +800,17 @@
           S[key] = Number(e.target.value);
         } else {
           S[key] = e.target.value;
+          if (key === 'rafterSection') {
+            S.section = e.target.value;
+            if (el('section')) el('section').value = e.target.value;
+          }
+          if (key === 'roof') {
+            if (e.target.value === 'GI') {
+              if (!S.wSheeting || S.wSheeting === 170 || S.wSheeting === 180) S.wSheeting = 130;
+            } else if (e.target.value === 'AC') {
+              if (!S.wSheeting || S.wSheeting === 130) S.wSheeting = 170;
+            }
+          }
         }
         markCustom();
         refresh();

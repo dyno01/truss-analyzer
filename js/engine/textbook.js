@@ -336,10 +336,18 @@
     // ii) Load Calculations
     // ==========================================
     // A) Dead Load (DL)
-    const dl_sheet = S.roof === 'AC' ? 180 : 130;
-    const dl_purlins = 100;
-    const dl_bracing = 20;
-    const dl_truss_calc = (span / 3 + 5) * 10;
+    const dl_sheet = (S.wSheeting !== undefined && S.wSheeting !== null && S.wSheeting !== '' && !isNaN(Number(S.wSheeting)))
+      ? Number(S.wSheeting)
+      : (S.roof === 'AC' ? 170 : 130);
+    const dl_purlins = (S.wPurlins !== undefined && S.wPurlins !== null && S.wPurlins !== '' && !isNaN(Number(S.wPurlins)))
+      ? Number(S.wPurlins)
+      : 100;
+    const dl_bracing = (S.wBracing !== undefined && S.wBracing !== null && S.wBracing !== '' && !isNaN(Number(S.wBracing)))
+      ? Number(S.wBracing)
+      : 12;
+    const dl_truss_calc = (S.wSelf !== undefined && S.wSelf !== null && S.wSelf !== '' && !isNaN(Number(S.wSelf)))
+      ? Number(S.wSelf)
+      : ((span / 3 + 5) * 10);
     const dl_total_intensity = dl_sheet + dl_purlins + dl_bracing + dl_truss_calc; // N/m^2
 
     const dl_total_kN = (dl_total_intensity * planArea) / 1000; // kN
@@ -358,7 +366,10 @@
 
     // C) Wind Load (WL)
     const Vb = Number(S.Vb) || G.Vb || 39;
-    const k1 = 1.0, k2 = 1.05, k3 = 1.0, k4 = 1.0;
+    const k1 = (S.k1 !== undefined && S.k1 !== null && S.k1 !== '') ? Number(S.k1) : 1.0;
+    const k2 = (S.k2 !== undefined && S.k2 !== null && S.k2 !== '') ? Number(S.k2) : 1.05;
+    const k3 = (S.k3 !== undefined && S.k3 !== null && S.k3 !== '') ? Number(S.k3) : 1.0;
+    const k4 = (S.k4 !== undefined && S.k4 !== null && S.k4 !== '') ? Number(S.k4) : 1.0;
     const Vz = Vb * k1 * k2 * k3 * k4;
     const Pz = 0.6 * Vz * Vz; // N/m^2
     const Ka = 0.90, Kd = 1.0, Kc = 0.90;

@@ -1,7 +1,7 @@
 /**
  * Structural Design Studio — Professional Structural Engineering Design & BOQ Report
  * Generates an executive, client/contractor-ready structural engineering calculation report
- * strictly complying with IS 800:2007 (Limit State Method) & IS 875:1987 (Parts 1, 2, 3).
+ * strictly complying with IS 800:2007 (Limit State Method) & IS 875 (Part 1: 2026, Part 2: 1987, Part 3: 2015).
  */
 
 (function(root) {

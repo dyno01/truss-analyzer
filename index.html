@@ -245,9 +245,32 @@
           </svg>
         </div>
         <div class="section-body">
-          <div class="field">
-            <label>Primary truss member (2 ISA)</label>
-            <select id="section"></select>
+          <div class="field-group" style="background: var(--panel2); padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line); margin-bottom: 12px;">
+            <div style="font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 2 22 22 22"/><line x1="12" y1="22" x2="12" y2="12"/></svg>
+              Truss Member Sections (IS 800)
+            </div>
+            <div class="row2">
+              <div class="field">
+                <label>Principal rafter (2 ISA)</label>
+                <select id="rafterSection"></select>
+              </div>
+              <div class="field">
+                <label>Main tie (2 ISA)</label>
+                <select id="tieSection"></select>
+              </div>
+            </div>
+            <div class="row2" style="margin-top: 6px;">
+              <div class="field">
+                <label>Vertical struts (ISA)</label>
+                <select id="strutSection"></select>
+              </div>
+              <div class="field">
+                <label>Diagonals (ISA)</label>
+                <select id="diagonalSection"></select>
+              </div>
+            </div>
+            <input type="hidden" id="section">
           </div>
           <div class="field">
             <label>Steel grade</label>
@@ -255,9 +278,8 @@
               <button class="active" data-grade="E250">E250 / Fe410</button>
               <button data-grade="E350">E350 / Fe490</button>
             </div>
-          </div>
           <div class="row2">
-            <div class="field"><label>Purlin (ISMC)</label><select id="purlin"></select></div>
+            <div class="field"><label>Purlin (Channel / Angle)</label><select id="purlin"></select></div>
             <div class="field">
               <label>Purlin spacing</label>
               <div class="input-with-unit">
@@ -284,7 +306,7 @@
               </select>
             </div>
           </div>
-          <div class="field"><label>Column: 2C back-to-back</label><select id="column"></select></div>
+          <div class="field"><label>Column (2C Channel / Rolled Beam)</label><select id="column"></select></div>
         </div>
       </section>
 
@@ -376,6 +398,50 @@
               </select>
             </div>
           </div>
+
+          <!-- Dead Load Breakdown (IS 875 Part 1: 2026) -->
+          <div class="dead-load-card">
+            <div class="dead-load-header">
+              <span class="dead-load-title">Dead Load (IS 875 Pt. 1: 2026)</span>
+              <span id="dlSumBadge" class="dl-sum-badge">wDL = 345.3 N/m²</span>
+            </div>
+            <div class="row2">
+              <div class="field">
+                <label title="Weight of roof sheeting along slope / plan"><span>Roof sheet <i>(w<sub>sheeting</sub>)</i></span></label>
+                <div class="input-with-unit">
+                  <input id="wSheeting" type="number" step="5" value="130">
+                  <span class="unit">N/m²</span>
+                </div>
+              </div>
+              <div class="field">
+                <label title="Weight of purlins per unit plan area"><span>Purlins <i>(w<sub>purlins</sub>)</i></span></label>
+                <div class="input-with-unit">
+                  <input id="wPurlins" type="number" step="5" value="100">
+                  <span class="unit">N/m²</span>
+                </div>
+              </div>
+            </div>
+            <div class="row2" style="margin-top: 6px;">
+              <div class="field">
+                <label title="Weight of wind bracings and ties"><span>Bracings <i>(w<sub>bracing</sub>)</i></span></label>
+                <div class="input-with-unit">
+                  <input id="wBracing" type="number" step="1" value="12">
+                  <span class="unit">N/m²</span>
+                </div>
+              </div>
+              <div class="field">
+                <label title="Truss self-weight (leave empty or Auto: (Span/3 + 5) × 10)"><span>Truss self-wt <i>(w<sub>self</sub>)</i></span></label>
+                <div class="input-with-unit">
+                  <input id="wSelf" type="number" step="1" placeholder="Auto">
+                  <span class="unit">N/m²</span>
+                </div>
+              </div>
+            </div>
+            <div class="dl-hint">
+              <b>w<sub>DL</sub> = w<sub>sheeting</sub> + w<sub>purlins</sub> + w<sub>bracing</sub> + w<sub>self</sub></b><br>
+              Auto self-wt: (Span/3 + 5) × 10 N/m² per IS 875 (Pt. 1: 2026).
+            </div>
+          </div>
           <div class="row2">
             <div class="field">
               <label>Basic wind Vb</label>
@@ -393,16 +459,30 @@
           </div>
           <div class="row2">
             <div class="field">
-              <label>Topography k3 (Cl. 6.3)</label>
+              <label title="Probability factor / risk coefficient per IS 875 (Part 3) Table 1"><span>Risk factor k<sub>1</sub> (Cl. 6.3.1)</span></label>
+              <div class="input-with-unit">
+                <input id="k1" type="number" step="0.01" min="0.5" max="1.5" value="1.00">
+              </div>
+            </div>
+            <div class="field">
+              <label title="Terrain, height and structure size factor per IS 875 (Part 3) Table 2"><span>Terrain factor k<sub>2</sub> (Cl. 6.3.2)</span></label>
+              <div class="input-with-unit">
+                <input id="k2" type="number" step="0.01" min="0.5" max="1.8" value="1.05">
+              </div>
+            </div>
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label title="Topography factor per IS 875 (Part 3) Cl. 6.3.3"><span>Topography k<sub>3</sub> (Cl. 6.3)</span></label>
               <select id="k3">
                 <option value="1.0" selected>1.00 (Flat slope &le; 3&deg;)</option>
-                <option value="1.05">1.05 (Gentle hill / slope 3&deg;&ndash;17&deg;)</option>
+                <option value="1.05">1.05 (Gentle hill 3&deg;&ndash;17&deg;)</option>
                 <option value="1.15">1.15 (Moderate cliff / ridge)</option>
-                <option value="1.36">1.36 (Steep crest / cliff &gt; 17&deg;)</option>
+                <option value="1.36">1.36 (Steep cliff &gt; 17&deg;)</option>
               </select>
             </div>
             <div class="field">
-              <label>Cyclonic k4 (Cl. 6.4)</label>
+              <label title="Cyclonic factor per IS 875 (Part 3) Cl. 6.3.4"><span>Cyclonic k<sub>4</sub> (Cl. 6.4)</span></label>
               <select id="k4">
                 <option value="1.0" selected>1.00 (Inland / Normal)</option>
                 <option value="1.15">1.15 (Coastal cyclonic &le; 60km)</option>
@@ -410,7 +490,27 @@
               </select>
             </div>
           </div>
-          <div class="hint">IS 875 (Part 3) computes Vz = Vb·k1·k2·k3·k4 and design wind pressure pz = 0.6·Vz².</div>
+          <div class="row3" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:6px;">
+            <div class="field">
+              <label title="Wind directionality factor per IS 875 (Part 3) Cl. 7.2.1"><span>Direction <i>k<sub>d</sub></i></span></label>
+              <div class="input-with-unit">
+                <input id="kd" type="number" step="0.05" min="0.5" max="1.2" value="0.90">
+              </div>
+            </div>
+            <div class="field">
+              <label title="Area averaging factor per IS 875 (Part 3) Cl. 7.2.2"><span>Area <i>k<sub>a</sub></i></span></label>
+              <div class="input-with-unit">
+                <input id="ka" type="number" step="0.05" min="0.5" max="1.2" value="1.00">
+              </div>
+            </div>
+            <div class="field">
+              <label title="Combination factor per IS 875 (Part 3) Cl. 7.3.3.13"><span>Combo <i>k<sub>c</sub></i></span></label>
+              <div class="input-with-unit">
+                <input id="kc" type="number" step="0.05" min="0.5" max="1.2" value="0.90">
+              </div>
+            </div>
+          </div>
+          <div class="hint">IS 875 (Part 3: 2015) computes Vz = Vb·k1·k2·k3·k4, Pz = 0.6·Vz², and design wind pressure Pd = kd·ka·kc·Pz.</div>
         </div>
       </section>
 
@@ -729,6 +829,7 @@
         </div>
       </div>
 
+
       <!-- Step Workflow Tabs (Figma: Design workflow) -->
       <div class="solution-tabs" id="solutionTabs">
         <button class="solution-tab active" data-solution-step="0"><b>01</b><span>Given Data</span></button>
@@ -1028,14 +1129,22 @@
               </select>
             </div>
             <div class="m-field">
-              <label>Truss chords section</label>
-              <select id="mInpTrussSection">
-                <option value="2x ISA 75x75x6" selected>2x ISA 75x75x6 (Standard)</option>
-                <option value="2x ISA 80x80x6">2x ISA 80x80x6</option>
-                <option value="2x ISA 90x90x6">2x ISA 90x90x6</option>
-                <option value="2x ISA 100x100x8">2x ISA 100x100x8</option>
-              </select>
+              <label>Principal rafter (2 ISA)</label>
+              <select id="mInpRafterSection"></select>
             </div>
+            <div class="m-field">
+              <label>Main tie (2 ISA)</label>
+              <select id="mInpTieSection"></select>
+            </div>
+            <div class="m-field">
+              <label>Vertical struts (ISA)</label>
+              <select id="mInpStrutSection"></select>
+            </div>
+            <div class="m-field">
+              <label>Diagonals (ISA)</label>
+              <select id="mInpDiagonalSection"></select>
+            </div>
+            <input type="hidden" id="mInpTrussSection">
             <div class="m-field">
               <label>Purlin section</label>
               <select id="mInpPurlinSection">
@@ -1104,6 +1213,82 @@
                   <option value="1.05">1.05 (Slope 3-17°)</option>
                   <option value="1.15">1.15 (Cliff/Ridge)</option>
                 </select>
+              </div>
+            </div>
+            <div class="m-row2">
+              <div class="m-field">
+                <label>Risk factor k1</label>
+                <div class="m-input-unit">
+                  <input id="mInpK1" type="number" step="0.01" value="1.00">
+                </div>
+              </div>
+              <div class="m-field">
+                <label>Terrain factor k2</label>
+                <div class="m-input-unit">
+                  <input id="mInpK2" type="number" step="0.01" value="1.05">
+                </div>
+              </div>
+            </div>
+            <div class="m-row2">
+              <div class="m-field">
+                <label>Cyclonic k4</label>
+                <select id="mInpK4">
+                  <option value="1.0" selected>1.00 (Normal)</option>
+                  <option value="1.15">1.15 (Coastal)</option>
+                  <option value="1.30">1.30 (Critical)</option>
+                </select>
+              </div>
+            </div>
+            <div class="m-row3" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:6px;">
+              <div class="m-field">
+                <label>Wind kd</label>
+                <div class="m-input-unit">
+                  <input id="mInpKd" type="number" step="0.05" value="0.90">
+                </div>
+              </div>
+              <div class="m-field">
+                <label>Area ka</label>
+                <div class="m-input-unit">
+                  <input id="mInpKa" type="number" step="0.05" value="1.00">
+                </div>
+              </div>
+              <div class="m-field">
+                <label>Combo kc</label>
+                <div class="m-input-unit">
+                  <input id="mInpKc" type="number" step="0.05" value="0.90">
+                </div>
+              </div>
+            </div>
+            <!-- Mobile Dead Load Breakdown -->
+            <div style="margin-top:8px; padding-top:8px; border-top:1px solid var(--line);">
+              <div style="font-size:10px; font-weight:700; color:var(--accent); text-transform:uppercase; margin-bottom:6px;">Dead Load (IS 875 Part 1: 2026)</div>
+              <div class="m-row2">
+                <div class="m-field">
+                  <label>Roof sheet (N/m²)</label>
+                  <div class="m-input-unit">
+                    <input id="mInpWSheeting" type="number" value="130">
+                  </div>
+                </div>
+                <div class="m-field">
+                  <label>Purlins (N/m²)</label>
+                  <div class="m-input-unit">
+                    <input id="mInpWPurlins" type="number" value="100">
+                  </div>
+                </div>
+              </div>
+              <div class="m-row2" style="margin-top:6px;">
+                <div class="m-field">
+                  <label>Bracings (N/m²)</label>
+                  <div class="m-input-unit">
+                    <input id="mInpWBracing" type="number" value="12">
+                  </div>
+                </div>
+                <div class="m-field">
+                  <label>Truss self-wt</label>
+                  <div class="m-input-unit">
+                    <input id="mInpWSelf" type="number" placeholder="Auto">
+                  </div>
+                </div>
               </div>
             </div>
           </div>

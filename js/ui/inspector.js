@@ -95,14 +95,16 @@
         });
       });
     }
+    const isColBm = root.Standards && root.Standards.BEAMS && root.Standards.BEAMS[S.column];
+    const colDispName = isColBm ? S.column : ('2× ' + (S.column || 'ISMC 125'));
     selectableList.push({
       key: 'col_0',
-      label: 'Column Left (2× ' + (S.column || 'ISMC 125') + ')',
+      label: 'Column Left (' + colDispName + ')',
       data: { kind: 'column', side: 0, frame: 0 }
     });
     selectableList.push({
       key: 'col_1',
-      label: 'Column Right (2× ' + (S.column || 'ISMC 125') + ')',
+      label: 'Column Right (' + colDispName + ')',
       data: { kind: 'column', side: 1, frame: 0 }
     });
     selectableList.push({
@@ -185,20 +187,24 @@
       </div>`;
     } else if (sel.kind === 'column') {
       const c = d.column || {};
+      const isBm = c.isRolled || (root.Standards && root.Standards.BEAMS && root.Standards.BEAMS[S.column]);
+      const title = isBm ? 'Rolled Steel Column' : 'Built-up 2C Column';
+      const sub = isBm ? `${root.escSafe(S.column)} solid rolled section (IS 800:2007 Cl. 7.1.2)` : `2 × ${root.escSafe(S.column)} back-to-back with lacing flats`;
+      const secLabel = isBm ? root.escSafe(S.column) : `2 × ${root.escSafe(S.column)}`;
       h += `
         <div style="display:flex;justify-content:space-between;align-items:center;">
-          <div class="inspect-title"><b>Built-up 2C Column</b><span class="tag">FRAME ${(Number(sel.frame) || 0) + 1}</span></div>
+          <div class="inspect-title"><b>${title}</b><span class="tag">FRAME ${(Number(sel.frame) || 0) + 1}</span></div>
           <button id="btnClearSel" class="btn" style="height:26px;padding:0 8px;font-size:10px;">✕ Clear</button>
         </div>`;
-      h += `<div class="inspect-sub">2 × ${root.escSafe(S.column)} back-to-back with lacing flats</div>`;
+      h += `<div class="inspect-sub">${sub}</div>`;
       h += `<div class="inspectgrid" style="margin-top:8px;">
-        <div class="icell"><span>Channel Section</span>2 × ${root.escSafe(S.column)}</div>
-        <div class="icell"><span>Web Gap s</span>${c.spacing_s || 60} mm</div>
+        <div class="icell"><span>${isBm ? 'Beam Section' : 'Channel Section'}</span>${secLabel}</div>
+        <div class="icell"><span>${isBm ? 'Buckling Class' : 'Web Gap s'}</span>${isBm ? 'Class c (Minor Axis)' : (c.spacing_s || 60) + ' mm'}</div>
         <div class="icell"><span>Axial Demand Pu</span>${(c.demand || 0).toFixed(1)} kN</div>
         <div class="icell"><span>Column Capacity Pd</span>${(c.Pd || c.capacity || 0).toFixed(1)} kN</div>
         <div class="icell"><span>Eff. Slenderness λe</span>${(c.lambda_e || c.lambda || 0).toFixed(1)}</div>
-        <div class="icell"><span>Transverse Shear Vt</span>${(c.Vt || 0).toFixed(2)} kN</div>
-        <div class="icell"><span>Lacing Pitch</span>${Number(S.lacing || 0.6).toFixed(2)} m</div>
+        <div class="icell"><span>${isBm ? 'Major Slenderness λz' : 'Transverse Shear Vt'}</span>${isBm ? (c.lambda_z || 0).toFixed(1) : (c.Vt || 0).toFixed(2) + ' kN'}</div>
+        <div class="icell"><span>${isBm ? 'System' : 'Lacing Pitch'}</span>${isBm ? 'Rolled Solid I-Section' : Number(S.lacing || 0.6).toFixed(2) + ' m'}</div>
         <div class="icell"><span>Status</span>${c.colPass ? '<span style="color:var(--ok);font-weight:600;">PASS</span>' : '<span style="color:var(--bad);font-weight:600;">FAIL</span>'}</div>
       </div>`;
     } else if (sel.kind === 'purlin') {
@@ -517,28 +523,46 @@
     const S = root.S;
     let changed = false;
 
+    const strKeys = ['section', 'rafterSection', 'tieSection', 'strutSection', 'diagonalSection', 'purlin', 'column'];
     Object.keys(v).forEach((k) => {
-      if (['section', 'purlin', 'column'].includes(k)) {
-        S[k] = v[k];
-        changed = true;
+      if (strKeys.includes(k)) {
+        if (S[k] !== v[k]) {
+          S[k] = v[k];
+          changed = true;
+        }
       } else {
         const val = Number(v[k]);
-        if (!isNaN(val)) {
+        if (!isNaN(val) && S[k] !== val) {
           S[k] = val;
           changed = true;
         }
       }
     });
 
+    if (S.rafterSection) S.section = S.rafterSection;
     if (S.purlin) S.purlinSection = S.purlin;
     if (S.column) S.colSection = S.column;
 
-    if (changed) {
-      if (root.markCustom) root.markCustom();
-      if (root.syncInputs) root.syncInputs();
-      if (root.refresh) root.refresh();
-      if (root.MobileUI && root.MobileUI.sync) root.MobileUI.sync();
-      window.dispatchEvent(new CustomEvent('analysisUpdated'));
+    if (root.markCustom) root.markCustom();
+    if (root.syncInputs) root.syncInputs();
+    if (window.syncCustomSelects) window.syncCustomSelects();
+    if (root.refresh) root.refresh();
+    if (root.MobileUI && root.MobileUI.sync) root.MobileUI.sync();
+    window.dispatchEvent(new CustomEvent('analysisUpdated'));
+
+    const deskBtn = document.getElementById('applyRecommendedInputs');
+    if (deskBtn) {
+      const origText = deskBtn.textContent;
+      deskBtn.style.background = 'var(--ok, #16a34a)';
+      deskBtn.style.borderColor = 'var(--ok, #16a34a)';
+      deskBtn.style.color = '#fff';
+      deskBtn.textContent = changed ? '✓ OPTIMAL SIZING APPLIED!' : '✓ ALREADY AT OPTIMAL SIZING';
+      setTimeout(() => {
+        deskBtn.style.background = '';
+        deskBtn.style.borderColor = '';
+        deskBtn.style.color = '';
+        deskBtn.textContent = origText;
+      }, 1500);
     }
   }
 

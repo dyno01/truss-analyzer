@@ -18,6 +18,10 @@
     slope: 26.57,
     overhang: 0.6,
     section: 'ISA 75×75×6',
+    rafterSection: 'ISA 75×75×6',
+    tieSection: 'ISA 60×60×6',
+    strutSection: 'ISA 70×70×6',
+    diagonalSection: 'ISA 50×50×6',
     grade: 'E250',
     purlin: 'ISMC 125',
     purlinSpacing: 1.4,
@@ -29,6 +33,10 @@
     weldLength: 65,
     boltDia: 16,
     roof: 'AC',
+    wSheeting: 130, // N/m^2 (GI: 130, AC: 170)
+    wPurlins: 100,  // N/m^2
+    wBracing: 12,   // N/m^2
+    wSelf: null,    // N/m^2 (null for auto (span/3+5)*10, or custom number)
     cpi: 0.2,
     Vb: 39,
     cpe: -0.8,
@@ -36,8 +44,13 @@
     buildingType: 'industrial',
     deflectionLimit: 180,
     fabrication: 'shop',
+    k1: 1.0,
+    k2: 1.05,
     k3: 1.0,
     k4: 1.0,
+    kd: 0.90,
+    ka: 1.00,
+    kc: 0.90,
     stabilitySystem: 'not_specified',
     step: 0,
     view: '3d',

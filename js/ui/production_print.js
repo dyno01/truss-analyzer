@@ -67,7 +67,10 @@
     const wl_k4 = windData.k4 || 1.0;
     const wl_Vz = windData.Vz || (wl_Vb * wl_k1 * wl_k2 * wl_k3 * wl_k4);
     const wl_Pz = windData.pz || (0.6 * Math.pow(wl_Vz, 2));
-    const wl_Pd = 0.90 * 1.0 * 0.90 * wl_Pz;
+    const wl_kd = windData.kd || (S.kd !== undefined ? Number(S.kd) : 0.90);
+    const wl_ka = windData.ka || (S.ka !== undefined ? Number(S.ka) : 1.00);
+    const wl_kc = windData.kc || (S.kc !== undefined ? Number(S.kc) : 0.90);
+    const wl_Pd = windData.pd || (wl_kd * wl_ka * wl_kc * wl_Pz);
     const cpe = -0.8;
     const cpi = 0.2;
     const wl_force_kN = ((cpe - cpi) * slopeArea * wl_Pd) / 1000;
@@ -730,7 +733,7 @@
         <tr><td>Cyclonic factor ($k_4$)</td><td>Cl. 6.3.4 (Standard industrial structure)</td><td>${wl_k4.toFixed(2)}</td></tr>
         <tr><td>Design wind speed ($V_z$)</td><td>$V_z = V_b \\cdot k_1 \\cdot k_2 \\cdot k_3 \\cdot k_4$</td><td>${wl_Vz.toFixed(2)} m/s</td></tr>
         <tr><td>Wind velocity pressure ($p_z$)</td><td>$p_z = 0.6 \\times V_z^2 = 0.6 \\times (${wl_Vz.toFixed(2)})^2$</td><td>${wl_Pz.toFixed(2)} N/m²</td></tr>
-        <tr><td>Design wind pressure ($p_d$)</td><td>$p_d = K_d \\cdot K_a \\cdot K_c \\cdot p_z = 0.90 \\times 1.00 \\times 0.90 \\times ${wl_Pz.toFixed(2)}$</td><td>${wl_Pd.toFixed(2)} N/m²</td></tr>
+        <tr><td>Design wind pressure ($p_d$)</td><td>$p_d = K_d \\cdot K_a \\cdot K_c \\cdot p_z = ${wl_kd.toFixed(2)} \\times ${wl_ka.toFixed(2)} \\times ${wl_kc.toFixed(2)} \\times ${wl_Pz.toFixed(2)}$</td><td>${wl_Pd.toFixed(2)} N/m²</td></tr>
         <tr><td>External pressure coeff. ($C_{pe}$)</td><td>Table 5 (Windward roof slope $\\theta = ${slopeDeg.toFixed(1)}^\\circ$)</td><td>$-0.80$ (Suction)</td></tr>
         <tr><td>Internal pressure coeff. ($C_{pi}$)</td><td>Cl. 6.2.3.2 (Normal permeability 0–20% openings)</td><td>$+0.20$ (Pressure)</td></tr>
         <tr><td>Net uplift pressure coeff.</td><td>$(C_{pe} - C_{pi}) = -0.80 - (+0.20)$</td><td>$-1.00$ (Governing Outward Suction)</td></tr>

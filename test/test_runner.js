@@ -63,10 +63,11 @@ console.log('\n[TEST 2] IS 875 (Part 3): 2015 Wind Speed & Pressure Calculation:
 // At height 12m in Cat 2: between 10m (k2=1.00) and 15m (k2=1.05) => k2 = 1.00 + (2/5)*0.05 = 1.02
 // Vz = 39 * 1.0 * 1.02 = 39.78 m/s
 // pz = 0.6 * (39.78)^2 = 0.6 * 1582.45 = 949.47 N/m^2 = 0.949 kN/m^2
-const windRes = Wind.computeWindAnalysis({ Vb: 39, height: 12, terrain: 2, age: 50, slope: 10, cpi: 0.2 });
+const windRes = Wind.computeWindAnalysis({ Vb: 39, height: 12, terrain: 2, age: 50, slope: 10, cpi: 0.2, kd: 0.90, ka: 0.80, kc: 0.90 });
 assertClose(windRes.k2, 1.02, 0.01, 'Terrain factor k2 at 12m Cat 2');
 assertClose(windRes.Vz, 39.78, 0.01, 'Design wind speed Vz');
-assertClose(windRes.pz, 949.5, 0.02, 'Design wind pressure pz (N/m^2)');
+assertClose(windRes.pz, 949.5, 0.02, 'Basic wind pressure pz (N/m^2)');
+assertClose(windRes.pd, 615.3, 0.02, 'Design wind pressure pd = kd·ka·kc·pz (N/m^2)');
 
 // -------------------------------------------------------------
 // Test 3: Direct Stiffness Matrix FEA Solver & Equilibrium
@@ -117,6 +118,8 @@ assert(allBottomChordInTension, 'All bottom chord members in tension under downw
 // -------------------------------------------------------------
 // Test 4: IS 800 Purlin Biaxial Bending Interaction Check
 // -------------------------------------------------------------
+// Test 4: IS 800:2007 Cl. 8.2 & 9.3.1 Purlin Biaxial Bending
+// -------------------------------------------------------------
 console.log('\n[TEST 4] IS 800:2007 Cl. 8.2 & 9.3.1 Purlin Biaxial Bending:');
 const purlinCheck = IS800.checkPurlin('ISMC 125', 4.0, 1.4, 10, 0.35, 0.50, 0.95, 'E250');
 assert(purlinCheck.Mz > 0 && purlinCheck.My > 0, 'Purlin experiences both Mz and My on sloping roof');
@@ -124,15 +127,25 @@ assert(purlinCheck.Mdz > 0 && purlinCheck.Mdy > 0, 'Valid major and minor moment
 assert(purlinCheck.interactionRatio > 0, 'Calculated biaxial interaction ratio (Mz/Mdz + My/Mdy)');
 assert(purlinCheck.delta_limit > 0, 'Purlin deflection limit evaluated (L/180)');
 
+// Angle Purlin check
+const anglePurlinCheck = IS800.checkPurlin('ISA 150×150×10', 4.0, 1.4, 10, 0.35, 0.50, 0.95, 'E250');
+assert(anglePurlinCheck.Mz > 0 && anglePurlinCheck.Mdz > 0, 'Angle purlin evaluates successfully with major and minor moment capacities');
+
 // -------------------------------------------------------------
-// Test 5: IS 800 Built-up 2C Column & Lacing Transverse Shear
+// Test 5: IS 800 Built-up 2C Column & Rolled Beam Column
 // -------------------------------------------------------------
-console.log('\n[TEST 5] IS 800:2007 Cl. 7.6 Built-Up 2C Column & Lacing Shear:');
+console.log('\n[TEST 5] IS 800:2007 Cl. 7.6 Built-Up 2C Column & Rolled Beam Column:');
 const colCheck = IS800.checkLacedColumn('ISMC 125', 12.0, 150.0, 1.0, 0.6, 'E250');
 assert(colCheck.spacing_s >= 40, `Required channel spacing for Iy >= Iz: ${colCheck.spacing_s} mm`);
 assertClose(colCheck.lambda_e, 1.05 * colCheck.lambda_z, 0.001, 'Laced column effective slenderness lambda_e = 1.05 * lambda_z');
 assertClose(colCheck.Vt, 0.025 * 150.0, 0.001, 'Transverse shear Vt = 0.025 * P');
 assert(colCheck.lambda_lacing <= 145, `Lacing flat slenderness (${colCheck.lambda_lacing}) within code limit 145`);
+
+// Rolled Beam Column check (ISHB 200)
+const rolledColCheck = IS800.checkLacedColumn('ISHB 200', 12.0, 150.0, 1.0, 0.6, 'E250');
+assert(rolledColCheck.isRolled === true, 'ISHB 200 identified as rolled steel section');
+assert(rolledColCheck.Pd > 0, `ISHB 200 capacity calculated: ${rolledColCheck.Pd} kN`);
+assert(rolledColCheck.lacingPass === true, 'Lacing pass automatic for rolled column');
 
 // -------------------------------------------------------------
 // Test 6: IS 800 Fillet Weld Connection Capacity

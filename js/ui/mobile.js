@@ -221,41 +221,86 @@
    * ---------------------------------------------------- */
   function initMobileSectionOptions() {
     if (root.Standards) {
-      const angleSelect = document.getElementById('mInpTrussSection');
-      if (angleSelect && root.Standards.ANGLES) {
-        const cur = (root.S && root.S.section) || 'ISA 75×75×6';
-        angleSelect.innerHTML = '';
-        Object.keys(root.Standards.ANGLES).forEach((k) => {
-          const opt = document.createElement('option');
-          opt.value = k;
-          opt.textContent = `2× ${k}`;
-          if (k === cur) opt.selected = true;
-          angleSelect.appendChild(opt);
-        });
-      }
+      const populateAngleSelect = (id, curVal, prefix = '') => {
+        const select = document.getElementById(id);
+        if (select && root.Standards.ANGLES) {
+          select.innerHTML = '';
+          Object.keys(root.Standards.ANGLES).forEach((k) => {
+            const opt = document.createElement('option');
+            opt.value = k;
+            opt.textContent = prefix ? `${prefix} ${k}` : k;
+            if (k === curVal) opt.selected = true;
+            select.appendChild(opt);
+          });
+        }
+      };
+      const curRafter = (root.S && (root.S.rafterSection || root.S.section)) || 'ISA 75×75×6';
+      const curTie = (root.S && (root.S.tieSection || root.S.section)) || 'ISA 60×60×6';
+      const curStrut = (root.S && (root.S.strutSection || root.S.section)) || 'ISA 70×70×6';
+      const curDiag = (root.S && (root.S.diagonalSection || root.S.section)) || 'ISA 50×50×6';
+
+      populateAngleSelect('mInpRafterSection', curRafter, '2×');
+      populateAngleSelect('mInpTieSection', curTie, '2×');
+      populateAngleSelect('mInpStrutSection', curStrut, 'Single');
+      populateAngleSelect('mInpDiagonalSection', curDiag, 'Single');
+      populateAngleSelect('mInpTrussSection', curRafter, '2×');
       const purlinSelect = document.getElementById('mInpPurlinSection');
-      if (purlinSelect && root.Standards.CHANNELS) {
+      if (purlinSelect && root.Standards) {
         const cur = (root.S && (root.S.purlin || root.S.purlinSection)) || 'ISMC 125';
         purlinSelect.innerHTML = '';
-        Object.keys(root.Standards.CHANNELS).forEach((k) => {
-          const opt = document.createElement('option');
-          opt.value = k;
-          opt.textContent = k;
-          if (k === cur) opt.selected = true;
-          purlinSelect.appendChild(opt);
-        });
+
+        const addPurlinGrp = (label, keys) => {
+          if (!keys || !keys.length) return;
+          const grp = document.createElement('optgroup');
+          grp.label = label;
+          keys.forEach(k => {
+            const opt = document.createElement('option');
+            opt.value = k;
+            opt.textContent = k;
+            if (k === cur) opt.selected = true;
+            grp.appendChild(opt);
+          });
+          purlinSelect.appendChild(grp);
+        };
+
+        const chKeys = Object.keys(root.Standards.CHANNELS || {});
+        addPurlinGrp('Medium Channels (ISMC)', chKeys.filter(k => k.startsWith('ISMC')));
+        addPurlinGrp('Light Channels (ISLC)', chKeys.filter(k => k.startsWith('ISLC')));
+        addPurlinGrp('Junior Channels (ISJC)', chKeys.filter(k => k.startsWith('ISJC')));
+        if (root.Standards.ANGLES) {
+          addPurlinGrp('Equal Angles (ISA)', Object.keys(root.Standards.ANGLES));
+        }
       }
       const colSelect = document.getElementById('mInpColSection');
-      if (colSelect && root.Standards.CHANNELS) {
+      if (colSelect && root.Standards) {
         const cur = (root.S && (root.S.column || root.S.colSection)) || 'ISMC 200';
         colSelect.innerHTML = '';
-        Object.keys(root.Standards.CHANNELS).forEach((k) => {
-          const opt = document.createElement('option');
-          opt.value = k;
-          opt.textContent = `2× ${k} (Built-up)`;
-          if (k === cur) opt.selected = true;
-          colSelect.appendChild(opt);
-        });
+
+        const addColGrp = (label, keys, isRolled) => {
+          if (!keys || !keys.length) return;
+          const grp = document.createElement('optgroup');
+          grp.label = label;
+          keys.forEach(k => {
+            const opt = document.createElement('option');
+            opt.value = k;
+            opt.textContent = isRolled ? k : `2× ${k} (Built-up)`;
+            if (k === cur) opt.selected = true;
+            grp.appendChild(opt);
+          });
+          colSelect.appendChild(grp);
+        };
+
+        const chKeys = Object.keys(root.Standards.CHANNELS || {});
+        addColGrp('Built-up 2× ISMC', chKeys.filter(k => k.startsWith('ISMC')), false);
+        addColGrp('Built-up 2× ISLC', chKeys.filter(k => k.startsWith('ISLC')), false);
+        addColGrp('Built-up 2× ISJC', chKeys.filter(k => k.startsWith('ISJC')), false);
+
+        if (root.Standards.BEAMS) {
+          const bmKeys = Object.keys(root.Standards.BEAMS);
+          addColGrp('Heavy Columns (ISHB)', bmKeys.filter(k => k.startsWith('ISHB')), true);
+          addColGrp('Wide Flange (ISWB)', bmKeys.filter(k => k.startsWith('ISWB')), true);
+          addColGrp('Medium Beams (ISMB)', bmKeys.filter(k => k.startsWith('ISMB')), true);
+        }
       }
     }
   }
@@ -281,15 +326,29 @@
     syncField('mInpOverhang', S.overhang || 0.5);
 
     syncField('mInpGrade', S.grade || 'E250');
-    syncField('mInpTrussSection', S.section || 'ISA 75×75×6');
+    syncField('mInpRafterSection', S.rafterSection || S.section || 'ISA 75×75×6');
+    syncField('mInpTieSection', S.tieSection || S.section || 'ISA 60×60×6');
+    syncField('mInpStrutSection', S.strutSection || S.section || 'ISA 70×70×6');
+    syncField('mInpDiagonalSection', S.diagonalSection || S.section || 'ISA 50×50×6');
+    syncField('mInpTrussSection', S.rafterSection || S.section || 'ISA 75×75×6');
     syncField('mInpPurlinSection', S.purlin || S.purlinSection || 'ISMC 125');
     syncField('mInpColSection', S.column || S.colSection || 'ISMC 200');
 
     syncField('mInpVb', S.Vb || 39);
     syncField('mInpRoof', S.roof || 'AC');
     syncField('mInpCpi', S.cpi || 0.2);
+    syncField('mInpK1', S.k1 !== undefined ? S.k1 : 1.0);
+    syncField('mInpK2', S.k2 !== undefined ? S.k2 : 1.05);
     syncField('mInpK3', S.k3 || 1.0);
     syncField('mInpK4', S.k4 || 1.0);
+    syncField('mInpKd', S.kd !== undefined ? S.kd : 0.90);
+    syncField('mInpKa', S.ka !== undefined ? S.ka : 1.00);
+    syncField('mInpKc', S.kc !== undefined ? S.kc : 0.90);
+
+    syncField('mInpWSheeting', (S.wSheeting !== undefined && S.wSheeting !== null) ? S.wSheeting : (S.roof === 'AC' ? 170 : 130));
+    syncField('mInpWPurlins', (S.wPurlins !== undefined && S.wPurlins !== null) ? S.wPurlins : 100);
+    syncField('mInpWBracing', (S.wBracing !== undefined && S.wBracing !== null) ? S.wBracing : 12);
+    syncField('mInpWSelf', (S.wSelf !== undefined && S.wSelf !== null && S.wSelf !== '') ? S.wSelf : '');
 
     // Connection toggle
     const connVal = S.connection || S.connectionType || 'Welded';
@@ -358,7 +417,9 @@
       'mInpLoc', 'mInpLength', 'mInpHeight', 'mInpSpacing',
       'mInpTruss', 'mInpSpan', 'mInpPanels', 'mInpSlopeDeg', 'mInpOverhang',
       'mInpGrade', 'mInpTrussSection', 'mInpPurlinSection', 'mInpColSection',
-      'mInpVb', 'mInpRoof', 'mInpCpi', 'mInpK3', 'mInpK4'
+      'mInpVb', 'mInpRoof', 'mInpCpi', 'mInpK1', 'mInpK2', 'mInpK3', 'mInpK4',
+      'mInpKd', 'mInpKa', 'mInpKc',
+      'mInpWSheeting', 'mInpWPurlins', 'mInpWBracing', 'mInpWSelf'
     ];
     inputIds.forEach(id => {
       const el = document.getElementById(id);
@@ -438,8 +499,11 @@
     S.overhang = readNum('mInpOverhang', S.overhang);
 
     S.grade = readStr('mInpGrade', S.grade);
-    const secStr = readStr('mInpTrussSection', S.section);
-    S.section = secStr;
+    S.rafterSection = readStr('mInpRafterSection', S.rafterSection || S.section || 'ISA 75×75×6');
+    S.tieSection = readStr('mInpTieSection', S.tieSection || 'ISA 60×60×6');
+    S.strutSection = readStr('mInpStrutSection', S.strutSection || 'ISA 70×70×6');
+    S.diagonalSection = readStr('mInpDiagonalSection', S.diagonalSection || 'ISA 50×50×6');
+    S.section = S.rafterSection;
     const purlinStr = readStr('mInpPurlinSection', S.purlin || S.purlinSection);
     S.purlin = purlinStr;
     S.purlinSection = purlinStr;
@@ -450,8 +514,19 @@
     S.Vb = readNum('mInpVb', S.Vb);
     S.roof = readStr('mInpRoof', S.roof);
     S.cpi = readNum('mInpCpi', S.cpi);
+    S.k1 = readNum('mInpK1', S.k1 || 1.0);
+    S.k2 = readNum('mInpK2', S.k2 || 1.05);
     S.k3 = readNum('mInpK3', S.k3);
     S.k4 = readNum('mInpK4', S.k4);
+    S.kd = readNum('mInpKd', S.kd || 0.90);
+    S.ka = readNum('mInpKa', S.ka || 1.00);
+    S.kc = readNum('mInpKc', S.kc || 0.90);
+
+    S.wSheeting = readNum('mInpWSheeting', S.roof === 'AC' ? 170 : 130);
+    S.wPurlins = readNum('mInpWPurlins', 100);
+    S.wBracing = readNum('mInpWBracing', 12);
+    const mSelfVal = document.getElementById('mInpWSelf') ? document.getElementById('mInpWSelf').value.trim() : '';
+    S.wSelf = mSelfVal === '' ? null : parseFloat(mSelfVal);
 
     const btnWeld = document.getElementById('mConnWeld');
     const connType = (btnWeld && btnWeld.classList.contains('active')) ? 'Welded' : 'Bolted';
